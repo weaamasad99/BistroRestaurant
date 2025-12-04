@@ -2,6 +2,12 @@ package server;
 
 import ocsf.server.AbstractServer;
 import ocsf.server.ConnectionToClient;
+import ocsf.server.ConnectionToClient;
+import common.KryoUtil; // Import the utility 
+import common.Message;
+import common.Order;
+import common.TaskType;
+import java.util.ArrayList;
 
 /**
  * This class overrides some of the methods in the abstract 
@@ -26,13 +32,49 @@ public class BistroServer extends AbstractServer {
      */
     @Override
     protected void handleMessageFromClient(Object msg, ConnectionToClient client) {
-        System.out.println("Message received: " + msg + " from " + client);
+        // Step 1: Check if the message is a byte array (Kryo payload)
+        if (msg instanceof byte[]) {
+            System.out.println("Log: Received binary data (Kryo). Deserializing...");
+            
+            // Step 2: Deserialize using Kryo
+            Object deserializedMsg = KryoUtil.deserialize((byte[]) msg);
+            
+            if (deserializedMsg instanceof Message) {
+                Message message = (Message) deserializedMsg;
+                processMessage(message, client);
+            }
+        } else {
+            System.out.println("Log: Received unknown format: " + msg.getClass());
+        }
+    }
 
-        // TODO: Add database logic here (SELECT/UPDATE) based on 'msg' content.
-        
-        // Example: Sending a response back to the client
+    private void processMessage(Message message, ConnectionToClient client) {
+        switch (message.getTask()) {
+            case GET_ORDERS:
+                System.out.println("Log: Fetching orders...");
+                ArrayList<Order> orders = MySQLConnection.getAllOrders();
+                
+                // Step 3: Serialize response using Kryo before sending
+                Message response = new Message(TaskType.ORDERS_IMPORTED, orders);
+                sendKryoToClient(response, client);
+                break;
+
+            case UPDATE_ORDER:
+                System.out.println("Log: Updating order...");
+                Order orderToUpdate = (Order) message.getObject();
+                boolean success = MySQLConnection.updateOrder(orderToUpdate);
+                
+                Message updateResponse = new Message(success ? TaskType.UPDATE_SUCCESS : TaskType.UPDATE_FAILED, null);
+                sendKryoToClient(updateResponse, client);
+                break;
+        }
+    }
+
+    // Helper method to send Kryo bytes
+    private void sendKryoToClient(Object msg, ConnectionToClient client) {
         try {
-            client.sendToClient("Server response: Received " + msg);
+            byte[] bytes = KryoUtil.serialize(msg);
+            client.sendToClient(bytes);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -45,6 +87,7 @@ public class BistroServer extends AbstractServer {
     @Override
     protected void serverStarted() {
         System.out.println("Server listening for connections on port " + getPort());
+        MySQLConnection.connectToDB();
     }
 
     /**
