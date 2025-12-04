@@ -1,6 +1,12 @@
 package client;
 
+
 import ocsf.client.AbstractClient;
+import common.KryoUtil; // Import the utility
+import common.Message;
+import common.Order;
+import common.TaskType;
+import java.util.ArrayList;
 
 /**
  * This class overrides some of the methods defined in the abstract
@@ -25,8 +31,47 @@ public class BistroClient extends AbstractClient {
      */
     @Override
     protected void handleMessageFromServer(Object msg) {
-        // TODO: Update Client GUI with the data received from Server/DB
-        System.out.println("Message received from server: " + msg.toString());
+        // Step 1: Check for byte array
+        if (msg instanceof byte[]) {
+            // Step 2: Deserialize
+            Object deserializedObj = KryoUtil.deserialize((byte[]) msg);
+            
+            if (deserializedObj instanceof Message) {
+                Message message = (Message) deserializedObj;
+                processServerResponse(message);
+            }
+        }
+    }
+
+    private void processServerResponse(Message message) {
+        switch (message.getTask()) {
+            case ORDERS_IMPORTED:
+                ArrayList<Order> orders = (ArrayList<Order>) message.getObject();
+                System.out.println("--- Kryo Data from DB ---");
+                for (Order o : orders) {
+                    System.out.println(o);
+                }
+                break;
+            case UPDATE_SUCCESS:
+                System.out.println("--- Update Successful (Kryo) ---");
+                break;
+            case UPDATE_FAILED:
+                System.out.println("--- Update Failed ---");
+                break;
+        }
+    }
+
+    /**
+     * Sends a request to the server using Kryo serialization.
+     */
+    public void sendKryoRequest(Message msg) {
+        try {
+            byte[] data = KryoUtil.serialize(msg);
+            sendToServer(data);
+        } catch (Exception e) {
+            System.out.println("Could not send Kryo message to server.");
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -37,18 +82,7 @@ public class BistroClient extends AbstractClient {
         System.out.println("Log: Connection to server established successfully.");
     }
     
-    /**
-     * Handles the request sent from the UI to the server.
-     * * @param message The object/command to send to the server.
-     */
-    public void sendRequestToServer(Object message) {
-        try {
-            sendToServer(message);
-        } catch (Exception e) {
-            System.out.println("Error: Could not send message to server. Terminating client.");
-            quit();
-        }
-    }
+
     
     /**
      * Closes the connection and terminates the client.

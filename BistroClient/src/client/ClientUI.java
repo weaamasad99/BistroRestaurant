@@ -1,28 +1,28 @@
 package client;
 
-import java.io.IOException;
-
-/**
- * Main entry point for the Client side.
- */
 public class ClientUI {
-    
     public static void main(String[] args) {
-        String host = "localhost"; // Use "localhost" for testing on same machine, or IP for remote.
-        int port = 5555;
+        ClientController controller = new ClientController();
         
-        BistroClient client = new BistroClient(host, port);
+        // 1. Connect
+        controller.connect("localhost", 5555);
         
-        try {
-            client.openConnection(); // Attempt to connect to the server
-            
-            // Sending a test message (Simulating a request to the DB)
-            client.sendRequestToServer("Prototype Test: Hello Server!"); 
-            
-        } catch (IOException e) {
-            System.out.println("Error: Failed to open connection to server.");
-            System.out.println("Ensure the Server is running first.");
-            e.printStackTrace();
-        }
+        // 2. Get Data
+        System.out.println("Command: Get All Orders");
+        controller.getAllOrders();
+        
+        // Sleep mainly for prototype visualization in console
+        try { Thread.sleep(2000); } catch (Exception e) {} 
+
+        // 3. Update Data
+        System.out.println("\nCommand: Update Order #1");
+        controller.updateOrderSample();
+        
+        // Sleep to ensure update finishes before reading again
+        try { Thread.sleep(2000); } catch (Exception e) {} 
+
+        // 4. Verify Update
+        System.out.println("\nCommand: Verify Update (Get All Orders)");
+        controller.getAllOrders();
     }
 }
