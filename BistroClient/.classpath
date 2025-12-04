@@ -7,9 +7,9 @@
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/OCSF"/>
-	<classpathentry kind="lib" path="C:/Users/abuya/Downloads/kryo-5.6.2/kryo-5.6.2.jar"/>
-	<classpathentry kind="lib" path="C:/Users/abuya/Downloads/kryo-5.6.2/lib/minlog-1.3.1.jar"/>
-	<classpathentry kind="lib" path="C:/Users/abuya/Downloads/kryo-5.6.2/lib/objenesis-3.2.jar"/>
-	<classpathentry kind="lib" path="C:/Users/abuya/Downloads/kryo-5.6.2/lib/reflectasm-1.11.9.jar"/>
+	<classpathentry kind="lib" path="C:/Users/user/Desktop/Work_space/kryo-5.6.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/user/Desktop/Work_space/minlog-1.3.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/user/Desktop/Work_space/objenesis-3.4.jar"/>
+	<classpathentry kind="lib" path="C:/Users/user/Desktop/Work_space/reflectasm-1.11.9.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
