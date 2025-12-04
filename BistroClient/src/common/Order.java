@@ -37,7 +37,10 @@ public class Order {
     
     public int getNumberOfGuests() { return numberOfGuests; }
     public void setNumberOfGuests(int numberOfGuests) { this.numberOfGuests = numberOfGuests; }
-
+    
+    public int getConfirmationCode() {return confirmationCode;}
+	public int getSubscriberId() { return this.subscriberId;}
+	public Date getDateOfPlacingOrder() {return this.dateOfPlacingOrder;}
     
 
     @Override
@@ -45,5 +48,7 @@ public class Order {
         return String.format("Order #%d | Date: %s | Guests: %d | Conf: %d | SubID: %d | Placed: %s",
                 orderNumber, orderDate, numberOfGuests, confirmationCode, subscriberId, dateOfPlacingOrder);
     }
+
+	
     
 }

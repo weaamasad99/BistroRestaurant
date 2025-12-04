@@ -14,14 +14,16 @@ import java.util.ArrayList;
  */
 public class BistroClient extends AbstractClient {
 
+	private ClientController controller;
     /**
      * Constructs an instance of the chat client.
      *
      * @param host The server to connect to.
      * @param port The port number to connect on.
      */
-    public BistroClient(String host, int port) {
+    public BistroClient(String host, int port, ClientController controller) {
         super(host, port);
+        this.controller = controller;
     }
 
     /**
@@ -37,8 +39,14 @@ public class BistroClient extends AbstractClient {
             Object deserializedObj = KryoUtil.deserialize((byte[]) msg);
             
             if (deserializedObj instanceof Message) {
+            	
                 Message message = (Message) deserializedObj;
                 processServerResponse(message);
+                if (controller != null) {
+                    controller.handleMessageFromClient(message);
+                } else {
+                    System.out.println("Error: Controller is null, cannot update GUI.");
+                }
             }
         }
     }

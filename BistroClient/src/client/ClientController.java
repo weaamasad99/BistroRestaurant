@@ -3,46 +3,67 @@ package client;
 import common.Message;
 import common.Order;
 import common.TaskType;
-import java.sql.Date;
+import javafx.application.Platform;
 
-/**
- * Controller to manage logic between UI and Client networking.
- */
+import java.util.ArrayList;
+
 public class ClientController {
     
-    public static BistroClient client;
+    private BistroClient client;
+    private ClientUI ui;
 
-    /**
-     * Connects to the server.
-     */
-    public void connect(String ip, int port) {
+    public ClientController(ClientUI ui) {
+        this.ui = ui;
+    }
+
+    public boolean connect(String ip, int port) {
         try {
-            client = new BistroClient(ip, port);
+            client = new BistroClient(ip, port, this);
             client.openConnection();
-            System.out.println("Log: Connected to server.");
+            return true;
         } catch (Exception e) {
-            System.out.println("Log: Connection failed.");
+            return false;
         }
     }
 
-    /**
-     * Asks the server to retrieve all orders.
-     */
     public void getAllOrders() {
+        if (client == null) return;
         Message msg = new Message(TaskType.GET_ORDERS, null);
         client.sendKryoRequest(msg);
     }
 
-    /**
-     * Asks the server to update a specific order.
-     */
-    public void updateOrderSample() {
-        // Sample data update for prototype
-        Date newDate = Date.valueOf("2026-01-01");
-        // Order #1, update date and guests to 10.
-        Order updatedOrder = new Order(1, newDate, 10, 0, 0, null); 
-        
-        Message msg = new Message(TaskType.UPDATE_ORDER, updatedOrder);
+    public void updateOrder(Order order) {
+        if (client == null) return;
+        Message msg = new Message(TaskType.UPDATE_ORDER, order);
         client.sendKryoRequest(msg);
+    }
+
+    // Callback from BistroClient
+    public void handleMessageFromClient(Message msg) {
+        // Run on JavaFX Thread
+        Platform.runLater(() -> {
+            switch (msg.getTask()) {
+                case ORDERS_IMPORTED:
+                    ArrayList<Order> orders = (ArrayList<Order>) msg.getObject();
+                    ui.updateOrderTable(orders);
+                    break;
+                case UPDATE_SUCCESS:
+                    ui.showAlert("Success", "Order updated successfully!");
+                    getAllOrders(); // Refresh table
+                    break;
+                case UPDATE_FAILED:
+                    ui.showAlert("Error", "Update failed.");
+                    break;
+            }
+        });
+    }
+    public void disconnect() {
+        if (client != null) {
+            try {
+                client.quit(); // סוגר את החיבור מול השרת
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
