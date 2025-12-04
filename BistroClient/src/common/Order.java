@@ -42,7 +42,6 @@ public class Order {
 	public int getSubscriberId() { return this.subscriberId;}
 	public Date getDateOfPlacingOrder() {return this.dateOfPlacingOrder;}
     
-
     @Override
     public String toString() {
         return String.format("Order #%d | Date: %s | Guests: %d | Conf: %d | SubID: %d | Placed: %s",

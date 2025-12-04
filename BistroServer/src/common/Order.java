@@ -38,8 +38,10 @@ public class Order {
     public int getNumberOfGuests() { return numberOfGuests; }
     public void setNumberOfGuests(int numberOfGuests) { this.numberOfGuests = numberOfGuests; }
 
-    // ... (Add rest of getters/setters) ...
-
+    public int getConfirmationCode() {return confirmationCode;}
+	public int getSubscriberId() { return this.subscriberId;}
+	public Date getDateOfPlacingOrder() {return this.dateOfPlacingOrder;}
+	
     @Override
     public String toString() {
         return String.format("Order #%d | Date: %s | Guests: %d | Conf: %d | SubID: %d | Placed: %s",
