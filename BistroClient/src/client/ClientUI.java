@@ -103,28 +103,65 @@ public class ClientUI extends Application {
         btnLoadOrders.setDisable(true); // Disabled until connected
         btnLoadOrders.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-weight: bold;");
 
-        // Actions
+        // --- CONNECT BUTTON ACTION (Threaded to prevent freezing) ---
         btnConnect.setOnAction(e -> {
-            String ip = txtIp.getText();
-            try {
-                int port = Integer.parseInt(txtPort.getText());
-                if (controller.connect(ip, port)) {
-                    lblStatus.setText("Connected");
-                    lblStatus.setTextFill(Color.GREEN);
-                    btnConnect.setDisable(true);
-                    txtIp.setDisable(true);
-                    txtPort.setDisable(true);
-                    
-                    // Enable the Load button
-                    btnLoadOrders.setDisable(false); 
-                } else {
-                    lblStatus.setText("Connection Failed");
-                }
-            } catch (NumberFormatException ex) {
-                showAlert("Error", "Port must be a number");
+            String ip = txtIp.getText().trim();
+            String portStr = txtPort.getText().trim();
+
+            // 1. Basic Validation
+            if (ip.isEmpty() || portStr.isEmpty()) {
+                showAlert("Input Error", "Please enter both IP Address and Port.");
+                return;
             }
+
+            // 2. Update UI to "Connecting..." state and disable button to prevent double-clicks
+            btnConnect.setDisable(true);
+            lblStatus.setText("Connecting...");
+            lblStatus.setTextFill(Color.ORANGE);
+
+            // 3. Run connection logic in a separate thread to avoid freezing the GUI
+            new Thread(() -> {
+                boolean success = false;
+                try {
+                    int port = Integer.parseInt(portStr);
+                    // This is the blocking call that might take time if IP is wrong
+                    success = controller.connect(ip, port);
+                } catch (NumberFormatException ex) {
+                    System.err.println("Error parsing port: " + ex.getMessage());
+                    success = false;
+                }
+
+                // Capture result for the UI thread
+                final boolean isConnected = success;
+
+                // 4. Update the GUI on the JavaFX Application Thread
+                Platform.runLater(() -> {
+                    // Re-enable the connect button (or keep disabled if connected)
+                    btnConnect.setDisable(false); 
+
+                    if (isConnected) {
+                        // --- SUCCESS ---
+                        lblStatus.setText("Connected");
+                        lblStatus.setTextFill(Color.GREEN);
+                        
+                        // Lock connection fields
+                        txtIp.setDisable(true);
+                        txtPort.setDisable(true);
+                        btnConnect.setDisable(true); // Disable connect button after success
+                        
+                        // Enable the functionality button
+                        btnLoadOrders.setDisable(false);
+                    } else {
+                        // --- FAILURE ---
+                        lblStatus.setText("Connection Failed");
+                        lblStatus.setTextFill(Color.RED);
+                        showAlert("Connection Error", "Failed to connect to server.\nPlease check the IP address and ensure the server is running.");
+                    }
+                });
+            }).start(); // Start the background thread
         });
 
+        // Load Orders Action
         btnLoadOrders.setOnAction(e -> {
             controller.getAllOrders();
         });
