@@ -12,6 +12,6 @@
 	<classpathentry kind="lib" path="C:/Users/abuya/Downloads/kryo-5.6.2/lib/objenesis-3.2.jar"/>
 	<classpathentry kind="lib" path="C:/Users/abuya/Downloads/kryo-5.6.2/lib/reflectasm-1.11.9.jar"/>
 	<classpathentry kind="lib" path="C:/Users/abuya/Downloads/kryo-5.6.2/kryo-5.6.2.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JavaFx"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JavaFX25"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
