@@ -303,9 +303,10 @@ public class ClientUI extends Application {
         alert.setContentText(content);
         alert.showAndWait();
     }
+    
     /**
      * This method is called automatically when the application is stopped.
-     * It ensures the connection is closed properly.
+     * It ensures the connection is closed properly
      */
     @Override
     public void stop() throws Exception {

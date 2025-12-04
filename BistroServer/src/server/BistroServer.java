@@ -131,7 +131,7 @@ public class BistroServer extends AbstractServer {
     }
     
     /**
-      This method is called when the client crashes or is closed abruptly.
+      This method is called when the client crashes or is closed abruptly
      * We redirect it to clientDisconnected so the GUI gets updated.
      */
     @Override
