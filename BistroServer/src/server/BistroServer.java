@@ -73,6 +73,7 @@ public class BistroServer extends AbstractServer {
                 Message updateResponse = new Message(success ? TaskType.UPDATE_SUCCESS : TaskType.UPDATE_FAILED, null);
                 sendKryoToClient(updateResponse, client);
                 break;
+            
         }
     }
 

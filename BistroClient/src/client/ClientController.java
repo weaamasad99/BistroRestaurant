@@ -57,10 +57,15 @@ public class ClientController {
             }
         });
     }
+    
+    public void serverWentDown() {
+        Platform.runLater(() -> {
+            ui.handleServerDisconnect(); 
+        });}
     public void disconnect() {
         if (client != null) {
             try {
-                client.quit(); // סוגר את החיבור מול השרת
+                client.quit(); 
             } catch (Exception e) {
                 e.printStackTrace();
             }

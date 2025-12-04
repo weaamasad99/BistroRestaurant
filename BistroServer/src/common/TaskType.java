@@ -7,5 +7,4 @@ public enum TaskType {
     UPDATE_SUCCESS, 
     UPDATE_FAILED,
     ERROR
-
 }

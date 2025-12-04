@@ -303,7 +303,26 @@ public class ClientUI extends Application {
         alert.setContentText(content);
         alert.showAndWait();
     }
-    
+    public void handleServerDisconnect() {
+        // 1. עדכון סטטוס
+        lblStatus.setText("Server Down");
+        lblStatus.setTextFill(Color.RED);
+
+        // 2. נעילת כפתורים
+        btnLoadOrders.setDisable(true);
+        btnUpdate.setDisable(true);
+        
+        // 3. שחרור כפתור ההתחברות (כדי לאפשר ניסיון חוזר)
+        // או השארתו נעול אם רוצים לחייב יציאה
+        // במקרה הזה נפתח את השדות כדי לאפשר חיבור מחדש
+        txtIp.setDisable(false);
+        txtPort.setDisable(false);
+        // אנחנו צריכים גישה לכפתור btnConnect, אם הוא משתנה מקומי ב-createTopPanel
+        // תצטרך להפוך אותו למשתנה מחלקה (field) כמו txtIp.
+        // אם לא הפכת אותו למשתנה מחלקה, תוכל רק להקפיץ הודעה:
+        
+        showAlert("Connection Lost", "The server has stopped or crashed.\nPlease restart the client or try to reconnect.");
+    }
     /**
      * This method is called automatically when the application is stopped.
      * It ensures the connection is closed properly
