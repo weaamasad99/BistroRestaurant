@@ -3,13 +3,13 @@ package server;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.VBox;
@@ -18,11 +18,18 @@ import javafx.stage.Stage;
 import ocsf.server.ConnectionToClient;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ServerUI extends Application {
 
     private BistroServer server;
     private ObservableList<ClientConnectionData> connectedClients;
+    private TableView<ClientConnectionData> table;
+    
+    // Map to assign simple IDs (1, 2, 3...) to clients instead of long Thread IDs
+    private Map<Long, Integer> clientSimpleIdMap = new HashMap<>();
+    private int idCounter = 1;
 
     public static void main(String[] args) {
         launch(args);
@@ -32,38 +39,33 @@ public class ServerUI extends Application {
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Bistro Server Manager");
 
-        // --- UI Header ---
         Label lblHeader = new Label("Connected Clients Monitor");
         lblHeader.setFont(new Font("Arial", 18));
         lblHeader.setStyle("-fx-font-weight: bold;");
 
         // --- Table Setup ---
-        TableView<ClientConnectionData> table = new TableView<>();
+        table = new TableView<>();
         connectedClients = FXCollections.observableArrayList();
         table.setItems(connectedClients);
 
-        // Column 1: Client IP (More reliable than Host Name)
         TableColumn<ClientConnectionData, String> colIp = new TableColumn<>("IP Address");
-        colIp.setCellValueFactory(cellData -> cellData.getValue().ipProperty());
-        colIp.setPrefWidth(120);
+        colIp.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getIp()));
+        colIp.setPrefWidth(130);
 
-        // Column 2: Host Name (DNS Name)
         TableColumn<ClientConnectionData, String> colHost = new TableColumn<>("Host Name");
-        colHost.setCellValueFactory(cellData -> cellData.getValue().hostProperty());
-        colHost.setPrefWidth(150);
+        colHost.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getHost()));
+        colHost.setPrefWidth(180);
 
-        // Column 3: Unique Port/ID (To distinguish multiple local clients)
-        TableColumn<ClientConnectionData, String> colId = new TableColumn<>("Client Port");
-        colId.setCellValueFactory(cellData -> cellData.getValue().idProperty());
-        colId.setPrefWidth(100);
+        // Shows simple numbers like "1", "2" instead of huge random numbers
+        TableColumn<ClientConnectionData, String> colId = new TableColumn<>("Client ID");
+        colId.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(cellData.getValue().getSimpleId())));
+        colId.setPrefWidth(80);
 
-        // Column 4: Status
         TableColumn<ClientConnectionData, String> colStatus = new TableColumn<>("Status");
         colStatus.setCellValueFactory(cellData -> cellData.getValue().statusProperty());
         colStatus.setPrefWidth(120);
 
-        // Add custom color to status column (Optional styling)
-        colStatus.setCellFactory(column -> new javafx.scene.control.TableCell<ClientConnectionData, String>() {
+        colStatus.setCellFactory(column -> new TableCell<ClientConnectionData, String>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
@@ -72,7 +74,7 @@ public class ServerUI extends Application {
                     setStyle("");
                 } else {
                     setText(item);
-                    if (item.equals("Connected")) {
+                    if ("Connected".equals(item)) {
                         setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
                     } else {
                         setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
@@ -84,22 +86,17 @@ public class ServerUI extends Application {
         table.getColumns().addAll(colIp, colHost, colId, colStatus);
         table.setPlaceholder(new Label("Waiting for connections..."));
 
-        // --- Exit Button ---
         Button btnExit = new Button("Shutdown Server");
         btnExit.setStyle("-fx-background-color: #d32f2f; -fx-text-fill: white; -fx-font-weight: bold;");
         btnExit.setOnAction(e -> {
-            try {
-                if (server != null) server.close();
-            } catch (Exception ex) {}
+            try { if (server != null) server.close(); } catch (Exception ex) {}
             System.exit(0);
         });
 
-        // --- Layout ---
         VBox root = new VBox(15, lblHeader, table, btnExit);
         root.setPadding(new Insets(20));
         root.setPrefSize(600, 400);
 
-        // --- Start Server Logic ---
         startServer();
 
         Scene scene = new Scene(root);
@@ -109,83 +106,75 @@ public class ServerUI extends Application {
     }
 
     private void startServer() {
-        // Initialize Server with a callback for connections
         server = new BistroServer(5555, (client, isConnected) -> {
-            // Must update GUI on JavaFX Thread
             Platform.runLater(() -> updateClientList(client, isConnected));
         });
 
         try {
             server.listen();
         } catch (IOException e) {
-            System.out.println("Error: Could not listen on port 5555");
+            System.out.println("Error listening on port 5555");
         }
     }
 
     private void updateClientList(ConnectionToClient client, boolean isConnected) {
-        // We use the unique 'client' object hash or ID to find the row
-        String clientUniqueId = String.valueOf(client.getId()); // OCSF assigns an ID
-        
-        // If getId is null/0 depending on version, use port:
-        if (client.getInetAddress() != null) {
-             // In local env, the remote port is the best differentiator
-             // Note: OCSF might not expose remote port easily in all versions, 
-             // but let's try to use the object reference logic below.
-        }
+        long threadId = client.getId(); // The original long ID from OCSF
 
         if (isConnected) {
-            // New Connection: Add to table
-            String ip = client.getInetAddress().getHostAddress();
-            String host = client.getInetAddress().getHostName();
-            // Using hashCode as a simple unique visual ID if standard ID isn't clear
-            String visualId = String.valueOf(client.hashCode()); 
-            
-            ClientConnectionData data = new ClientConnectionData(client, ip, host, visualId, "Connected");
-            connectedClients.add(data);
-            
-        } else {
-            // Disconnection: Find the row and update status
+            // Assign a simple ID (1, 2, 3) for display purposes
+            if (!clientSimpleIdMap.containsKey(threadId)) {
+                clientSimpleIdMap.put(threadId, idCounter++);
+            }
+            int simpleId = clientSimpleIdMap.get(threadId);
+
+            // Check duplicates
             for (ClientConnectionData data : connectedClients) {
-                // Check if this row belongs to the specific client object
-                if (data.getClientReference() == client) {
-                    data.setStatus("Disconnected");
-                    break; 
+                if (data.getOriginalId() == threadId) {
+                    data.setStatus("Connected");
+                    table.refresh();
+                    return;
                 }
             }
+
+            // Add new
+            String ip = client.getInetAddress().getHostAddress();
+            String host = client.getInetAddress().getHostName();
+            connectedClients.add(new ClientConnectionData(threadId, simpleId, ip, host, "Connected"));
+
+        } else {
+            // Disconnect logic
+            for (ClientConnectionData data : connectedClients) {
+                if (data.getOriginalId() == threadId) {
+                    data.setStatus("Disconnected");
+                    break;
+                }
+            }
+            table.refresh();
         }
     }
 
-    
+    // --- Data Class ---
     public static class ClientConnectionData {
-        
-        private final ConnectionToClient clientReference;
-        
-        private final StringProperty ip;
-        private final StringProperty host;
-        private final StringProperty id;
-        private final StringProperty status;
+        private final long originalId; // Hidden internal ID
+        private final int simpleId;    // Visible ID (1, 2, 3...)
+        private final String ip;
+        private final String host;
+        private final SimpleStringProperty status;
 
-        public ClientConnectionData(ConnectionToClient client, String ip, String host, String id, String status) {
-            this.clientReference = client;
-            this.ip = new SimpleStringProperty(ip);
-            this.host = new SimpleStringProperty(host);
-            this.id = new SimpleStringProperty(id);
+        public ClientConnectionData(long originalId, int simpleId, String ip, String host, String status) {
+            this.originalId = originalId;
+            this.simpleId = simpleId;
+            this.ip = ip;
+            this.host = host;
             this.status = new SimpleStringProperty(status);
         }
 
-        public ConnectionToClient getClientReference() {
-            return clientReference;
-        }
-
+        public long getOriginalId() { return originalId; }
+        public int getSimpleId() { return simpleId; }
+        public String getIp() { return ip; }
+        public String getHost() { return host; }
         
-        public StringProperty ipProperty() { return ip; }
-        public StringProperty hostProperty() { return host; }
-        public StringProperty idProperty() { return id; }
-        public StringProperty statusProperty() { return status; }
-
-        // Setter for Status update
-        public void setStatus(String newStatus) {
-            this.status.set(newStatus);
-        }
+        public SimpleStringProperty statusProperty() { return status; }
+        public void setStatus(String s) { this.status.set(s); }
     }
 }

@@ -117,16 +117,27 @@ public class BistroServer extends AbstractServer {
             connectionListener.accept(client, true);
         }
     }
-
+    
     /**
      * Hook method called each time a client disconnects.
      * * @param client the connection with the client.
      */
     @Override
     synchronized protected void clientDisconnected(ConnectionToClient client) {
-        // Notify GUI: Client Disconnected (false)
+        // Update GUI: Disconnected
         if (connectionListener != null) {
             connectionListener.accept(client, false);
         }
     }
+
+    /**
+      This method is called when the client crashes or is closed abruptly.
+     * We redirect it to clientDisconnected so the GUI gets updated.
+     */
+    @Override
+    synchronized protected void clientException(ConnectionToClient client, Throwable exception) {
+        // Treat exception (like connection reset) as a disconnection
+        clientDisconnected(client);
+    }
+  
 }

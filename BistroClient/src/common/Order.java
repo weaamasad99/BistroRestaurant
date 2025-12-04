@@ -38,7 +38,7 @@ public class Order {
     public int getNumberOfGuests() { return numberOfGuests; }
     public void setNumberOfGuests(int numberOfGuests) { this.numberOfGuests = numberOfGuests; }
 
-    // ... (Add rest of getters/setters) ...
+    
 
     @Override
     public String toString() {
