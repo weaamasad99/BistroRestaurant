@@ -13,7 +13,7 @@ import common.Order;
  */
 public class MySQLConnection {
     
-    // 1. Hold the single instance of the class
+    // Hold the single instance of the class
     private static MySQLConnection instance = null;
     
     // Connection object (now an instance variable, not static)
