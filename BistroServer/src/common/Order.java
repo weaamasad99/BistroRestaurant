@@ -45,4 +45,5 @@ public class Order {
         return String.format("Order #%d | Date: %s | Guests: %d | Conf: %d | SubID: %d | Placed: %s",
                 orderNumber, orderDate, numberOfGuests, confirmationCode, subscriberId, dateOfPlacingOrder);
     }
+    
 }
