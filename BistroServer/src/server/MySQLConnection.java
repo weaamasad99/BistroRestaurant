@@ -13,35 +13,50 @@ import common.Order;
  */
 public class MySQLConnection {
     
-    private static Connection conn;
+    // 1. Hold the single instance of the class
+    private static MySQLConnection instance = null;
+    
+    // Connection object (now an instance variable, not static)
+    private static Connection conn = null;
+
+    private static final String URL = "jdbc:mysql://localhost:3306/bistro_db?serverTimezone=UTC";
+    private static final String USER = "root";        
+    private static final String PASSWORD = "Aa123456";  
 
     /**
-     * Establishes a connection to the DB. 
-     * IMPORTANT: Update 'password' to your local MySQL password.
+     * 2. Private Constructor to prevent instantiation from outside
      */
-    public static void connectToDB() {
+    private MySQLConnection() {
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
-            System.out.println("Log: Driver definition succeed");
-        } catch (Exception ex) {
-            System.out.println("Log: Driver definition failed");
-        }
-
-        try {
-            
-            conn = DriverManager.getConnection("jdbc:mysql://localhost/bistro_db?serverTimezone=IST", "root", "Aa123456");
-            System.out.println("Log: SQL connection succeed");
-        } catch (SQLException ex) {
-            System.out.println("SQLException: " + ex.getMessage());
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            System.out.println(">>> Connected Successfully to MySQL");
+        } catch (SQLException e) {
+            System.err.println("SQL Connection Error: " + e.getMessage());
+        } catch (ClassNotFoundException e) {
+            System.err.println("MySQL Driver Not Found: " + e.getMessage());
         }
     }
 
     /**
-     * Fetches all records from the 'orders' table.
-     * @return ArrayList of Order objects.
+     * 3. Public static method to get the single instance.
+     * Implements Lazy Initialization.
      */
-    public static ArrayList<Order> getAllOrders() {
+    public static synchronized MySQLConnection getInstance() {
+        if (instance == null) {
+            instance = new MySQLConnection();
+        }
+        return instance;
+    }
+
+    /**
+     * Fetches all records from the 'orders' table.
+     * Note: Removed 'static' keyword.
+     */
+    public ArrayList<Order> getAllOrders() {
         ArrayList<Order> orders = new ArrayList<>();
+        if (conn == null) return orders; // Safety check
+
         try {
             PreparedStatement ps = conn.prepareStatement("SELECT * FROM orders");
             ResultSet rs = ps.executeQuery();
@@ -66,10 +81,11 @@ public class MySQLConnection {
 
     /**
      * Updates the date and number of guests for a specific orders.
-     * @param orderToUpdate The order object containing updated info.
-     * @return true if update succeeded, false otherwise.
+     * Note: Removed 'static' keyword.
      */
-    public static boolean updateOrder(Order orderToUpdate) {
+    public  boolean updateOrder(Order orderToUpdate) {
+        if (conn == null) return false; // Safety check
+
         try {
             PreparedStatement ps = conn.prepareStatement("UPDATE orders SET order_date = ?, number_of_guests = ? WHERE order_number = ?");
             ps.setDate(1, orderToUpdate.getOrderDate());

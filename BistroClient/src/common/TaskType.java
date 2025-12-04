@@ -5,6 +5,7 @@ public enum TaskType {
     UPDATE_ORDER,    
     ORDERS_IMPORTED, 
     UPDATE_SUCCESS,  
+    UPDATE_FAILED,
     ERROR
 
 }
