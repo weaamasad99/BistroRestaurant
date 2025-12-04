@@ -7,6 +7,8 @@ import common.Message;
 import common.Order;
 import common.TaskType;
 import java.util.ArrayList;
+import java.util.function.BiConsumer;
+
 /**
  * This class overrides some of the methods in the abstract 
  * superclass in order to give more functionality to the server.
@@ -19,9 +21,14 @@ public class BistroServer extends AbstractServer {
      *
      * @param port The port number to connect on.
      */
-    public BistroServer(int port) {
-        super(port);
-    }
+
+	    // Callback to update the GUI: (Client, IsConnected)
+	    private BiConsumer<ConnectionToClient, Boolean> connectionListener;
+
+	    public BistroServer(int port, BiConsumer<ConnectionToClient, Boolean> connectionListener) {
+	        super(port);
+	        this.connectionListener = connectionListener;
+	    }
 
     /**
      * This method handles any messages received from the client.
@@ -105,11 +112,10 @@ public class BistroServer extends AbstractServer {
      */
     @Override
     protected void clientConnected(ConnectionToClient client) {
-        super.clientConnected(client);
-        System.out.println("--- Client Connected ---");
-        System.out.println("Client IP: " + client.getInetAddress().getHostAddress());
-        System.out.println("Client Host: " + client.getInetAddress().getHostName());
-        System.out.println("Connection Status: Active");
+        // Notify GUI: Client Connected (true)
+        if (connectionListener != null) {
+            connectionListener.accept(client, true);
+        }
     }
 
     /**
@@ -118,6 +124,9 @@ public class BistroServer extends AbstractServer {
      */
     @Override
     synchronized protected void clientDisconnected(ConnectionToClient client) {
-        System.out.println("--- Client Disconnected ---");
+        // Notify GUI: Client Disconnected (false)
+        if (connectionListener != null) {
+            connectionListener.accept(client, false);
+        }
     }
 }
