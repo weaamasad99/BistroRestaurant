@@ -129,7 +129,7 @@ public class BistroServer extends AbstractServer {
             connectionListener.accept(client, false);
         }
     }
-
+    
     /**
       This method is called when the client crashes or is closed abruptly.
      * We redirect it to clientDisconnected so the GUI gets updated.

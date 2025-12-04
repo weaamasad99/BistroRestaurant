@@ -70,14 +70,6 @@ public class ClientUI extends Application {
 
         Scene scene = new Scene(root, 900, 650);
         primaryStage.setScene(scene);
-        primaryStage.setOnCloseRequest(event -> {
-            System.out.println("Closing client...");
-            if (controller != null) {
-                controller.disconnect(); // מנתק את החיבור לשרת
-            }
-            Platform.exit(); 
-            System.exit(0);  
-        });
         primaryStage.show();
     }
 
@@ -310,5 +302,18 @@ public class ClientUI extends Application {
         alert.setHeaderText(null);
         alert.setContentText(content);
         alert.showAndWait();
+    }
+    /**
+     * This method is called automatically when the application is stopped.
+     * It ensures the connection is closed properly.
+     */
+    @Override
+    public void stop() throws Exception {
+        System.out.println("Stopping client...");
+        if (controller != null) {
+            controller.disconnect(); 
+        }
+        super.stop();
+        System.exit(0); 
     }
 }
