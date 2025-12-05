@@ -9,33 +9,18 @@ import common.TaskType;
 import java.util.ArrayList;
 import java.util.function.BiConsumer;
 
-/**
- * This class overrides some of the methods in the abstract 
- * superclass in order to give more functionality to the server.
- */
 public class BistroServer extends AbstractServer {
+    // Callback to update the GUI: (Client, IsConnected)
+    private BiConsumer<ConnectionToClient, Boolean> connectionListener;
 
-	
-    /**
-     * Constructs an instance of the echo server.
-     *
-     * @param port The port number to connect on.
-     */
+    public BistroServer(int port, BiConsumer<ConnectionToClient, Boolean> connectionListener) {
+        super(port);
+        this.connectionListener = connectionListener;
+    }
 
-	    // Callback to update the GUI: (Client, IsConnected)
-	    private BiConsumer<ConnectionToClient, Boolean> connectionListener;
-
-	    public BistroServer(int port, BiConsumer<ConnectionToClient, Boolean> connectionListener) {
-	        super(port);
-	        this.connectionListener = connectionListener;
-	    }
-
-    /**
-     * This method handles any messages received from the client.
-     *
-     * @param msg    The message received from the client.
-     * @param client The connection from which the message originated.
-     */
+    /*
+      This method handles any messages received from the client.
+    */
     @Override
     protected void handleMessageFromClient(Object msg, ConnectionToClient client) {
         // Step 1: Check if the message is a byte array (Kryo payload)
@@ -87,42 +72,40 @@ public class BistroServer extends AbstractServer {
         }
     }
 
-    /**
-     * This method overrides the one in the superclass.  Called
-     * when the server starts listening for connections.
-     */
+    /*
+      This method overrides the one in the superclass.  
+      Called when the server starts listening for connections.
+    */
     @Override
     protected void serverStarted() {
         System.out.println("Server listening for connections on port " + getPort());
         MySQLConnection.getInstance();
     }
 
-    /**
-     * This method overrides the one in the superclass.  Called
-     * when the server stops listening for connections.
-     */
+    /*
+      This method overrides the one in the superclass.  
+      Called when the server stops listening for connections.
+    */
     @Override
     protected void serverStopped() {
         System.out.println("Server has stopped listening for connections.");
     }
 
-    /**
-     * Hook method called each time a new client connection is accepted.
-     * Required for the prototype to display connection details.
-     * * @param client the connection connected to the client.
-     */
+    /*
+      Hook method called each time a new client connection is accepted.
+      Required for the prototype to display connection details.
+    */
     @Override
     protected void clientConnected(ConnectionToClient client) {
-        // Notify GUI: Client Connected (true)
+        // Notify GUI: Client Connected
         if (connectionListener != null) {
             connectionListener.accept(client, true);
         }
     }
     
-    /**
-     * Hook method called each time a client disconnects.
-     * * @param client the connection with the client.
-     */
+    /*
+      Hook method called each time a client disconnects,
+    */
     @Override
     synchronized protected void clientDisconnected(ConnectionToClient client) {
         // Update GUI: Disconnected
@@ -131,10 +114,10 @@ public class BistroServer extends AbstractServer {
         }
     }
     
-    /**
+    /*
       This method is called when the client crashes or is closed abruptly
-     * We redirect it to clientDisconnected so the GUI gets updated.
-     */
+      We redirect it to clientDisconnected so the GUI gets updated.
+    */
     @Override
     synchronized protected void clientException(ConnectionToClient client, Throwable exception) {
         // Treat exception (like connection reset) as a disconnection

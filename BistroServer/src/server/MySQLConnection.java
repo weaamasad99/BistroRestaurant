@@ -8,24 +8,23 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import common.Order;
 
-/**
- * Singleton class handling the JDBC connection to the MySQL database.
- */
+/*
+  Singleton class handling the JDBC connection to the MySQL database.
+*/
 public class MySQLConnection {
     
     // Hold the single instance of the class
     private static MySQLConnection instance = null;
     
-    // Connection object (now an instance variable, not static)
     private static Connection conn = null;
 
     private static final String URL = "jdbc:mysql://localhost:3306/bistro_db?serverTimezone=UTC";
     private static final String USER = "root";        
     private static final String PASSWORD = "Aa123456";  
 
-    /**
-     * 2. Private Constructor to prevent instantiation from outside
-     */
+    /*
+      Private Constructor to prevent instantiation from outside
+    */
     private MySQLConnection() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -38,10 +37,10 @@ public class MySQLConnection {
         }
     }
 
-    /**
-     * 3. Public static method to get the single instance.
-     * Implements Lazy Initialization.
-     */
+    /*
+      Public static method to get the single instance.
+      Implements Lazy Initialization.
+    */
     public static synchronized MySQLConnection getInstance() {
         if (instance == null) {
             instance = new MySQLConnection();
@@ -49,10 +48,9 @@ public class MySQLConnection {
         return instance;
     }
 
-    /**
-     * Fetches all records from the 'orders' table.
-     * Note: Removed 'static' keyword.
-     */
+    /*
+      Fetches all records from the 'orders' table.
+    */
     public ArrayList<Order> getAllOrders() {
         ArrayList<Order> orders = new ArrayList<>();
         if (conn == null) return orders; // Safety check
@@ -79,13 +77,12 @@ public class MySQLConnection {
         return orders;
     }
 
-    /**
-     * Updates the date and number of guests for a specific orders.
-     * Note: Removed 'static' keyword.
-     */
+    /*
+      Updates the date and number of guests for a specific orders.
+    */
     public  boolean updateOrder(Order orderToUpdate) {
-        if (conn == null) return false; // Safety check
-
+        if (conn == null)
+        	return false; // Safety check
         try {
             PreparedStatement ps = conn.prepareStatement("UPDATE orders SET order_date = ?, number_of_guests = ? WHERE order_number = ?");
             ps.setDate(1, orderToUpdate.getOrderDate());

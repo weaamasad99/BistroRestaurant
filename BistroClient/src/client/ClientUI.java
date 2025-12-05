@@ -95,7 +95,7 @@ public class ClientUI extends Application {
         btnLoadOrders.setDisable(true); // Disabled until connected
         btnLoadOrders.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-weight: bold;");
 
-        // --- CONNECT BUTTON ACTION (Threaded to prevent freezing) ---
+        //  Connect button action (Threaded to prevent freezing)
         btnConnect.setOnAction(e -> {
             String ip = txtIp.getText().trim();
             String portStr = txtPort.getText().trim();
@@ -132,7 +132,7 @@ public class ClientUI extends Application {
                     btnConnect.setDisable(false); 
 
                     if (isConnected) {
-                        // --- SUCCESS ---
+                        // Success
                         lblStatus.setText("Connected");
                         lblStatus.setTextFill(Color.GREEN);
                         
@@ -144,7 +144,7 @@ public class ClientUI extends Application {
                         // Enable the functionality button
                         btnLoadOrders.setDisable(false);
                     } else {
-                        // --- FAILURE ---
+                        // Failure
                         lblStatus.setText("Connection Failed");
                         lblStatus.setTextFill(Color.RED);
                         showAlert("Connection Error", "Failed to connect to server.\nPlease check the IP address and ensure the server is running.");
@@ -304,29 +304,33 @@ public class ClientUI extends Application {
         alert.showAndWait();
     }
     public void handleServerDisconnect() {
-        // 1. עדכון סטטוס
+        // 1. Update status
         lblStatus.setText("Server Down");
         lblStatus.setTextFill(Color.RED);
 
-        // 2. נעילת כפתורים
+        // 2. Disable buttons
         btnLoadOrders.setDisable(true);
         btnUpdate.setDisable(true);
         
-        // 3. שחרור כפתור ההתחברות (כדי לאפשר ניסיון חוזר)
-        // או השארתו נעול אם רוצים לחייב יציאה
-        // במקרה הזה נפתח את השדות כדי לאפשר חיבור מחדש
+        // 3. Re-enable the connect fields (to allow retry)
+        // or keep them disabled if you want to force exit.
+        // In this case, we open the fields to allow reconnecting.
         txtIp.setDisable(false);
         txtPort.setDisable(false);
-        // אנחנו צריכים גישה לכפתור btnConnect, אם הוא משתנה מקומי ב-createTopPanel
-        // תצטרך להפוך אותו למשתנה מחלקה (field) כמו txtIp.
-        // אם לא הפכת אותו למשתנה מחלקה, תוכל רק להקפיץ הודעה:
-        
+
+        // We need access to the btnConnect button. 
+        // If it is a local variable in createTopPanel,
+        // you must make it a class field (like txtIp).
+        // If you did not convert it to a class field,
+        // you can only show an alert:
+
         showAlert("Connection Lost", "The server has stopped or crashed.\nPlease restart the client or try to reconnect.");
     }
-    /**
-     * This method is called automatically when the application is stopped.
-     * It ensures the connection is closed properly
-     */
+
+    /*
+      This method is called automatically when the application is stopped.
+      It ensures the connection is closed properly.
+    */
     @Override
     public void stop() throws Exception {
         System.out.println("Stopping client...");

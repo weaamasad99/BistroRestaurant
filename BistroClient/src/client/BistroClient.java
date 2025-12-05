@@ -8,29 +8,20 @@ import common.Order;
 import common.TaskType;
 import java.util.ArrayList;
 
-/**
- * This class overrides some of the methods defined in the abstract
- * superclass in order to give more functionality to the client.
- */
 public class BistroClient extends AbstractClient {
 
 	private ClientController controller;
-    /**
-     * Constructs an instance of the chat client.
-     *
-     * @param host The server to connect to.
-     * @param port The port number to connect on.
-     */
+    /*
+      Constructs an instance of the chat client.
+    */
     public BistroClient(String host, int port, ClientController controller) {
         super(host, port);
         this.controller = controller;
     }
 
-    /**
-     * This method handles all data that comes in from the server.
-     *
-     * @param msg The message from the server.
-     */
+    /*
+      This method handles all data that comes in from the server.
+    */
     @Override
     protected void handleMessageFromServer(Object msg) {
         // Step 1: Check for byte array
@@ -69,9 +60,9 @@ public class BistroClient extends AbstractClient {
         }
     }
 
-    /**
-     * Sends a request to the server using Kryo serialization.
-     */
+    /*
+      Sends a request to the server using Kryo serialization.
+    */
     public void sendKryoRequest(Message msg) {
         try {
             byte[] data = KryoUtil.serialize(msg);
@@ -82,21 +73,18 @@ public class BistroClient extends AbstractClient {
         }
     }
 
-    /**
-     * Hook method called after the connection has been established.
-     */
+    /*
+      Hook method called after the connection has been established.
+    */
     @Override
     protected void connectionEstablished() {
         System.out.println("Log: Connection to server established successfully.");
     }
     
 
-    /**
-     * Hook method called after the connection has been closed.
-     * The default implementation does nothing. The method may be
-     * overriden by subclasses to perform special processing such
-     * as cleaning up and terminating, or attempting to reconnect.
-     */
+    /*
+      Hook method called after the connection has been closed.
+    */
     @Override
     protected void connectionClosed() {
         System.out.println("Server connection closed.");
@@ -105,12 +93,10 @@ public class BistroClient extends AbstractClient {
         }
     }
 
-    /**
-     * Hook method called each time an exception is thrown by the client's
-     * thread that is waiting for messages from the server.
-     * The method may be overridden by subclasses.
-     * * @param exception the exception raised.
-     */
+    /*
+      Hook method called each time an exception is thrown by the client's
+      thread that is waiting for messages from the server.
+    */
     @Override
     protected void connectionException(Exception exception) {
         System.out.println("Server connection exception (Crash).");
@@ -119,9 +105,9 @@ public class BistroClient extends AbstractClient {
         }
     }
 
-    /**
-     * Closes the connection and terminates the client.
-     */
+    /*
+      Closes the connection and terminates the client.
+    */
     public void quit() {
         try {
             closeConnection();
