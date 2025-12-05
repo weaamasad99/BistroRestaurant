@@ -1,6 +1,5 @@
-# 🍽️ Bistro Management System (BMS) - Prototype
+# 🍽️ Bistro Management System (BMS) - 
 
-> **Course:** Software Engineering - Laboratory  
 > **Group:** 6  
 > **Status:** Phase 2 (Prototype Complete)
 
@@ -49,18 +48,11 @@ Unlike standard Java serialization, we implemented **Kryo** for network communic
 Follow these steps to launch the system in your local environment.
 
 🟢 Step 1: Start the Server
-Open the project in your IDE (Eclipse) or rin Server JAR file.
-
-Navigate to src/server/ServerUI.java.
-
-Right-click and select Run 'ServerUI'.
+Run the Server JAR file in the computer with the DB.
 
 Verification: The Bistro Server Manager window will appear, waiting for connections.
 
 🔵 Step 2: Start the Client
-Navigate to src/client/ClientUI.java.
-
-Right-click and select Run 'ClientUI', or run the Clinet Jar.
 
 Action: In the window that opens, enter the Server IP (use localhost for local testing) and Port 5555.
 
@@ -69,14 +61,14 @@ Click the Connect button.
 Once the status turns Green, click Load Orders to fetch data.
 
 🔮 Future Roadmap (Phase 3)
-This prototype sets the foundation for the full Bistro Management System. The upcoming Phase 3 will introduce comprehensive restaurant management features:
+This prototype sets the foundation for the full Bistro Management System. The upcoming Phase 3 will introduce comprehensive restaurant management features like :
 
-📋 Full Menu Management: Add, remove, and edit dishes with images and prices.
+📋 Full Menu Management: Add, remove, and edit all the operations in the UI's.
 
-👥 User Roles & Permissions: Distinct interfaces for Managers, Customers, and Kitchen Staff.
+👥 User Roles & Permissions: Distinct interfaces for Managers, Customers and Others.
 
-📊 Reports & Analytics: Generate monthly revenue reports and order frequency charts.
+📊 Reports & Analytics: Generate monthly revenue reports.
 
-📍 Visual Table Map: Interactive floor plan for managing table reservations.
+📍 Visual Table Map:  managing table reservations.
 
 🔔 Notifications: Real-time alerts for order readiness and cancellations.
