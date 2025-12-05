@@ -9,6 +9,8 @@ import common.TaskType;
 import java.util.ArrayList;
 import java.util.function.BiConsumer;
 
+import JDBC.DatabaseConnection;
+
 public class BistroServer extends AbstractServer {
     // Callback to update the GUI: (Client, IsConnected)
     private BiConsumer<ConnectionToClient, Boolean> connectionListener;
@@ -43,7 +45,7 @@ public class BistroServer extends AbstractServer {
         switch (message.getTask()) {
             case GET_ORDERS:
                 System.out.println("Log: Fetching orders...");
-                ArrayList<Order> orders = MySQLConnection.getInstance().getAllOrders();
+                ArrayList<Order> orders = DatabaseConnection.getInstance().getAllOrders();
                 
                 // Step 3: Serialize response using Kryo before sending
                 Message response = new Message(TaskType.ORDERS_IMPORTED, orders);
@@ -53,7 +55,7 @@ public class BistroServer extends AbstractServer {
             case UPDATE_ORDER:
                 System.out.println("Log: Updating order...");
                 Order orderToUpdate = (Order) message.getObject();
-                boolean success = MySQLConnection.getInstance().updateOrder(orderToUpdate);
+                boolean success = DatabaseConnection.getInstance().updateOrder(orderToUpdate);
                 
                 Message updateResponse = new Message(success ? TaskType.UPDATE_SUCCESS : TaskType.UPDATE_FAILED, null);
                 sendKryoToClient(updateResponse, client);
@@ -79,7 +81,7 @@ public class BistroServer extends AbstractServer {
     @Override
     protected void serverStarted() {
         System.out.println("Server listening for connections on port " + getPort());
-        MySQLConnection.getInstance();
+        DatabaseConnection.getInstance();
     }
 
     /*
