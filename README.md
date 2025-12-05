@@ -44,7 +44,8 @@ Unlike standard Java serialization, we implemented **Kryo** for network communic
 * **Design Pattern:** MVC (Model-View-Controller) separation on the client side.
 * **Concurrency:** extensive use of `Threads` and `Platform.runLater` to ensure thread-safety between network logic and JavaFX UI.
 
-  ▶️ How to Run The prototype 
+
+ ###▶️ How to Run The prototype 
 Follow these steps to launch the system in your local environment.
 
 🟢 Step 1: Start the Server
@@ -60,7 +61,7 @@ Click the Connect button.
 
 Once the status turns Green, click Load Orders to fetch data.
 
-🔮 Future Roadmap (Phase 3)
+###🔮 Future Roadmap (Phase 3)
 This prototype sets the foundation for the full Bistro Management System. The upcoming Phase 3 will introduce comprehensive restaurant management features like :
 
 📋 Full Menu Management: Add, remove, and edit all the operations in the UI's.
