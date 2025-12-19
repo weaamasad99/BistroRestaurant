@@ -109,10 +109,18 @@ public class SubscriberUI {
         Button btnIdentify = createOptionButton("Identify at Table", "🆔");
         btnIdentify.setOnAction(e -> mainUI.showAlert("Action", "Identifying..."));
 
-        // 4. Order History (Exclusive to Subscriber)
+     // 4. History
         Button btnHistory = createOptionButton("Order History", "📜");
         btnHistory.setStyle("-fx-background-color: #E3F2FD; -fx-border-color: #2196F3; -fx-font-size: 14px; -fx-cursor: hand;");
-        btnHistory.setOnAction(e -> mainUI.showAlert("Action", "Fetching History... (To be implemented)"));
+        
+        btnHistory.setOnAction(e -> {
+            // Define Back Action: Return to Dashboard
+            Runnable onBack = () -> showDashboardScreen(username, id);
+
+            // Open SubscriberHistoryUI (Updated Name)
+            SubscriberHistoryUI historyScreen = new SubscriberHistoryUI(mainLayout, mainUI, onBack, id);
+            historyScreen.start();
+        });
 
         // 5. Check Out
         Button btnCheckout = createOptionButton("Check Out (10% Off)", "💳");
