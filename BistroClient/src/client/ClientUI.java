@@ -192,8 +192,8 @@ public class ClientUI extends Application {
         Button btnCasual = new Button("Casual Diner");
         styleRoleButton(btnCasual, "#4CAF50"); // Green
 
-        // 2. Customer
-        Button btnCustomer = new Button("Customer");
+        // 2. Customer (Updated to Subscriber)
+        Button btnCustomer = new Button("Subscriber"); // Changed label to Subscriber
         styleRoleButton(btnCustomer, "#2196F3"); // Blue
 
         // 3. Representative
@@ -204,12 +204,18 @@ public class ClientUI extends Application {
         Button btnManager = new Button("Manager");
         styleRoleButton(btnManager, "#9C27B0"); // Purple
 
-        // Actions (Placeholder for now)
+        // Actions
         btnCasual.setOnAction(e -> {
             CasualUI casualScreen = new CasualUI(mainLayout, this);
             casualScreen.start();
         });
-        btnCustomer.setOnAction(e -> showAlert("Navigating", "Going to Customer Screen..."));
+
+        // --- NEW SUBSCRIBER ACTION ADDED HERE ---
+        btnCustomer.setOnAction(e -> {
+            SubscriberUI subscriberScreen = new SubscriberUI(mainLayout, this);
+            subscriberScreen.start();
+        });
+
         btnRep.setOnAction(e -> showAlert("Navigating", "Going to Rep Screen..."));
         btnManager.setOnAction(e -> showAlert("Navigating", "Going to Manager Screen..."));
 
