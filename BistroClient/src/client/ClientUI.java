@@ -181,7 +181,7 @@ public class ClientUI extends Application {
     // =========================================================
     // SCREEN 2: Role Selection (The 4 Buttons)
     // =========================================================
-    private void showRoleSelectionScreen() {
+    public void showRoleSelectionScreen() {
         mainLayout.getChildren().clear(); 
 
         Label header = new Label("Select Your Role");
@@ -205,7 +205,10 @@ public class ClientUI extends Application {
         styleRoleButton(btnManager, "#9C27B0"); // Purple
 
         // Actions (Placeholder for now)
-        btnCasual.setOnAction(e -> showAlert("Navigating", "Going to Casual Diner Screen..."));
+        btnCasual.setOnAction(e -> {
+            CasualUI casualScreen = new CasualUI(mainLayout, this);
+            casualScreen.start();
+        });
         btnCustomer.setOnAction(e -> showAlert("Navigating", "Going to Customer Screen..."));
         btnRep.setOnAction(e -> showAlert("Navigating", "Going to Rep Screen..."));
         btnManager.setOnAction(e -> showAlert("Navigating", "Going to Manager Screen..."));
