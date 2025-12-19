@@ -92,7 +92,7 @@ public class SubscriberHistoryUI {
         table.setItems(getMockData());
 
         // --- Buttons ---
-        Button btnBack = new Button("Back to Dashboard");
+        Button btnBack = new Button("Back to Menu");
         btnBack.setStyle("-fx-background-color: transparent; -fx-text-fill: #555; -fx-underline: true; -fx-cursor: hand;");
         btnBack.setOnAction(e -> onBack.run());
 

@@ -92,7 +92,12 @@ public class SubscriberUI {
 
         // 1. Make Reservation
         Button btnReservation = createOptionButton("Make Reservation", "📅");
-        btnReservation.setOnAction(e -> mainUI.showAlert("Action", "Opening Reservation Form..."));
+        btnReservation.setOnAction(e -> {
+        	Runnable onBack = () -> showDashboardScreen(username, id);
+        	
+            ReservationUI resUI = new ReservationUI(mainLayout, mainUI, onBack, username);
+            resUI.start();
+        });
 
         // 2. Enter Waiting List
         Button btnWaitingList = createOptionButton("Enter Waiting List", "⏳");

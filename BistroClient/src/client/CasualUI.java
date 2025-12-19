@@ -87,13 +87,20 @@ public class CasualUI {
         // 1. Make Reservation
         Button btnReservation = createOptionButton("Make Reservation", "📅");
         btnReservation.setOnAction(e -> {
-            ReservationUI resUI = new ReservationUI(mainLayout, mainUI, this, phoneNumber);
+        	Runnable onBack = () -> showOptionsScreen(phoneNumber);
+        	
+            ReservationUI resUI = new ReservationUI(mainLayout, mainUI, onBack, phoneNumber);
             resUI.start();
         });
 
         // 2. Enter Waiting List
         Button btnWaitingList = createOptionButton("Enter Waiting List", "⏳");
-        btnWaitingList.setOnAction(e -> mainUI.showAlert("Action", "Joining Waiting List... (To be implemented)"));
+        btnWaitingList.setOnAction(e -> {
+        	Runnable onBack = () -> showOptionsScreen(phoneNumber);
+        	
+        	WaitingListUI resUI = new WaitingListUI(mainLayout, mainUI, onBack, phoneNumber, true);
+            resUI.start();
+        });
 
         // 3. Identify
         Button btnIdentify = createOptionButton("Check-In", "📋");
@@ -106,7 +113,12 @@ public class CasualUI {
 
         // 4. Check Out
         Button btnCheckout = createOptionButton("Check Out", "💳");
-        btnCheckout.setOnAction(e -> mainUI.showAlert("Action", "Proceeding to Checkout... (To be implemented)"));
+        btnCheckout.setOnAction(e -> {
+        	Runnable onBack = () -> showOptionsScreen(phoneNumber);
+        	
+            CheckoutUI identifyUI = new CheckoutUI(mainLayout, mainUI, onBack);
+            identifyUI.start();
+        });
 
         VBox actionsBox = new VBox(15, btnReservation, btnWaitingList, btnIdentify, new Separator(), btnCheckout);
         actionsBox.setAlignment(Pos.CENTER);

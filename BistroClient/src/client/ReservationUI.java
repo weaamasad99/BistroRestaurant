@@ -17,13 +17,13 @@ public class ReservationUI {
 
     private VBox mainLayout;
     private ClientUI mainUI;      // For alerts and global methods
-    private CasualUI parentUI;    // To go back to the specific Casual Menu
+    private Runnable onBack;    // To go back to the specific Casual Menu
     private String phoneNumber;   // The ID of the user
 
-    public ReservationUI(VBox mainLayout, ClientUI mainUI, CasualUI parentUI, String phoneNumber) {
+    public ReservationUI(VBox mainLayout, ClientUI mainUI, Runnable onBack, String phoneNumber) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
-        this.parentUI = parentUI;
+        this.onBack = onBack;
         this.phoneNumber = phoneNumber;
     }
 
@@ -89,7 +89,7 @@ public class ReservationUI {
         btnBack.setStyle("-fx-background-color: transparent; -fx-text-fill: #555; -fx-underline: true; -fx-cursor: hand;");
         
         // Navigation: Go back to the Casual Options screen
-        btnBack.setOnAction(e -> parentUI.showOptionsScreen(phoneNumber));
+        btnBack.setOnAction(e -> onBack.run());
 
         // Submit Logic
         btnSubmit.setOnAction(e -> {
