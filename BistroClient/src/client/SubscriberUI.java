@@ -127,10 +127,18 @@ public class SubscriberUI {
             historyScreen.start();
         });
 
-        // 5. Check Out
-        Button btnCheckout = createOptionButton("Check Out (10% Off)", "💳");
+     // 5. Check Out
+        Button btnCheckout = createOptionButton("Check Out", "💳");
         btnCheckout.setStyle("-fx-background-color: #FF5722; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand;");
-        btnCheckout.setOnAction(e -> mainUI.showAlert("Action", "Proceeding to Checkout with discount..."));
+        
+        btnCheckout.setOnAction(e -> {
+            // Define Back Action
+            Runnable onBack = () -> showDashboardScreen(username, id);
+            
+            // Open Checkout
+            CheckoutUI checkoutScreen = new CheckoutUI(mainLayout, mainUI, onBack);
+            checkoutScreen.start();
+        });
 
         VBox actionsBox = new VBox(10, btnReservation, btnWaitingList, btnIdentify, btnHistory, new Separator(), btnCheckout);
         actionsBox.setAlignment(Pos.CENTER);
