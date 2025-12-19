@@ -96,7 +96,14 @@ public class SubscriberUI {
 
         // 2. Enter Waiting List
         Button btnWaitingList = createOptionButton("Enter Waiting List", "⏳");
-        btnWaitingList.setOnAction(e -> mainUI.showAlert("Action", "Joining Waiting List..."));
+        btnWaitingList.setOnAction(e -> {
+            // Define Back Action
+            Runnable onBack = () -> showDashboardScreen(username, id);
+            
+            // Open Waiting List (isCasual = false)
+            WaitingListUI waitScreen = new WaitingListUI(mainLayout, mainUI, onBack, id, false);
+            waitScreen.start();
+        });
 
         // 3. Identify
         Button btnIdentify = createOptionButton("Identify at Table", "🆔");
@@ -129,7 +136,6 @@ public class SubscriberUI {
         mainLayout.getChildren().add(content);
     }
 
-    //
     private Button createOptionButton(String text, String icon) {
         Button btn = new Button(icon + "  " + text);
         btn.setPrefWidth(250);
