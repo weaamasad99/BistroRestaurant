@@ -16,9 +16,9 @@ import java.util.List;
 public class ReservationUI {
 
     private VBox mainLayout;
-    private ClientUI mainUI;       // For alerts and global methods
-    private CasualUI parentUI;     // To go back to the specific Casual Menu
-    private String phoneNumber;    // The ID of the user
+    private ClientUI mainUI;      // For alerts and global methods
+    private CasualUI parentUI;    // To go back to the specific Casual Menu
+    private String phoneNumber;   // The ID of the user
 
     public ReservationUI(VBox mainLayout, ClientUI mainUI, CasualUI parentUI, String phoneNumber) {
         this.mainLayout = mainLayout;
