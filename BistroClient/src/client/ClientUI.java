@@ -7,7 +7,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
+// import javafx.scene.control.cell.PropertyValueFactory; // Commented out
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -21,20 +21,24 @@ import java.util.ArrayList;
 public class ClientUI extends Application {
 
     private ClientController controller;
-    private TableView<Order> table;
-    
+    private VBox mainLayout; // Main container for swapping views
+
     // Connection Fields
     private TextField txtIp;
     private TextField txtPort;
     private Label lblStatus;
-    private Button btnLoadOrders; // New Button requested
+    private Button btnConnect; 
 
-    // Edit Fields
+    // --- OLD FIELDS (Commented out per request) ---
+    /*
+    private TableView<Order> table;
+    private Button btnLoadOrders; 
     private TextField txtEditGuests;
     private DatePicker datePicker;
     private Label lblSelectedOrder;
     private Order currentSelectedOrder;
     private Button btnUpdate;
+    */
 
     public static void main(String[] args) {
         launch(args);
@@ -43,8 +47,19 @@ public class ClientUI extends Application {
     @Override
     public void start(Stage primaryStage) {
         controller = new ClientController(this);
-        primaryStage.setTitle("Bistro Client Management");
+        primaryStage.setTitle("Bistro Management System");
 
+        // Use a VBox as the main layout that we will clear and refill
+        mainLayout = new VBox(20);
+        mainLayout.setAlignment(Pos.CENTER);
+        mainLayout.setStyle("-fx-background-color: #f4f4f4;");
+        mainLayout.setPadding(new Insets(20));
+
+        // --- NEW FLOW: Start with Connection Screen ---
+        showConnectionScreen();
+
+        // --- OLD PROTOTYPE CODE (Commented out) ---
+        /*
         // 1. Top Panel (Connection + Load Action)
         HBox topPanel = createTopPanel();
 
@@ -69,108 +84,156 @@ public class ClientUI extends Application {
         root.setStyle("-fx-background-color: #f4f4f4;");
 
         Scene scene = new Scene(root, 900, 650);
+        */
+
+        // Set the scene with our dynamic mainLayout
+        Scene scene = new Scene(mainLayout, 600, 500);
         primaryStage.setScene(scene);
+        
+        // Handle window close
+        primaryStage.setOnCloseRequest(e -> {
+            try { stop(); } catch (Exception ex) { ex.printStackTrace(); }
+        });
+
         primaryStage.show();
     }
 
-    private HBox createTopPanel() {
-        // Connection Inputs
+    // =========================================================
+    // SCREEN 1: Connection UI
+    // =========================================================
+    private void showConnectionScreen() {
+        mainLayout.getChildren().clear(); // Clear any existing content
+
+        Label header = new Label("Connect to Server");
+        header.setFont(new Font("Arial", 24));
+        header.setStyle("-fx-font-weight: bold; -fx-text-fill: #333;");
+
         txtIp = new TextField("localhost");
         txtIp.setPromptText("IP Address");
-        txtIp.setPrefWidth(120);
+        txtIp.setMaxWidth(300);
         
         txtPort = new TextField("5555");
         txtPort.setPromptText("Port");
-        txtPort.setPrefWidth(60);
+        txtPort.setMaxWidth(300);
 
-        Button btnConnect = new Button("Connect");
+        btnConnect = new Button("Connect");
+        btnConnect.setPrefWidth(150);
         btnConnect.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: bold;");
         
         lblStatus = new Label("Disconnected");
         lblStatus.setTextFill(Color.RED);
         lblStatus.setFont(Font.font("Arial", 14));
 
-        // The requested "Get Orders" Option
-        btnLoadOrders = new Button("Load Orders");
-        btnLoadOrders.setDisable(true); // Disabled until connected
-        btnLoadOrders.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-weight: bold;");
-
-        //  Connect button action (Threaded to prevent freezing)
+        // Connect Action
         btnConnect.setOnAction(e -> {
             String ip = txtIp.getText().trim();
             String portStr = txtPort.getText().trim();
 
-            // 1. Basic Validation
             if (ip.isEmpty() || portStr.isEmpty()) {
                 showAlert("Input Error", "Please enter both IP Address and Port.");
                 return;
             }
 
-            // 2. Update UI to "Connecting..." state and disable button to prevent double-clicks
             btnConnect.setDisable(true);
             lblStatus.setText("Connecting...");
             lblStatus.setTextFill(Color.ORANGE);
 
-            // 3. Run connection logic in a separate thread to avoid freezing the GUI
+            // Thread for connection
             new Thread(() -> {
                 boolean success = false;
                 try {
                     int port = Integer.parseInt(portStr);
-                    // This is the blocking call that might take time if IP is wrong
                     success = controller.connect(ip, port);
                 } catch (NumberFormatException ex) {
                     System.err.println("Error parsing port: " + ex.getMessage());
                     success = false;
                 }
 
-                // Capture result for the UI thread
                 final boolean isConnected = success;
 
-                // 4. Update the GUI on the JavaFX Application Thread
                 Platform.runLater(() -> {
-                    // Re-enable the connect button (or keep disabled if connected)
                     btnConnect.setDisable(false); 
 
                     if (isConnected) {
-                        // Success
                         lblStatus.setText("Connected");
                         lblStatus.setTextFill(Color.GREEN);
                         
-                        // Lock connection fields
-                        txtIp.setDisable(true);
-                        txtPort.setDisable(true);
-                        btnConnect.setDisable(true); // Disable connect button after success
-                        
-                        // Enable the functionality button
-                        btnLoadOrders.setDisable(false);
+                        // --- NAVIGATION: Go to Role Selection ---
+                        showRoleSelectionScreen();
+
                     } else {
-                        // Failure
                         lblStatus.setText("Connection Failed");
                         lblStatus.setTextFill(Color.RED);
-                        showAlert("Connection Error", "Failed to connect to server.\nPlease check the IP address and ensure the server is running.");
+                        showAlert("Connection Error", "Failed to connect to server.");
                     }
                 });
-            }).start(); // Start the background thread
+            }).start();
         });
 
-        // Load Orders Action
-        btnLoadOrders.setOnAction(e -> {
-            controller.getAllOrders();
-        });
+        VBox content = new VBox(15, header, new Label("Host:"), txtIp, new Label("Port:"), txtPort, btnConnect, lblStatus);
+        content.setAlignment(Pos.CENTER);
+        content.setMaxWidth(400);
+        content.setStyle("-fx-background-color: white; -fx-padding: 30; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);");
 
-        // Layout container
-        HBox box = new HBox(15, 
-            new Label("Host:"), txtIp, 
-            new Label("Port:"), txtPort, 
-            btnConnect, 
-            new Separator(javafx.geometry.Orientation.VERTICAL), // Visual separator
-            btnLoadOrders,
-            lblStatus
-        );
-        box.setAlignment(Pos.CENTER_LEFT);
-        box.setPadding(new Insets(15));
-        box.setStyle("-fx-background-color: white; -fx-border-color: #cccccc; -fx-border-radius: 5;");
-        return box;
+        mainLayout.getChildren().add(content);
+    }
+
+    // =========================================================
+    // SCREEN 2: Role Selection (The 4 Buttons)
+    // =========================================================
+    private void showRoleSelectionScreen() {
+        mainLayout.getChildren().clear(); 
+
+        Label header = new Label("Select Your Role");
+        header.setFont(new Font("Arial", 24));
+        header.setStyle("-fx-font-weight: bold; -fx-text-fill: #333;");
+
+        // 1. Casual Diner
+        Button btnCasual = new Button("Casual Diner");
+        styleRoleButton(btnCasual, "#4CAF50"); // Green
+
+        // 2. Customer
+        Button btnCustomer = new Button("Customer");
+        styleRoleButton(btnCustomer, "#2196F3"); // Blue
+
+        // 3. Representative
+        Button btnRep = new Button("Representative");
+        styleRoleButton(btnRep, "#FF9800"); // Orange
+
+        // 4. Manager
+        Button btnManager = new Button("Manager");
+        styleRoleButton(btnManager, "#9C27B0"); // Purple
+
+        // Actions (Placeholder for now)
+        btnCasual.setOnAction(e -> showAlert("Navigating", "Going to Casual Diner Screen..."));
+        btnCustomer.setOnAction(e -> showAlert("Navigating", "Going to Customer Screen..."));
+        btnRep.setOnAction(e -> showAlert("Navigating", "Going to Rep Screen..."));
+        btnManager.setOnAction(e -> showAlert("Navigating", "Going to Manager Screen..."));
+
+        VBox menuBox = new VBox(20, header, btnCasual, btnCustomer, btnRep, btnManager);
+        menuBox.setAlignment(Pos.CENTER);
+        menuBox.setMaxWidth(400);
+        menuBox.setPadding(new Insets(30));
+        menuBox.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);");
+
+        mainLayout.getChildren().add(menuBox);
+    }
+
+    private void styleRoleButton(Button btn, String colorHex) {
+        btn.setPrefWidth(250);
+        btn.setPrefHeight(45);
+        btn.setFont(new Font("Arial", 16));
+        btn.setStyle("-fx-background-color: " + colorHex + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
+    }
+
+    // =========================================================
+    // OLD PROTOTYPE METHODS (Commented Out)
+    // =========================================================
+
+    /*
+    private HBox createTopPanel() {
+        // ... Old top panel logic ...
+        return new HBox(); 
     }
 
     private void setupTableColumns() {
@@ -184,7 +247,6 @@ public class ClientUI extends Application {
         TableColumn<Order, Integer> colGuests = new TableColumn<>("Guests");
         colGuests.setCellValueFactory(new PropertyValueFactory<>("numberOfGuests"));
         
-        // Additional columns for context
         TableColumn<Order, Integer> colSub = new TableColumn<>("Subscriber ID");
         colSub.setCellValueFactory(new PropertyValueFactory<>("subscriberId"));
 
@@ -290,10 +352,14 @@ public class ClientUI extends Application {
             showAlert("Input Error", "Number of guests must be a valid integer.");
         }
     }
+    */
 
     public void updateOrderTable(ArrayList<Order> orders) {
+        // Not used yet in this screen, but method kept for controller compatibility
+        /*
         table.getItems().clear();
         table.getItems().addAll(orders);
+        */
     }
 
     public void showAlert(String title, String content) {
@@ -303,34 +369,13 @@ public class ClientUI extends Application {
         alert.setContentText(content);
         alert.showAndWait();
     }
+
     public void handleServerDisconnect() {
-        // 1. Update status
-        lblStatus.setText("Server Down");
-        lblStatus.setTextFill(Color.RED);
-
-        // 2. Disable buttons
-        btnLoadOrders.setDisable(true);
-        btnUpdate.setDisable(true);
-        
-        // 3. Re-enable the connect fields (to allow retry)
-        // or keep them disabled if you want to force exit.
-        // In this case, we open the fields to allow reconnecting.
-        txtIp.setDisable(false);
-        txtPort.setDisable(false);
-
-        // We need access to the btnConnect button. 
-        // If it is a local variable in createTopPanel,
-        // you must make it a class field (like txtIp).
-        // If you did not convert it to a class field,
-        // you can only show an alert:
-
-        showAlert("Connection Lost", "The server has stopped or crashed.\nPlease restart the client or try to reconnect.");
+        showAlert("Connection Lost", "The server has stopped or crashed.\nRestart client.");
+        // Optional: Go back to connection screen
+        showConnectionScreen();
     }
 
-    /*
-      This method is called automatically when the application is stopped.
-      It ensures the connection is closed properly.
-    */
     @Override
     public void stop() throws Exception {
         System.out.println("Stopping client...");
