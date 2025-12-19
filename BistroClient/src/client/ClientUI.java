@@ -218,7 +218,10 @@ public class ClientUI extends Application {
             subscriberScreen.start();
         });
 
-        btnRep.setOnAction(e -> showAlert("Navigating", "Going to Rep Screen..."));
+        btnRep.setOnAction(e -> {
+            RepresentativeUI repScreen = new RepresentativeUI(mainLayout, this);
+            repScreen.start();
+        });
         btnManager.setOnAction(e -> showAlert("Navigating", "Going to Manager Screen..."));
 
         VBox menuBox = new VBox(20, header, btnCasual, btnCustomer, btnRep, btnManager);
