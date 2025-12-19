@@ -106,11 +106,11 @@ public class SubscriberUI {
         });
 
         // 3. Identify
-        Button btnIdentify = createOptionButton("Identify at Table", "🆔");
+        Button btnIdentify = createOptionButton("Check-In", "📋");
         btnIdentify.setOnAction(e -> {
             Runnable onBack = () -> showDashboardScreen(username, id);
             
-            SubscriberIdentificationUI identifyScreen = new SubscriberIdentificationUI(mainLayout, mainUI, onBack, id);
+            IdentificationUI identifyScreen = new IdentificationUI(mainLayout, mainUI, onBack, id);
             identifyScreen.start();
         });
 

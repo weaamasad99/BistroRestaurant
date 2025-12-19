@@ -11,16 +11,16 @@ public class IdentificationUI {
 
     private VBox mainLayout;
     private ClientUI mainUI;       
-    private CasualUI parentUI;     
-    private String phoneNumber;    
+    private Runnable onBack;      // Action to go back
+    private String userIdentifier;    
 
-    public IdentificationUI(VBox mainLayout, ClientUI mainUI, CasualUI parentUI, String phoneNumber) {
+    public IdentificationUI(VBox mainLayout, ClientUI mainUI, Runnable onBack, String userIdentifier) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
-        this.parentUI = parentUI;
-        this.phoneNumber = phoneNumber;
+        this.onBack = onBack;
+        this.userIdentifier = userIdentifier;
     }
-
+    
     public void start() {
         showIdentificationForm();
     }
@@ -43,31 +43,25 @@ public class IdentificationUI {
         txtBookingId.setStyle("-fx-font-size: 16px; -fx-padding: 10;");
 
         // --- Buttons ---
-        Button btnCheckIn = new Button("Get My Table");
+        Button btnCheckIn = new Button("Get Table");
         btnCheckIn.setPrefWidth(200);
         btnCheckIn.setPrefHeight(40);
         btnCheckIn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
 
-        // Scan QR Button (Mockup)
-        Button btnScanQR = new Button("📷 Scan QR Code");
-        btnScanQR.setPrefWidth(200);
-        btnScanQR.setStyle("-fx-background-color: #607D8B; -fx-text-fill: white; -fx-cursor: hand;");
-        btnScanQR.setOnAction(e -> mainUI.showAlert("Camera", "Scanning feature would open camera here..."));
-
         // Lost Code Button (NEW)
-        Button btnLostCode = new Button("❓ Lost Code");
+        Button btnLostCode = new Button("Lost Code?");
         btnLostCode.setPrefWidth(200);
         btnLostCode.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
         btnLostCode.setOnAction(e -> {
              // Logic: Usually this would trigger an SMS to the phone number
-             mainUI.showAlert("Retrieving Code", "We are sending the reservation details to: " + phoneNumber);
+             mainUI.showAlert("Retrieving Code", "We are sending the reservation details to: " + userIdentifier);
         });
         
         Button btnBack = new Button("Back to Menu");
         btnBack.setStyle("-fx-background-color: transparent; -fx-text-fill: #555; -fx-underline: true; -fx-cursor: hand;");
         
         // Navigation: Back to Casual Options
-        btnBack.setOnAction(e -> parentUI.showOptionsScreen(phoneNumber));
+        btnBack.setOnAction(e -> onBack.run());
 
         // --- Check-In Logic ---
         btnCheckIn.setOnAction(e -> {
@@ -86,7 +80,7 @@ public class IdentificationUI {
             }
         });
 
-        VBox content = new VBox(20, header, instruction, txtBookingId, btnCheckIn, btnScanQR, btnLostCode, btnBack);
+        VBox content = new VBox(20, header, instruction, txtBookingId, btnCheckIn, btnLostCode, btnBack);
         content.setAlignment(Pos.CENTER);
         content.setMaxWidth(450);
         content.setPadding(new Insets(30));
