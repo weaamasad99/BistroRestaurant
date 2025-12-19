@@ -129,6 +129,7 @@ public class SubscriberUI {
         mainLayout.getChildren().add(content);
     }
 
+    //
     private Button createOptionButton(String text, String icon) {
         Button btn = new Button(icon + "  " + text);
         btn.setPrefWidth(250);
