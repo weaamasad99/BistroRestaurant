@@ -107,7 +107,12 @@ public class SubscriberUI {
 
         // 3. Identify
         Button btnIdentify = createOptionButton("Identify at Table", "🆔");
-        btnIdentify.setOnAction(e -> mainUI.showAlert("Action", "Identifying..."));
+        btnIdentify.setOnAction(e -> {
+            Runnable onBack = () -> showDashboardScreen(username, id);
+            
+            SubscriberIdentificationUI identifyScreen = new SubscriberIdentificationUI(mainLayout, mainUI, onBack, id);
+            identifyScreen.start();
+        });
 
      // 4. History
         Button btnHistory = createOptionButton("Order History", "📜");
