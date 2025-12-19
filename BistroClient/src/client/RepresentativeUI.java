@@ -6,6 +6,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import java.util.Optional; 
 
 public class RepresentativeUI {
 
@@ -22,7 +23,7 @@ public class RepresentativeUI {
     }
 
     /**
-     * SCREEN 1: Representative Login
+     * SCREEN 1: Staff
      */
     private void showLoginScreen() {
         mainLayout.getChildren().clear();
@@ -33,17 +34,13 @@ public class RepresentativeUI {
 
         Label lblInstruction = new Label("Please enter staff credentials:");
 
-        // Username Field
         TextField txtUsername = new TextField();
         txtUsername.setPromptText("Employee Username");
         txtUsername.setMaxWidth(300);
-        txtUsername.setStyle("-fx-font-size: 14px;");
 
-        // Password Field
         PasswordField txtPassword = new PasswordField();
         txtPassword.setPromptText("Password");
         txtPassword.setMaxWidth(300);
-        txtPassword.setStyle("-fx-font-size: 14px;");
 
         Button btnLogin = new Button("Login");
         btnLogin.setPrefWidth(150);
@@ -52,10 +49,8 @@ public class RepresentativeUI {
         Button btnBack = new Button("Back");
         btnBack.setStyle("-fx-background-color: transparent; -fx-text-fill: #555; -fx-underline: true; -fx-cursor: hand;");
 
-        // Navigation: Back to Main Role Selection
         btnBack.setOnAction(e -> mainUI.showRoleSelectionScreen());
 
-        // Action: Login Logic
         btnLogin.setOnAction(e -> {
             String user = txtUsername.getText().trim();
             String pass = txtPassword.getText().trim();
@@ -63,7 +58,6 @@ public class RepresentativeUI {
             if (user.isEmpty() || pass.isEmpty()) {
                 mainUI.showAlert("Invalid Input", "Please enter username and password.");
             } else {
-                // Future: Validate against DB
                 showDashboardScreen(user);
             }
         });
@@ -90,33 +84,75 @@ public class RepresentativeUI {
         Label subHeader = new Label("Logged in as: " + username);
         subHeader.setTextFill(Color.GRAY);
 
-        // --- SECTION 1: Customer Service (Acting on behalf of client) And Registerations ---
-        Label lblService = new Label("Customer Service");
+        // ==========================================================
+        // SECTION 1: Act As Client 
+        // ==========================================================
+        Label lblAct = new Label("Access Client/Subscriber");
+        lblAct.setStyle("-fx-font-weight: bold; -fx-text-fill: #E91E63; -fx-underline: true;");
+
+        // 1. Act as Subscriber
+        Button btnActSub = createOptionButton("Access Subscriber Dashboard", "🎭");
+        btnActSub.setOnAction(e -> {
+            // Popup Dialog to get ID
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle("Subscriber Access");
+            dialog.setHeaderText("Enter Subscriber ID to manage:");
+            dialog.setContentText("ID:");
+
+            Optional<String> result = dialog.showAndWait();
+            result.ifPresent(id -> {
+                if(!id.isEmpty()) {
+                    SubscriberUI subUI = new SubscriberUI(mainLayout, mainUI);
+                    
+                    //  We pass a Runnable that brings us back HERE (Rep Dashboard) when done
+                    Runnable returnToRep = () -> showDashboardScreen(username);
+                    
+                    subUI.showDashboardScreen("Client(Via Rep)", id, returnToRep);
+                }
+            });
+        });
+
+        // 2. Act as Casual
+        Button btnActCas = createOptionButton("Access Casual Dashboard", "🎭");
+        btnActCas.setOnAction(e -> {
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle("Casual Diner Access");
+            dialog.setHeaderText("Enter Customer Phone Number:");
+            dialog.setContentText("Phone:");
+
+            Optional<String> result = dialog.showAndWait();
+            result.ifPresent(phoneinput -> {
+            	String phone = phoneinput.trim();
+            	if (phone.isEmpty() || !phone.matches("\\d+")) { 
+                    mainUI.showAlert("Invalid Input", "Please enter a valid phone number (digits only).");
+                }
+                else if (!phone.startsWith("05") || phone.length() != 10) {
+                    mainUI.showAlert("Invalid Input", "Please enter a valid phone number .");
+                } 
+                else {
+                    // Validation Passed - Open Dashboard
+                    CasualUI casualUI = new CasualUI(mainLayout, mainUI);
+                    //  Return to Rep Dashboard when done
+                    Runnable returnToRep = () -> showDashboardScreen(username);
+                    
+                    casualUI.showOptionsScreen(phone, returnToRep);
+                }
+            });
+        });
+
+        VBox actBox = new VBox(8, lblAct, btnActSub, btnActCas);
+        actBox.setAlignment(Pos.CENTER);
+
+
+        // ==========================================================
+        // SECTION 2: General Operations
+        // ==========================================================
+        Label lblService = new Label("General Operations");
         lblService.setStyle("-fx-font-weight: bold; -fx-text-fill: #2196F3; -fx-underline: true;");
-     // 1. Register New Customer
+        
         Button btnRegister = createOptionButton("Register New Customer", "👤");
         btnRegister.setOnAction(e -> mainUI.showAlert("Registration", "Open Customer Registration Form... (Not Implemented)"));
         
-        // 2. New Reservation (Uses ReservationUI)
-        Button btnNewRes = createOptionButton("New Reservation (For Client)", "📅");
-        btnNewRes.setOnAction(e -> {
-            // Define return path
-            Runnable onBack = () -> showDashboardScreen(username);
-            // Open ReservationUI passing a placeholder ID for the client
-            ReservationUI resUI = new ReservationUI(mainLayout, mainUI, onBack, "Client-Via-Rep"); 
-            resUI.start();
-        });
-
-        // 3. Waiting List (Uses WaitingListUI)
-        Button btnWaiting = createOptionButton("Add to Waiting List", "⏳");
-        btnWaiting.setOnAction(e -> {
-            Runnable onBack = () -> showDashboardScreen(username);
-            // Open WaitingListUI (Assuming Casual/Walk-in mode = true)
-            WaitingListUI waitScreen = new WaitingListUI(mainLayout, mainUI, onBack, "Client-Via-Rep", true); 
-            waitScreen.start();
-        });
-        
-        // 4. Check-In (Uses IdentificationUI)
         Button btnCheckIn = createOptionButton("Check-In / Identify Client", "📋");
         btnCheckIn.setOnAction(e -> {
             Runnable onBack = () -> showDashboardScreen(username);
@@ -124,30 +160,28 @@ public class RepresentativeUI {
             idScreen.start();
         });
 
-        // 5. Checkout Uses CheckoutUI 
-        Button btnCheckout = createOptionButton("Process Payment / Checkout", "💳");
-        btnCheckout.setStyle("-fx-background-color: #FF5722; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px; -fx-cursor: hand;");
-        btnCheckout.setOnAction(e -> {
-             Runnable onBack = () -> showDashboardScreen(username);
-             // Ensure CheckoutUI exists in your package or use Alert for now
-             CheckoutUI checkoutScreen = new CheckoutUI(mainLayout, mainUI, onBack);
-             checkoutScreen.start();
-        });
+        VBox opsBox = new VBox(8, lblService, btnRegister, btnCheckIn);
+        opsBox.setAlignment(Pos.CENTER);
 
-        // --- SECTION 2: Management ---
-        Label lblManage = new Label("Management & Report");
+        
+        // ==========================================================
+        // SECTION 3: Management & Reports
+        // ==========================================================
+        Label lblManage = new Label("Management");
         lblManage.setStyle("-fx-font-weight: bold; -fx-text-fill: #4CAF50; -fx-underline: true;");
 
-        // 1. Manage Tables
         Button btnTables = createOptionButton("Manage Tables", "▦");
         btnTables.setOnAction(e -> mainUI.showAlert("System", "Opening Table Management... (Not Implemented)"));
-     // 2. Manage Manage Opening Hours
+        
         Button btnHours = createOptionButton("Manage Opening Hours", "⏰");
         btnHours.setOnAction(e -> mainUI.showAlert("Management", "Open Hours Management Screen..."));
+        VBox manageBox = new VBox(8, lblManage, btnTables, btnHours);
+        manageBox.setAlignment(Pos.CENTER);
         
-        Label lblInfo = new Label("Views & Live Data");
-        lblInfo.setStyle("-fx-font-weight: bold; -fx-text-fill: #9C27B0; -fx-underline: true;");
-     // 1. View Active Orders 
+        Label lblView = new Label("View");
+        lblView.setStyle("-fx-font-weight: bold; -fx-text-fill: #4CAF50; -fx-underline: true;");
+        
+        // 1. View Active Orders 
         Button btnViewOrders = createOptionButton("View Active Orders", "🍜");
         btnViewOrders.setOnAction(e -> mainUI.showAlert("View Data", "Fetching Active Orders... (Not Implemented)"));
 
@@ -166,28 +200,15 @@ public class RepresentativeUI {
         Button btnViewSubscribers = createOptionButton("View All Subscribers", "👥");
         btnViewSubscribers.setOnAction(e -> mainUI.showAlert("Data", "Fetch Subscriber List..."));
 
-     // --- Layout Assembly ---
-        VBox container = new VBox(10);
+        VBox ViewBox = new VBox(8, lblView, btnCurrentDiners,btnViewOrders,btnViewWaitList,btnViewSubscribers);
+        ViewBox.setAlignment(Pos.CENTER);
+
+
+        // --- Layout Assembly ---
+        VBox container = new VBox(15);
         container.setAlignment(Pos.CENTER);
+        container.getChildren().addAll(actBox, new Separator(), opsBox, new Separator(), manageBox, new Separator(),ViewBox);
         
-       
-        container.getChildren().addAll(
-            // Section 1: Customer Service
-            lblService,btnRegister, btnNewRes, btnWaiting, btnCheckIn, btnCheckout,
-            new Separator(),
-            
-            // Section 2: Management
-            lblManage, btnTables, btnHours, // <--- Added btnHours here
-            new Separator(),
-            
-            // Section 3: Views
-            lblInfo,                
-            btnCurrentDiners, 
-            btnViewSubscribers,
-            btnViewWaitList,
-            btnViewOrders
-            
-        );
 
         Button btnLogout = new Button("Logout");
         btnLogout.setStyle("-fx-background-color: #ddd; -fx-text-fill: black; -fx-cursor: hand;");
@@ -202,22 +223,13 @@ public class RepresentativeUI {
         mainLayout.getChildren().add(content);
     }
 
-    // Helper method for styling buttons
     private Button createOptionButton(String text, String icon) {
         Button btn = new Button(icon + "  " + text);
-        btn.setPrefWidth(280);
+        btn.setPrefWidth(300);
         btn.setPrefHeight(35);
         btn.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #ccc; -fx-font-size: 13px; -fx-cursor: hand;");
-
-        btn.setOnMouseEntered(e -> {
-            if (!text.contains("Payment") && !text.contains("Checkout")) 
-                btn.setStyle("-fx-background-color: #e0e0e0; -fx-border-color: #bbb; -fx-font-size: 13px; -fx-cursor: hand;");
-        });
-        btn.setOnMouseExited(e -> {
-            if (!text.contains("Payment") && !text.contains("Checkout"))
-                btn.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #ccc; -fx-font-size: 13px; -fx-cursor: hand;");
-        });
-
+        btn.setOnMouseEntered(e -> btn.setStyle("-fx-background-color: #e0e0e0; -fx-border-color: #bbb; -fx-font-size: 13px; -fx-cursor: hand;"));
+        btn.setOnMouseExited(e -> btn.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #ccc; -fx-font-size: 13px; -fx-cursor: hand;"));
         return btn;
     }
 }

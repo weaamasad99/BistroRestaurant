@@ -64,8 +64,7 @@ public class SubscriberUI {
                 mainUI.showAlert("Invalid Input", "Please enter both Username and Subscriber ID.");
             } else {
                 // Future: Send to server for real authentication
-                showDashboardScreen(user, id);
-            }
+            	showDashboardScreen(user, id, () -> mainUI.showRoleSelectionScreen());            }
         });
 
         VBox content = new VBox(15, header, lblInstruction, txtUsername, txtId, btnLogin, btnBack);
@@ -80,7 +79,7 @@ public class SubscriberUI {
     /**
      * SCREEN 2: Dashboard with Options + History
      */
-    private void showDashboardScreen(String username, String id) {
+    public void showDashboardScreen(String username, String id, Runnable onExit) { 
         mainLayout.getChildren().clear();
 
         Label header = new Label("Welcome, " + username);
@@ -89,13 +88,13 @@ public class SubscriberUI {
 
         Label subHeader = new Label("Subscriber #" + id);
         subHeader.setTextFill(Color.GRAY);
+        Runnable stayHere = () -> showDashboardScreen(username, id, onExit);
 
         // 1. Make Reservation
         Button btnReservation = createOptionButton("Make Reservation", "📅");
         btnReservation.setOnAction(e -> {
-        	Runnable onBack = () -> showDashboardScreen(username, id);
         	
-            ReservationUI resUI = new ReservationUI(mainLayout, mainUI, onBack, username);
+            ReservationUI resUI = new ReservationUI(mainLayout, mainUI, stayHere, username);
             resUI.start();
         });
 
@@ -103,19 +102,19 @@ public class SubscriberUI {
         Button btnWaitingList = createOptionButton("Enter Waiting List", "⏳");
         btnWaitingList.setOnAction(e -> {
             // Define Back Action
-            Runnable onBack = () -> showDashboardScreen(username, id);
+            
             
             // Open Waiting List (isCasual = false)
-            WaitingListUI waitScreen = new WaitingListUI(mainLayout, mainUI, onBack, id, false);
+            WaitingListUI waitScreen = new WaitingListUI(mainLayout, mainUI, stayHere, id, false);
             waitScreen.start();
         });
 
         // 3. Identify
         Button btnIdentify = createOptionButton("Check-In", "📋");
         btnIdentify.setOnAction(e -> {
-            Runnable onBack = () -> showDashboardScreen(username, id);
             
-            IdentificationUI identifyScreen = new IdentificationUI(mainLayout, mainUI, onBack, id);
+            
+            IdentificationUI identifyScreen = new IdentificationUI(mainLayout, mainUI, stayHere, id);
             identifyScreen.start();
         });
 
@@ -124,11 +123,11 @@ public class SubscriberUI {
         btnHistory.setStyle("-fx-background-color: #E3F2FD; -fx-border-color: #2196F3; -fx-font-size: 14px; -fx-cursor: hand;");
         
         btnHistory.setOnAction(e -> {
-            // Define Back Action: Return to Dashboard
-            Runnable onBack = () -> showDashboardScreen(username, id);
+            
+           
 
             // Open SubscriberHistoryUI (Updated Name)
-            SubscriberHistoryUI historyScreen = new SubscriberHistoryUI(mainLayout, mainUI, onBack, id);
+            SubscriberHistoryUI historyScreen = new SubscriberHistoryUI(mainLayout, mainUI, stayHere, id);
             historyScreen.start();
         });
 
@@ -137,11 +136,9 @@ public class SubscriberUI {
         btnCheckout.setStyle("-fx-background-color: #FF5722; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand;");
         
         btnCheckout.setOnAction(e -> {
-            // Define Back Action
-            Runnable onBack = () -> showDashboardScreen(username, id);
             
             // Open Checkout
-            CheckoutUI checkoutScreen = new CheckoutUI(mainLayout, mainUI, onBack);
+            CheckoutUI checkoutScreen = new CheckoutUI(mainLayout, mainUI, stayHere);
             checkoutScreen.start();
         });
 
@@ -151,7 +148,11 @@ public class SubscriberUI {
 
         Button btnLogout = new Button("Logout");
         btnLogout.setStyle("-fx-background-color: #ddd; -fx-text-fill: black;");
-        btnLogout.setOnAction(e -> mainUI.showRoleSelectionScreen());
+        btnLogout.setOnAction(e -> {
+            if(onExit != null) onExit.run(); // Return to Rep Dashboard or Main Menu
+            else mainUI.showRoleSelectionScreen();
+       });
+
 
         VBox content = new VBox(15, header, subHeader, actionsBox, btnLogout);
         content.setAlignment(Pos.CENTER);

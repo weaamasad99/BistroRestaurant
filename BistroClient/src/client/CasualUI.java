@@ -58,7 +58,7 @@ public class CasualUI {
             	mainUI.showAlert("Invalid Input", "Please enter a valid phone number");
             } 
             else {
-                showOptionsScreen(phone);
+                showOptionsScreen(phone,() -> mainUI.showRoleSelectionScreen());
             }
         });
 
@@ -74,7 +74,7 @@ public class CasualUI {
     /**
      * SCREEN 2: Dashboard with 4 Options
      */
-    public void showOptionsScreen(String phoneNumber) {
+    public void showOptionsScreen(String phoneNumber, Runnable onExit) {
         mainLayout.getChildren().clear();
 
         Label header = new Label("Hello");
@@ -83,40 +83,40 @@ public class CasualUI {
         
         Label subHeader = new Label("What would you like to do?");
         subHeader.setTextFill(Color.GRAY);
+        Runnable stayHere = () -> showOptionsScreen(phoneNumber, onExit);
 
         // 1. Make Reservation
         Button btnReservation = createOptionButton("Make Reservation", "📅");
         btnReservation.setOnAction(e -> {
-        	Runnable onBack = () -> showOptionsScreen(phoneNumber);
         	
-            ReservationUI resUI = new ReservationUI(mainLayout, mainUI, onBack, phoneNumber);
+            ReservationUI resUI = new ReservationUI(mainLayout, mainUI, stayHere, phoneNumber);
             resUI.start();
         });
 
         // 2. Enter Waiting List
         Button btnWaitingList = createOptionButton("Enter Waiting List", "⏳");
         btnWaitingList.setOnAction(e -> {
-        	Runnable onBack = () -> showOptionsScreen(phoneNumber);
+ 
         	
-        	WaitingListUI resUI = new WaitingListUI(mainLayout, mainUI, onBack, phoneNumber, true);
+        	WaitingListUI resUI = new WaitingListUI(mainLayout, mainUI, stayHere, phoneNumber, true);
             resUI.start();
         });
 
         // 3. Identify
         Button btnIdentify = createOptionButton("Check-In", "📋");
         btnIdentify.setOnAction(e -> {
-        	Runnable onBack = () -> showOptionsScreen(phoneNumber);
         	
-            IdentificationUI identifyUI = new IdentificationUI(mainLayout, mainUI, onBack, phoneNumber);
+        	
+            IdentificationUI identifyUI = new IdentificationUI(mainLayout, mainUI, stayHere, phoneNumber);
             identifyUI.start();
         });
 
         // 4. Check Out
         Button btnCheckout = createOptionButton("Check Out", "💳");
         btnCheckout.setOnAction(e -> {
-        	Runnable onBack = () -> showOptionsScreen(phoneNumber);
         	
-            CheckoutUI identifyUI = new CheckoutUI(mainLayout, mainUI, onBack);
+        	
+            CheckoutUI identifyUI = new CheckoutUI(mainLayout, mainUI, stayHere);
             identifyUI.start();
         });
 
@@ -126,7 +126,10 @@ public class CasualUI {
 
         Button btnLogout = new Button("Logout");
         btnLogout.setStyle("-fx-background-color: #ddd; -fx-text-fill: black;");
-        btnLogout.setOnAction(e -> mainUI.showRoleSelectionScreen());
+        btnLogout.setOnAction(e -> {
+            if(onExit != null) onExit.run(); // Return to Rep Dashboard or Main Menu
+            else mainUI.showRoleSelectionScreen();
+       });
 
         VBox content = new VBox(15, header, subHeader, actionsBox, btnLogout);
         content.setAlignment(Pos.CENTER);
