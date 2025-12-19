@@ -70,7 +70,7 @@ public class CasualUI {
     /**
      * SCREEN 2: Dashboard with 4 Options
      */
-    private void showOptionsScreen(String phoneNumber) {
+    public void showOptionsScreen(String phoneNumber) {
         mainLayout.getChildren().clear();
 
         Label header = new Label("Hello, " + phoneNumber);
@@ -82,7 +82,10 @@ public class CasualUI {
 
         // 1. Make Reservation
         Button btnReservation = createOptionButton("Make Reservation", "📅");
-        btnReservation.setOnAction(e -> mainUI.showAlert("Action", "Opening Reservation Form... (To be implemented)"));
+        btnReservation.setOnAction(e -> {
+            ReservationUI resUI = new ReservationUI(mainLayout, mainUI, this, phoneNumber);
+            resUI.start();
+        });
 
         // 2. Enter Waiting List
         Button btnWaitingList = createOptionButton("Enter Waiting List", "⏳");
