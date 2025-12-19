@@ -53,7 +53,11 @@ public class CasualUI {
             String phone = txtPhone.getText().trim();
             if (phone.isEmpty() || !phone.matches("\\d+")) { 
                 mainUI.showAlert("Invalid Input", "Please enter a valid phone number (digits only).");
-            } else {
+            }
+            else if (!phone.startsWith("05") || phone.length() != 10) {
+            	mainUI.showAlert("Invalid Input", "Please enter a valid phone number");
+            } 
+            else {
                 showOptionsScreen(phone);
             }
         });
@@ -73,7 +77,7 @@ public class CasualUI {
     public void showOptionsScreen(String phoneNumber) {
         mainLayout.getChildren().clear();
 
-        Label header = new Label("Hello, " + phoneNumber);
+        Label header = new Label("Hello");
         header.setFont(new Font("Arial", 24));
         header.setStyle("-fx-font-weight: bold; -fx-text-fill: #333;");
         
@@ -92,12 +96,14 @@ public class CasualUI {
         btnWaitingList.setOnAction(e -> mainUI.showAlert("Action", "Joining Waiting List... (To be implemented)"));
 
         // 3. Identify
-        Button btnIdentify = createOptionButton("Identify", "🆔");
-        btnIdentify.setOnAction(e -> mainUI.showAlert("Action", "Identifying Order... (To be implemented)"));
+        Button btnIdentify = createOptionButton("Check-In", "📋");
+        btnIdentify.setOnAction(e -> {
+            IdentificationUI identifyUI = new IdentificationUI(mainLayout, mainUI, this, phoneNumber);
+            identifyUI.start();
+        });
 
         // 4. Check Out
         Button btnCheckout = createOptionButton("Check Out", "💳");
-        btnCheckout.setStyle("-fx-background-color: #FF5722; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand;");
         btnCheckout.setOnAction(e -> mainUI.showAlert("Action", "Proceeding to Checkout... (To be implemented)"));
 
         VBox actionsBox = new VBox(15, btnReservation, btnWaitingList, btnIdentify, new Separator(), btnCheckout);
