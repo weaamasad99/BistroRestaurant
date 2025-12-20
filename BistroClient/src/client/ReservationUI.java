@@ -98,7 +98,6 @@ public class ReservationUI {
             String guestsStr = txtGuests.getText().trim();
 
             if (validateInput(date, time, guestsStr)) {
-            	
                 // TODO: Send request to Server
                 mainUI.showAlert("Request Sent", 
                     "Checking availability for:\n" + 
