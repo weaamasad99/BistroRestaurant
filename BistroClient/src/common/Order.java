@@ -1,53 +1,81 @@
 package common;
 
-import java.sql.Date;
+import java.io.Serializable;
+import java.sql.Date; 
+import java.sql.Time;
 
 /**
- * Entity class representing an Order.
- * Note: With Kryo, implementing Serializable is NOT required.
- * However, a no-arg constructor is recommended for Kryo.
+ * Represents a Reservation/Order in the system.
+ * Matches the 'orders' table in the database.
  */
-public class Order {
-    
-    private int orderNumber;
-    private Date orderDate;
-    private int numberOfGuests;
-    private int confirmationCode;
-    private int subscriberId;
-    private Date dateOfPlacingOrder;
+public class Order implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-    // Must have a no-arg constructor for Kryo (can be empty)
-    public Order() {}
+    private int orderNumber;        // Unique Order ID (PK)
+    private int userId;             // Foreign Key to User
+    private Date orderDate;         // Date of reservation
+    private Time orderTime;         // Time of reservation
+    private int numberOfDiners;     // Amount of guests
+    private String status;          // PENDING, APPROVED, ACTIVE, FINISHED, CANCELLED
+    private int confirmationCode;   // Code sent to the customer
+    private Time actualArrivalTime; // When the customer actually arrived
 
-    public Order(int orderNumber, Date orderDate, int numberOfGuests, int confirmationCode, int subscriberId, Date dateOfPlacingOrder) {
-        this.orderNumber = orderNumber;
+    /**
+     * Constructor for creating a new Reservation Request (Client -> Server).
+     * Used in ReservationUI.
+     * * @param userId The ID of the user making the booking.
+     * @param orderDate The requested date.
+     * @param orderTime The requested time.
+     * @param numberOfDiners Number of guests.
+     */
+    public Order(int userId, Date orderDate, Time orderTime, int numberOfDiners) {
+        this.userId = userId;
         this.orderDate = orderDate;
-        this.numberOfGuests = numberOfGuests;
-        this.confirmationCode = confirmationCode;
-        this.subscriberId = subscriberId;
-        this.dateOfPlacingOrder = dateOfPlacingOrder;
+        this.orderTime = orderTime;
+        this.numberOfDiners = numberOfDiners;
+        this.status = "PENDING"; // Default status
     }
 
-    // Getters and Setters (Important: Kryo accesses fields directly or via setters)
+    /**
+     * Full Constructor (Server -> Client).
+     * Used when loading history or details from DB.
+     */
+    public Order(int orderNumber, int userId, Date orderDate, Time orderTime, int numberOfDiners, String status, int confirmationCode, Time actualArrivalTime) {
+        this.orderNumber = orderNumber;
+        this.userId = userId;
+        this.orderDate = orderDate;
+        this.orderTime = orderTime;
+        this.numberOfDiners = numberOfDiners;
+        this.status = status;
+        this.confirmationCode = confirmationCode;
+        this.actualArrivalTime = actualArrivalTime;
+    }
+
+    // --- Getters and Setters ---
+
     public int getOrderNumber() { return orderNumber; }
     public void setOrderNumber(int orderNumber) { this.orderNumber = orderNumber; }
-    
+
+    public int getUserId() { return userId; }
+    public void setUserId(int userId) { this.userId = userId; }
+
     public Date getOrderDate() { return orderDate; }
-    public void setOrderDate(Date orderDate) { this.orderDate = orderDate; }
+    public Time getOrderTime() { return orderTime; }
     
-    public int getNumberOfGuests() { return numberOfGuests; }
-    public void setNumberOfGuests(int numberOfGuests) { this.numberOfGuests = numberOfGuests; }
-    
-    public int getConfirmationCode() {return confirmationCode;}
-	public int getSubscriberId() { return this.subscriberId;}
-	public Date getDateOfPlacingOrder() {return this.dateOfPlacingOrder;}
-    
+    public int getNumberOfDiners() { return numberOfDiners; }
+    public void setNumberOfDiners(int numberOfDiners) { this.numberOfDiners = numberOfDiners; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public int getConfirmationCode() { return confirmationCode; }
+    public void setConfirmationCode(int confirmationCode) { this.confirmationCode = confirmationCode; }
+
+    public Time getActualArrivalTime() { return actualArrivalTime; }
+    public void setActualArrivalTime(Time actualArrivalTime) { this.actualArrivalTime = actualArrivalTime; }
+
     @Override
     public String toString() {
-        return String.format("Order #%d | Date: %s | Guests: %d | Conf: %d | SubID: %d | Placed: %s",
-                orderNumber, orderDate, numberOfGuests, confirmationCode, subscriberId, dateOfPlacingOrder);
+        return "Order #" + orderNumber + " | " + orderDate + " @ " + orderTime + " | Guests: " + numberOfDiners + " | Status: " + status;
     }
-
-	
-    
 }

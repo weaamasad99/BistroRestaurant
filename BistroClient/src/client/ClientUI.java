@@ -20,7 +20,7 @@ import java.util.ArrayList;
 
 public class ClientUI extends Application {
 
-    private ClientController controller;
+    ClientController controller;
     private VBox mainLayout; // Main container for swapping views
 
     // Connection Fields
