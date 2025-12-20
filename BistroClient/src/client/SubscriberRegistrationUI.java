@@ -12,7 +12,16 @@ public class SubscriberRegistrationUI {
 
     private VBox mainLayout;
     private ClientUI mainUI;
-    private Runnable onBack; 
+    private Runnable onBack;
+
+    // Fields from Class Diagram
+    private TextField txtUserName;
+    private TextField txtPhoneNumber;
+    private TextField txtEmail;
+    
+    // Additional fields
+    private TextField txtFirstName;
+    private TextField txtLastName;
 
     public SubscriberRegistrationUI(VBox mainLayout, ClientUI mainUI, Runnable onBack) {
         this.mainLayout = mainLayout;
@@ -36,39 +45,37 @@ public class SubscriberRegistrationUI {
         grid.setVgap(15);
         grid.setAlignment(Pos.CENTER);
 
-        // שדות הקלט (לפי הדיאגרמה והסיפור)
-        TextField txtFirstName = new TextField(); txtFirstName.setPromptText("First Name");
-        TextField txtLastName = new TextField(); txtLastName.setPromptText("Last Name");
-        TextField txtPhone = new TextField(); txtPhone.setPromptText("05X-XXXXXXX");
-        TextField txtEmail = new TextField(); txtEmail.setPromptText("email@example.com");
-        TextField txtUsername = new TextField(); txtUsername.setPromptText("Choose Username");
-        
-        // הערה: אין שדה סיסמה!
+        // Fields
+        txtFirstName = new TextField(); txtFirstName.setPromptText("First Name");
+        txtLastName = new TextField(); txtLastName.setPromptText("Last Name");
+        txtPhoneNumber = new TextField(); txtPhoneNumber.setPromptText("05X-XXXXXXX");
+        txtEmail = new TextField(); txtEmail.setPromptText("email@example.com");
+        txtUserName = new TextField(); txtUserName.setPromptText("Choose Username");
 
         grid.add(new Label("First Name:"), 0, 0); grid.add(txtFirstName, 1, 0);
         grid.add(new Label("Last Name:"), 0, 1); grid.add(txtLastName, 1, 1);
-        grid.add(new Label("Phone:"), 0, 2); grid.add(txtPhone, 1, 2);
+        grid.add(new Label("Phone Number:"), 0, 2); grid.add(txtPhoneNumber, 1, 2);
         grid.add(new Label("Email:"), 0, 3); grid.add(txtEmail, 1, 3);
-        grid.add(new Label("Username:"), 0, 4); grid.add(txtUsername, 1, 4);
+        grid.add(new Label("Username:"), 0, 4); grid.add(txtUserName, 1, 4);
 
         Button btnRegister = new Button("Register & Generate ID");
         btnRegister.setPrefWidth(200);
-        btnRegister.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;");
+        btnRegister.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
 
         Button btnBack = new Button("Back to Dashboard");
-        btnBack.setStyle("-fx-background-color: transparent; -fx-text-fill: #555; -fx-underline: true;");
+        btnBack.setStyle("-fx-background-color: transparent; -fx-text-fill: #555; -fx-underline: true; -fx-cursor: hand;");
+        
+        // --- NAVIGATION BACK ---
         btnBack.setOnAction(e -> onBack.run());
 
-        // logic
+        // Logic
         btnRegister.setOnAction(e -> {
-            String fName = txtFirstName.getText();
-            String lName = txtLastName.getText();
-            String phone = txtPhone.getText();
-            String email = txtEmail.getText();
-            String user = txtUsername.getText();
-
-            if (validateInput(user, phone, email, fName)) {
-                createSubscriber(user, phone, email, fName, lName);
+            String uName = txtUserName.getText();
+            String phone = txtPhoneNumber.getText();
+            String mail = txtEmail.getText();
+            
+            if (validateInput(uName, phone, mail)) {
+                createSubscriber(uName, phone, mail);
             }
         });
 
@@ -81,42 +88,31 @@ public class SubscriberRegistrationUI {
         mainLayout.getChildren().add(content);
     }
 
-    // --- Methods from Class Diagram ---
-
-    private boolean validateInput(String userName, String phoneNumber, String email, String fName) {
-        if (userName.isEmpty() || phoneNumber.isEmpty() || email.isEmpty() || fName.isEmpty()) {
+    // Methods from Diagram
+    public boolean validateInput(String userName, String phoneNumber, String Email) {
+        if (userName.isEmpty() || phoneNumber.isEmpty() || Email.isEmpty()) {
             mainUI.showAlert("Validation Error", "All fields are required.");
-            return false;
-        }
-        if (!phoneNumber.matches("\\d{10}")) { // Simple validation
-            mainUI.showAlert("Validation Error", "Phone must be 10 digits.");
             return false;
         }
         return true;
     }
 
-    private void createSubscriber(String userName, String phone, String email, String fName, String lName) {
-        // 1. Generate ID
-        String newSubscriberID = String.valueOf(1000 + new Random().nextInt(9000)); // Mock ID generation
-        
-        // 2. Generate Digital Card (Simulation)
+    public void createSubscriber(String userName, String phoneNumber, String Email) {
+        String newSubscriberID = String.valueOf(1000 + new Random().nextInt(9000)); 
         generateDigitalCard(newSubscriberID);
 
-        // 3. Show Success & ID to Representative
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Registration Successful");
         alert.setHeaderText("New Subscriber Created!");
-        alert.setContentText("Subscriber: " + fName + " " + lName + "\n" +
-                             "Username: " + userName + "\n" +
-                             "Generated ID: " + newSubscriberID + "\n\n" + 
-                             "Please give this ID to the customer.");
+        alert.setContentText("Username: " + userName + "\n" +
+                             "Generated Subscriber ID: " + newSubscriberID);
         alert.showAndWait();
         
-        // 4. Return
+        // --- NAVIGATION BACK ON SUCCESS ---
         onBack.run();
     }
 
-    private void generateDigitalCard(String subscriberID) {
-        System.out.println("Simulating QR Code generation for ID: " + subscriberID);
+    public void generateDigitalCard(String subscriberID) {
+        System.out.println("LOG: Generating QR Digital Card for Subscriber ID: " + subscriberID);
     }
 }

@@ -222,8 +222,12 @@ public class ClientUI extends Application {
             RepresentativeUI repScreen = new RepresentativeUI(mainLayout, this);
             repScreen.start();
         });
-        btnManager.setOnAction(e -> showAlert("Navigating", "Going to Manager Screen..."));
-
+     // 4. Manager (Launches Login -> Manager Dashboard)
+        btnManager.setOnAction(e -> {
+             // ManagerUI inherits from RepUI but has extra buttons
+            // ManagerUI managerScreen = new ManagerUI(mainLayout, this);
+           //  managerScreen.start();
+        });
         VBox menuBox = new VBox(20, header, btnCasual, btnCustomer, btnRep, btnManager);
         menuBox.setAlignment(Pos.CENTER);
         menuBox.setMaxWidth(400);

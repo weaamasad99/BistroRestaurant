@@ -6,12 +6,34 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import java.util.Optional; 
 
+/**
+ * Boundary class for Representative Dashboard.
+ * Matches the Class Diagram specification and the Staff Dashboard Screenshot.
+ */
 public class RepresentativeUI {
 
-    private VBox mainLayout;
-    private ClientUI mainUI; // Reference back to main
+    protected VBox mainLayout;
+    protected ClientUI mainUI; 
+
+    // --- Fields from Class Diagram (Buttons) ---
+    protected Button registerNewSubscriberButton;
+    protected Button viewSubscriberButton;     // Maps to "View All Subscribers"
+    protected Button manageTablesButton;
+    protected Button editOpeningHoursButton;
+    protected Button viewOrdersButton;         // Maps to "View Active Orders"
+    
+    // Additional buttons from your Screenshot/Requirements
+    protected Button accessSubscriberDashButton;
+    protected Button accessCasualDashButton;
+    protected Button checkInClientButton;
+    protected Button viewCurrentDinersButton;
+    protected Button viewWaitingListButton;
+
+    // Sub-screen buttons (Diagram fields)
+    protected Button addTableButton;
+    protected Button editTableButton;
+    protected Button updateHoursButton;
 
     public RepresentativeUI(VBox mainLayout, ClientUI mainUI) {
         this.mainLayout = mainLayout;
@@ -23,213 +45,211 @@ public class RepresentativeUI {
     }
 
     /**
-     * SCREEN 1: Staff
+     * SCREEN 1: Staff Login
      */
-    private void showLoginScreen() {
+    protected void showLoginScreen() {
         mainLayout.getChildren().clear();
 
         Label header = new Label("Staff Login");
         header.setFont(new Font("Arial", 22));
         header.setStyle("-fx-font-weight: bold; -fx-text-fill: #333;");
 
-        Label lblInstruction = new Label("Please enter staff credentials:");
-
-        TextField txtUsername = new TextField();
-        txtUsername.setPromptText("Employee Username");
+        TextField txtUsername = new TextField(); 
+        txtUsername.setPromptText("Username"); 
         txtUsername.setMaxWidth(300);
 
-        PasswordField txtPassword = new PasswordField();
-        txtPassword.setPromptText("Password");
+        PasswordField txtPassword = new PasswordField(); 
+        txtPassword.setPromptText("Password"); 
         txtPassword.setMaxWidth(300);
 
         Button btnLogin = new Button("Login");
-        btnLogin.setPrefWidth(150);
         btnLogin.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
+        btnLogin.setPrefWidth(150);
 
         Button btnBack = new Button("Back");
         btnBack.setStyle("-fx-background-color: transparent; -fx-text-fill: #555; -fx-underline: true; -fx-cursor: hand;");
-
         btnBack.setOnAction(e -> mainUI.showRoleSelectionScreen());
 
         btnLogin.setOnAction(e -> {
-            String user = txtUsername.getText().trim();
-            String pass = txtPassword.getText().trim();
-
-            if (user.isEmpty() || pass.isEmpty()) {
-                mainUI.showAlert("Invalid Input", "Please enter username and password.");
-            } else {
+            String user = txtUsername.getText();
+            String pass = txtPassword.getText();
+            // Simple validation for prototype
+            if ((user.equals("rep") && pass.equals("1234")) || (user.equals("admin") && pass.equals("admin"))) {
                 showDashboardScreen(user);
+            } else {
+                mainUI.showAlert("Error", "Invalid Credentials (Try: rep/1234)");
             }
         });
 
-        VBox content = new VBox(15, header, lblInstruction, txtUsername, txtPassword, btnLogin, btnBack);
+        VBox content = new VBox(15, header, txtUsername, txtPassword, btnLogin, btnBack);
         content.setAlignment(Pos.CENTER);
         content.setMaxWidth(400);
         content.setPadding(new Insets(30));
         content.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);");
-
         mainLayout.getChildren().add(content);
     }
 
     /**
-     * SCREEN 2: Representative Dashboard
+     * SCREEN 2: Dashboard
      */
-    private void showDashboardScreen(String username) {
+    protected void showDashboardScreen(String username) {
         mainLayout.getChildren().clear();
 
         Label header = new Label("Staff Dashboard");
-        header.setFont(new Font("Arial", 24));
+        header.setFont(new Font("Arial", 26));
         header.setStyle("-fx-font-weight: bold; -fx-text-fill: #333;");
 
         Label subHeader = new Label("Logged in as: " + username);
         subHeader.setTextFill(Color.GRAY);
 
-        // ==========================================================
-        // SECTION 1: Act As Client 
-        // ==========================================================
-        Label lblAct = new Label("Access Client/Subscriber");
-        lblAct.setStyle("-fx-font-weight: bold; -fx-text-fill: #E91E63; -fx-underline: true;");
+        // --- 1. Access Client/Subscriber Section ---
+        Label lblAccess = sectionTitle("Access Client/Subscriber", "#E91E63"); // Pink
+        accessSubscriberDashButton = createWideButton("Access Subscriber Dashboard", "🎭");
+        accessCasualDashButton = createWideButton("Access Casual Dashboard", "🎭");
+        
+        accessSubscriberDashButton.setOnAction(e -> promptForSubscriberAccess(username));
+        accessCasualDashButton.setOnAction(e -> promptForCasualAccess(username));
 
-        // 1. Act as Subscriber
-        Button btnActSub = createOptionButton("Access Subscriber Dashboard", "🎭");
-        btnActSub.setOnAction(e -> {
-            // Popup Dialog to get ID
-            TextInputDialog dialog = new TextInputDialog();
-            dialog.setTitle("Subscriber Access");
-            dialog.setHeaderText("Enter Subscriber ID to manage:");
-            dialog.setContentText("ID:");
+        // --- 2. General Operations Section ---
+        Label lblOps = sectionTitle("General Operations", "#2196F3"); // Blue
+        registerNewSubscriberButton = createWideButton("Register New Customer", "👤");
+        checkInClientButton = createWideButton("Check-In / Identify Client", "📋");
 
-            Optional<String> result = dialog.showAndWait();
-            result.ifPresent(id -> {
-                if(!id.isEmpty()) {
-                    SubscriberUI subUI = new SubscriberUI(mainLayout, mainUI);
-                    
-                    //  We pass a Runnable that brings us back HERE (Rep Dashboard) when done
-                    Runnable returnToRep = () -> showDashboardScreen(username);
-                    
-                    subUI.showDashboardScreen("Client(Via Rep)", id, returnToRep);
-                }
-            });
+        // *** NAVIGATION LOGIC ***
+        registerNewSubscriberButton.setOnAction(e -> registerNewSubscriber(username));
+        checkInClientButton.setOnAction(e -> {
+            IdentificationUI idUI = new IdentificationUI(mainLayout, mainUI, () -> showDashboardScreen(username), "Client-Via-Rep");
+            idUI.start();
         });
 
-        // 2. Act as Casual
-        Button btnActCas = createOptionButton("Access Casual Dashboard", "🎭");
-        btnActCas.setOnAction(e -> {
-            TextInputDialog dialog = new TextInputDialog();
-            dialog.setTitle("Casual Diner Access");
-            dialog.setHeaderText("Enter Customer Phone Number:");
-            dialog.setContentText("Phone:");
-
-            Optional<String> result = dialog.showAndWait();
-            result.ifPresent(phoneinput -> {
-            	String phone = phoneinput.trim();
-            	if (phone.isEmpty() || !phone.matches("\\d+")) { 
-                    mainUI.showAlert("Invalid Input", "Please enter a valid phone number (digits only).");
-                }
-                else if (!phone.startsWith("05") || phone.length() != 10) {
-                    mainUI.showAlert("Invalid Input", "Please enter a valid phone number .");
-                } 
-                else {
-                    // Validation Passed - Open Dashboard
-                    CasualUI casualUI = new CasualUI(mainLayout, mainUI);
-                    //  Return to Rep Dashboard when done
-                    Runnable returnToRep = () -> showDashboardScreen(username);
-                    
-                    casualUI.showOptionsScreen(phone, returnToRep);
-                }
-            });
-        });
-
-        VBox actBox = new VBox(8, lblAct, btnActSub, btnActCas);
-        actBox.setAlignment(Pos.CENTER);
-
-
-        // ==========================================================
-        // SECTION 2: General Operations
-        // ==========================================================
-        Label lblService = new Label("General Operations");
-        lblService.setStyle("-fx-font-weight: bold; -fx-text-fill: #2196F3; -fx-underline: true;");
+        // --- 3. Management Section ---
+        Label lblMgmt = sectionTitle("Management", "#4CAF50"); // Green
+        manageTablesButton = createWideButton("Manage Tables", "▦");
+        editOpeningHoursButton = createWideButton("Manage Opening Hours", "⏰");
         
-        Button btnRegister = createOptionButton("Register New Customer", "👤");
-        btnRegister.setOnAction(e -> mainUI.showAlert("Registration", "Open Customer Registration Form... (Not Implemented)"));
+        manageTablesButton.setOnAction(e -> updateTableDetails());
+        editOpeningHoursButton.setOnAction(e -> setOpeningHours());
+
+        // --- 4. View Section ---
+        Label lblView = sectionTitle("View", "#4CAF50"); // Green
+        viewCurrentDinersButton = createWideButton("View Current Diners (Active)", "🍽");
+        viewOrdersButton = createWideButton("View Active Orders", "🍜");
+        viewWaitingListButton = createWideButton("View Full Waiting List", "⏳");
+        viewSubscriberButton = createWideButton("View All Subscribers", "👥");
+
+        viewCurrentDinersButton.setOnAction(e -> displayCurrentDiners());
+        viewOrdersButton.setOnAction(e -> displayWaitingList()); // Placeholder
+        viewWaitingListButton.setOnAction(e -> displayWaitingList());
+        viewSubscriberButton.setOnAction(e -> mainUI.showAlert("Info", "Showing Subscriber List..."));
+
+        // --- Helper Layouts ---
+        VBox groupAccess = new VBox(8, lblAccess, accessSubscriberDashButton, accessCasualDashButton);
+        groupAccess.setAlignment(Pos.CENTER);
         
-        Button btnCheckIn = createOptionButton("Check-In / Identify Client", "📋");
-        btnCheckIn.setOnAction(e -> {
-            Runnable onBack = () -> showDashboardScreen(username);
-            IdentificationUI idScreen = new IdentificationUI(mainLayout, mainUI, onBack, "Client-Via-Rep");
-            idScreen.start();
-        });
-
-        VBox opsBox = new VBox(8, lblService, btnRegister, btnCheckIn);
-        opsBox.setAlignment(Pos.CENTER);
-
+        VBox groupOps = new VBox(8, lblOps, registerNewSubscriberButton, checkInClientButton);
+        groupOps.setAlignment(Pos.CENTER);
         
-        // ==========================================================
-        // SECTION 3: Management & Reports
-        // ==========================================================
-        Label lblManage = new Label("Management");
-        lblManage.setStyle("-fx-font-weight: bold; -fx-text-fill: #4CAF50; -fx-underline: true;");
-
-        Button btnTables = createOptionButton("Manage Tables", "▦");
-        btnTables.setOnAction(e -> mainUI.showAlert("System", "Opening Table Management... (Not Implemented)"));
+        VBox groupMgmt = new VBox(8, lblMgmt, manageTablesButton, editOpeningHoursButton);
+        groupMgmt.setAlignment(Pos.CENTER);
         
-        Button btnHours = createOptionButton("Manage Opening Hours", "⏰");
-        btnHours.setOnAction(e -> mainUI.showAlert("Management", "Open Hours Management Screen..."));
-        VBox manageBox = new VBox(8, lblManage, btnTables, btnHours);
-        manageBox.setAlignment(Pos.CENTER);
+        VBox groupView = new VBox(8, lblView, viewCurrentDinersButton, viewOrdersButton, viewWaitingListButton, viewSubscriberButton);
+        groupView.setAlignment(Pos.CENTER);
+
+        // Allow Manager to add content here (Override hook)
+        VBox centralContainer = new VBox(20, groupAccess, new Separator(), groupOps, new Separator(), groupMgmt, new Separator(), groupView);
+        centralContainer.setAlignment(Pos.CENTER);
         
-        Label lblView = new Label("View");
-        lblView.setStyle("-fx-font-weight: bold; -fx-text-fill: #4CAF50; -fx-underline: true;");
-        
-        // 1. View Active Orders 
-        Button btnViewOrders = createOptionButton("View Active Orders", "🍜");
-        btnViewOrders.setOnAction(e -> mainUI.showAlert("View Data", "Fetching Active Orders... (Not Implemented)"));
-
-        // 2. View Waiting List 
-        Button btnViewWaitList = createOptionButton("View Full Waiting List", "📜");
-        btnViewWaitList.setOnAction(e -> mainUI.showAlert("View Data", "Fetching Waiting List... (Not Implemented)"));
-
-        // 3. View Current Diners
-        Button btnCurrentDiners = createOptionButton("View Current Diners (Active)", "🥘");
-        btnCurrentDiners.setOnAction(e -> {
-
-             mainUI.showAlert("System", "Fetching Active Diners List...");
-             //Future
-        });
-     // 4. View Subscribers
-        Button btnViewSubscribers = createOptionButton("View All Subscribers", "👥");
-        btnViewSubscribers.setOnAction(e -> mainUI.showAlert("Data", "Fetch Subscriber List..."));
-
-        VBox ViewBox = new VBox(8, lblView, btnCurrentDiners,btnViewOrders,btnViewWaitList,btnViewSubscribers);
-        ViewBox.setAlignment(Pos.CENTER);
-
-
-        // --- Layout Assembly ---
-        VBox container = new VBox(15);
-        container.setAlignment(Pos.CENTER);
-        container.getChildren().addAll(actBox, new Separator(), opsBox, new Separator(), manageBox, new Separator(),ViewBox);
-        
+        // Add Manager specific content if needed
+        addManagerContent(centralContainer);
 
         Button btnLogout = new Button("Logout");
-        btnLogout.setStyle("-fx-background-color: #ddd; -fx-text-fill: black; -fx-cursor: hand;");
         btnLogout.setOnAction(e -> mainUI.showRoleSelectionScreen());
 
-        VBox content = new VBox(15, header, subHeader, new Separator(), container, new Separator(), btnLogout);
+        // ScrollPane for smaller screens
+        VBox content = new VBox(20, header, subHeader, new Separator(), centralContainer, new Separator(), btnLogout);
         content.setAlignment(Pos.CENTER);
-        content.setMaxWidth(400); 
         content.setPadding(new Insets(20));
         content.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);");
-
-        mainLayout.getChildren().add(content);
+        
+        ScrollPane scroll = new ScrollPane(content);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        
+        mainLayout.getChildren().add(scroll);
+    }
+    
+    // Hook for ManagerUI
+    protected void addManagerContent(VBox container) {
+        // Empty in Rep UI, overridden in ManagerUI
     }
 
-    private Button createOptionButton(String text, String icon) {
+    // ==========================================
+    // Methods
+    // ==========================================
+
+    /** Matches Diagram: +registerNewSubscriber() */
+    public void registerNewSubscriber(String returnUser) {
+        // Navigate to SubscriberRegistrationUI
+        SubscriberRegistrationUI regUI = new SubscriberRegistrationUI(mainLayout, mainUI, () -> showDashboardScreen(returnUser));
+        regUI.start();
+    }
+
+    /** Matches Diagram: +updateTableDetails() */
+    public void updateTableDetails() {
+        mainUI.showAlert("System", "Opening Table Management Screen...");
+    }
+
+    /** Matches Diagram: +setOpeningHours() */
+    public void setOpeningHours() {
+        mainUI.showAlert("System", "Opening Hours Editor...");
+    }
+
+    /** Matches Diagram: +displayWaitingList() */
+    public void displayWaitingList() {
+        mainUI.showAlert("System", "Fetching Waiting List Data...");
+    }
+
+    /** Matches Diagram: +displayCurrentDiners() */
+    public void displayCurrentDiners() {
+        mainUI.showAlert("System", "Fetching Current Diners...");
+    }
+
+    // --- Helpers ---
+    private Button createWideButton(String text, String icon) {
         Button btn = new Button(icon + "  " + text);
         btn.setPrefWidth(300);
         btn.setPrefHeight(35);
-        btn.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #ccc; -fx-font-size: 13px; -fx-cursor: hand;");
-        btn.setOnMouseEntered(e -> btn.setStyle("-fx-background-color: #e0e0e0; -fx-border-color: #bbb; -fx-font-size: 13px; -fx-cursor: hand;"));
-        btn.setOnMouseExited(e -> btn.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #ccc; -fx-font-size: 13px; -fx-cursor: hand;"));
+        btn.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #ccc; -fx-cursor: hand; -fx-font-size: 13px;");
+        btn.setOnMouseEntered(e -> btn.setStyle("-fx-background-color: #e0e0e0; -fx-border-color: #bbb; -fx-cursor: hand; -fx-font-size: 13px;"));
+        btn.setOnMouseExited(e -> btn.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #ccc; -fx-cursor: hand; -fx-font-size: 13px;"));
         return btn;
+    }
+
+    private Label sectionTitle(String title, String color) {
+        Label lbl = new Label(title);
+        lbl.setStyle("-fx-font-weight: bold; -fx-text-fill: " + color + "; -fx-underline: true;");
+        return lbl;
+    }
+    
+    private void promptForSubscriberAccess(String returnUser) {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Access"); dialog.setHeaderText("Enter Subscriber ID:");
+        dialog.showAndWait().ifPresent(id -> {
+            if(!id.isEmpty()) {
+                 SubscriberUI subUI = new SubscriberUI(mainLayout, mainUI);
+                 subUI.showDashboardScreen("Client(Via Rep)", id, () -> showDashboardScreen(returnUser));
+            }
+        });
+    }
+
+    private void promptForCasualAccess(String returnUser) {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Access"); dialog.setHeaderText("Enter Phone Number:");
+        dialog.showAndWait().ifPresent(phone -> {
+            if(!phone.isEmpty()) {
+                 CasualUI casualUI = new CasualUI(mainLayout, mainUI);
+                 casualUI.showOptionsScreen(phone, () -> showDashboardScreen(returnUser));
+            }
+        });
     }
 }
