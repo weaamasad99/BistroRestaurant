@@ -9,31 +9,25 @@ import javafx.scene.text.Font;
 
 /**
  * Boundary class for Representative Dashboard.
- * Matches the Class Diagram specification and the Staff Dashboard Screenshot.
  */
 public class RepresentativeUI {
 
     protected VBox mainLayout;
     protected ClientUI mainUI; 
 
-    // --- Fields from Class Diagram (Buttons) ---
+    // --- Fields from Class Diagram ---
     protected Button registerNewSubscriberButton;
-    protected Button viewSubscriberButton;     // Maps to "View All Subscribers"
+    protected Button viewSubscriberButton;
     protected Button manageTablesButton;
     protected Button editOpeningHoursButton;
-    protected Button viewOrdersButton;         // Maps to "View Active Orders"
+    protected Button viewOrdersButton;
     
-    // Additional buttons from your Screenshot/Requirements
+    // Additional buttons for the layout
     protected Button accessSubscriberDashButton;
     protected Button accessCasualDashButton;
     protected Button checkInClientButton;
     protected Button viewCurrentDinersButton;
     protected Button viewWaitingListButton;
-
-    // Sub-screen buttons (Diagram fields)
-    protected Button addTableButton;
-    protected Button editTableButton;
-    protected Button updateHoursButton;
 
     public RepresentativeUI(VBox mainLayout, ClientUI mainUI) {
         this.mainLayout = mainLayout;
@@ -44,9 +38,6 @@ public class RepresentativeUI {
         showLoginScreen();
     }
 
-    /**
-     * SCREEN 1: Staff Login
-     */
     protected void showLoginScreen() {
         mainLayout.getChildren().clear();
 
@@ -73,7 +64,6 @@ public class RepresentativeUI {
         btnLogin.setOnAction(e -> {
             String user = txtUsername.getText();
             String pass = txtPassword.getText();
-            // Simple validation for prototype
             if ((user.equals("rep") && pass.equals("1234")) || (user.equals("admin") && pass.equals("admin"))) {
                 showDashboardScreen(user);
             } else {
@@ -89,9 +79,6 @@ public class RepresentativeUI {
         mainLayout.getChildren().add(content);
     }
 
-    /**
-     * SCREEN 2: Dashboard
-     */
     protected void showDashboardScreen(String username) {
         mainLayout.getChildren().clear();
 
@@ -103,7 +90,7 @@ public class RepresentativeUI {
         subHeader.setTextFill(Color.GRAY);
 
         // --- 1. Access Client/Subscriber Section ---
-        Label lblAccess = sectionTitle("Access Client/Subscriber", "#E91E63"); // Pink
+        Label lblAccess = sectionTitle("Access Client/Subscriber", "#E91E63");
         accessSubscriberDashButton = createWideButton("Access Subscriber Dashboard", "🎭");
         accessCasualDashButton = createWideButton("Access Casual Dashboard", "🎭");
         
@@ -111,11 +98,11 @@ public class RepresentativeUI {
         accessCasualDashButton.setOnAction(e -> promptForCasualAccess(username));
 
         // --- 2. General Operations Section ---
-        Label lblOps = sectionTitle("General Operations", "#2196F3"); // Blue
+        Label lblOps = sectionTitle("General Operations", "#2196F3");
         registerNewSubscriberButton = createWideButton("Register New Customer", "👤");
         checkInClientButton = createWideButton("Check-In / Identify Client", "📋");
 
-        // *** NAVIGATION LOGIC ***
+        // NAVIGATION LOGIC
         registerNewSubscriberButton.setOnAction(e -> registerNewSubscriber(username));
         checkInClientButton.setOnAction(e -> {
             IdentificationUI idUI = new IdentificationUI(mainLayout, mainUI, () -> showDashboardScreen(username), "Client-Via-Rep");
@@ -123,7 +110,7 @@ public class RepresentativeUI {
         });
 
         // --- 3. Management Section ---
-        Label lblMgmt = sectionTitle("Management", "#4CAF50"); // Green
+        Label lblMgmt = sectionTitle("Management", "#4CAF50");
         manageTablesButton = createWideButton("Manage Tables", "▦");
         editOpeningHoursButton = createWideButton("Manage Opening Hours", "⏰");
         
@@ -131,18 +118,18 @@ public class RepresentativeUI {
         editOpeningHoursButton.setOnAction(e -> setOpeningHours());
 
         // --- 4. View Section ---
-        Label lblView = sectionTitle("View", "#4CAF50"); // Green
+        Label lblView = sectionTitle("View", "#4CAF50");
         viewCurrentDinersButton = createWideButton("View Current Diners (Active)", "🍽");
         viewOrdersButton = createWideButton("View Active Orders", "🍜");
         viewWaitingListButton = createWideButton("View Full Waiting List", "⏳");
         viewSubscriberButton = createWideButton("View All Subscribers", "👥");
 
         viewCurrentDinersButton.setOnAction(e -> displayCurrentDiners());
-        viewOrdersButton.setOnAction(e -> displayWaitingList()); // Placeholder
+        viewOrdersButton.setOnAction(e -> displayWaitingList());
         viewWaitingListButton.setOnAction(e -> displayWaitingList());
         viewSubscriberButton.setOnAction(e -> mainUI.showAlert("Info", "Showing Subscriber List..."));
 
-        // --- Helper Layouts ---
+        // Helper Layouts
         VBox groupAccess = new VBox(8, lblAccess, accessSubscriberDashButton, accessCasualDashButton);
         groupAccess.setAlignment(Pos.CENTER);
         
@@ -159,13 +146,12 @@ public class RepresentativeUI {
         VBox centralContainer = new VBox(20, groupAccess, new Separator(), groupOps, new Separator(), groupMgmt, new Separator(), groupView);
         centralContainer.setAlignment(Pos.CENTER);
         
-        // Add Manager specific content if needed
+        // This is where ManagerUI will inject buttons
         addManagerContent(centralContainer);
 
         Button btnLogout = new Button("Logout");
         btnLogout.setOnAction(e -> mainUI.showRoleSelectionScreen());
 
-        // ScrollPane for smaller screens
         VBox content = new VBox(20, header, subHeader, new Separator(), centralContainer, new Separator(), btnLogout);
         content.setAlignment(Pos.CENTER);
         content.setPadding(new Insets(20));
@@ -178,50 +164,42 @@ public class RepresentativeUI {
         mainLayout.getChildren().add(scroll);
     }
     
-    // Hook for ManagerUI
+    /**
+     * Hook for ManagerUI to add buttons. Empty in base class.
+     */
     protected void addManagerContent(VBox container) {
-        // Empty in Rep UI, overridden in ManagerUI
+        // Do nothing in Rep UI
     }
 
-    // ==========================================
-    // Methods
-    // ==========================================
+    // --- Actions ---
 
-    /** Matches Diagram: +registerNewSubscriber() */
     public void registerNewSubscriber(String returnUser) {
-        // Navigate to SubscriberRegistrationUI
         SubscriberRegistrationUI regUI = new SubscriberRegistrationUI(mainLayout, mainUI, () -> showDashboardScreen(returnUser));
         regUI.start();
     }
 
-    /** Matches Diagram: +updateTableDetails() */
     public void updateTableDetails() {
         mainUI.showAlert("System", "Opening Table Management Screen...");
     }
 
-    /** Matches Diagram: +setOpeningHours() */
     public void setOpeningHours() {
         mainUI.showAlert("System", "Opening Hours Editor...");
     }
 
-    /** Matches Diagram: +displayWaitingList() */
     public void displayWaitingList() {
         mainUI.showAlert("System", "Fetching Waiting List Data...");
     }
 
-    /** Matches Diagram: +displayCurrentDiners() */
     public void displayCurrentDiners() {
         mainUI.showAlert("System", "Fetching Current Diners...");
     }
 
     // --- Helpers ---
-    private Button createWideButton(String text, String icon) {
+    protected Button createWideButton(String text, String icon) {
         Button btn = new Button(icon + "  " + text);
         btn.setPrefWidth(300);
         btn.setPrefHeight(35);
         btn.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #ccc; -fx-cursor: hand; -fx-font-size: 13px;");
-        btn.setOnMouseEntered(e -> btn.setStyle("-fx-background-color: #e0e0e0; -fx-border-color: #bbb; -fx-cursor: hand; -fx-font-size: 13px;"));
-        btn.setOnMouseExited(e -> btn.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #ccc; -fx-cursor: hand; -fx-font-size: 13px;"));
         return btn;
     }
 

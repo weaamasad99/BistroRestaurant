@@ -224,9 +224,9 @@ public class ClientUI extends Application {
         });
      // 4. Manager (Launches Login -> Manager Dashboard)
         btnManager.setOnAction(e -> {
-             // ManagerUI inherits from RepUI but has extra buttons
-            // ManagerUI managerScreen = new ManagerUI(mainLayout, this);
-           //  managerScreen.start();
+            //  ManagerUI inherits from RepUI but has extra buttons
+             ManagerUI managerScreen = new ManagerUI(mainLayout, this);
+             managerScreen.start();
         });
         VBox menuBox = new VBox(20, header, btnCasual, btnCustomer, btnRep, btnManager);
         menuBox.setAlignment(Pos.CENTER);
