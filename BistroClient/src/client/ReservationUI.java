@@ -106,6 +106,7 @@ public class ReservationUI {
             }
         });
 
+        
         VBox content = new VBox(20, header, subHeader, grid, btnSubmit, btnBack);
         content.setAlignment(Pos.CENTER);
         content.setMaxWidth(450);
@@ -113,6 +114,7 @@ public class ReservationUI {
         content.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);");
 
         mainLayout.getChildren().add(content);
+        
     }
 
     // Helper: Generate time slots from 12:00 to 23:00
