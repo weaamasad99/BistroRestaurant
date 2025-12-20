@@ -28,6 +28,8 @@ public class Order implements Serializable {
      * @param orderTime The requested time.
      * @param numberOfDiners Number of guests.
      */
+    public Order() {
+    }
     public Order(int userId, Date orderDate, Time orderTime, int numberOfDiners) {
         this.userId = userId;
         this.orderDate = orderDate;

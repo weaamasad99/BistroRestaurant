@@ -17,10 +17,13 @@ import javafx.stage.Stage;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import common.Table;
+import common.User;
+import common.WaitingList;
 
 public class ClientUI extends Application {
-
-    ClientController controller;
+	public RepresentativeUI repUI;
+	public ClientController controller;
     private VBox mainLayout; // Main container for swapping views
 
     // Connection Fields
@@ -219,8 +222,8 @@ public class ClientUI extends Application {
         });
 
         btnRep.setOnAction(e -> {
-            RepresentativeUI repScreen = new RepresentativeUI(mainLayout, this);
-            repScreen.start();
+        	this.repUI = new RepresentativeUI(mainLayout, this); 
+        	this.repUI.start();
         });
      // 4. Manager (Launches Login -> Manager Dashboard)
         btnManager.setOnAction(e -> {
@@ -379,7 +382,33 @@ public class ClientUI extends Application {
         table.getItems().addAll(orders);
         */
     }
+    public void refreshTableData(ArrayList<Table> tables) {
+        // This passes the data to the specific screen
+        if (repUI != null) {
+            repUI.updateTableData(tables);
+        } else {
+            System.out.println("Error: RepresentativeUI is null. Make sure you saved the reference when opening the dashboard.");
+        }
+    }
+    public void refreshSubscriberData(ArrayList<User> subscribers) {
+        if (repUI != null) {
+            repUI.updateSubscriberData(subscribers);
+        }
+    }
 
+    public void refreshOrderData(ArrayList<Order> orders) {
+        if (repUI != null) {
+            repUI.updateOrdersData(orders);
+        } else {
+            System.out.println("Error: RepresentativeUI is not open, cannot update orders.");
+        }
+    }
+
+    public void refreshWaitingListData(ArrayList<WaitingList> list) {
+        if (repUI != null) {
+            repUI.updateWaitingListData(list);
+        }
+    }
     public void showAlert(String title, String content) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);
@@ -403,4 +432,5 @@ public class ClientUI extends Application {
         super.stop();
         System.exit(0); 
     }
+    
 }
