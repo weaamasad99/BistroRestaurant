@@ -51,7 +51,8 @@ public class DatabaseConnection {
     /*
       Fetches all records from the 'orders' table.
     */
-    public ArrayList<Order> getAllOrders() {
+    public ArrayList<Order> getAllOrders() { return null;}
+    	/*
         ArrayList<Order> orders = new ArrayList<>();
         if (conn == null) return orders; // Safety check
 
@@ -86,7 +87,7 @@ public class DatabaseConnection {
         try {
             PreparedStatement ps = conn.prepareStatement("UPDATE orders SET order_date = ?, number_of_guests = ? WHERE order_number = ?");
             ps.setDate(1, orderToUpdate.getOrderDate());
-            ps.setInt(2, orderToUpdate.getNumberOfGuests());
+            ps.setInt(2, orderToUpdate.getNumberOfDiners());
             ps.setInt(3, orderToUpdate.getOrderNumber());
             
             ps.executeUpdate();
