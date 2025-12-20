@@ -80,7 +80,7 @@ public class ReservationUI {
         grid.add(lblGuests, 0, 2);
         grid.add(txtGuests, 1, 2);
 
-        // --- Buttons ---_
+        // --- Buttons ---
         Button btnSubmit = new Button("Check Availability");
         btnSubmit.setPrefWidth(200);
         btnSubmit.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
