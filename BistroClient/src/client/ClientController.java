@@ -3,6 +3,10 @@ package client;
 import common.Message;
 import common.Order;
 import common.TaskType;
+import common.Table;
+import common.User;
+import common.WaitingList;
+
 import javafx.application.Platform;
 
 import java.util.ArrayList;
@@ -32,6 +36,11 @@ public class ClientController {
             return false;
         }
     }
+    public void accept(Object msg) {
+        if (client != null) {
+            client.sendKryoRequest((Message) msg);
+        }
+    }
 
     // Request all orders from the server
     public void getAllOrders() {
@@ -55,11 +64,7 @@ public class ClientController {
 
             switch (msg.getTask()) {
 
-                // Server sent list of orders
-                case ORDERS_IMPORTED:
-                    ArrayList<Order> orders = (ArrayList<Order>) msg.getObject();
-                    ui.updateOrderTable(orders);
-                    break;
+
 
                 // Order updated successfully
                 case UPDATE_SUCCESS:
@@ -71,7 +76,34 @@ public class ClientController {
                 case UPDATE_FAILED:
                     ui.showAlert("Error", "Update failed.");
                     break;
+                case GET_TABLES:
+                    ArrayList<Table> tables = (ArrayList<Table>) msg.getObject();
+                    ui.refreshTableData(tables); 
+                    break;
+                // --------------------------
+                 //  SUBSCRIBERS
+                case GET_ALL_SUBSCRIBERS:
+                    ArrayList<User> subs = (ArrayList<User>) msg.getObject();
+                    ui.refreshSubscriberData(subs);
+                    break;
+
+                //  ACTIVE ORDERS / DINERS
+                case GET_ORDERS:
+                case ORDERS_IMPORTED: // Check if your Server uses this name instead!
+                    System.out.println("Log: Received orders from server.");
+                    ArrayList<Order> orders = (ArrayList<Order>) msg.getObject();
+                    ui.refreshOrderData(orders); // Calls the bridge in ClientUI
+                    break;
+
+                //  WAITING LIST
+                case GET_WAITING_LIST:
+                    ArrayList<WaitingList> waitList = (ArrayList<WaitingList>) msg.getObject();
+                    ui.refreshWaitingListData(waitList);
+                    break;
             }
+
+
+            
         });
     }
 
