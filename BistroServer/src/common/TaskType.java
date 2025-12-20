@@ -12,10 +12,10 @@ public enum TaskType {
     UPDATE_FAILED,
     ERROR,
 
-    // --- User Authentication ---
-    USER_LOGIN,             // Client sends username & ID/password
-    LOGIN_SUCCESS,          // Server returns full User object
-    LOGIN_FAILED,           // Server returns error message
+    LOGIN_REQUEST,      // Client sends User object (username/pass)
+    LOGIN_RESPONSE,     // Server sends User object (with ID/Type) or null
+    LOGOUT,
+
 
     // --- Reservation Process ---
     REQUEST_RESERVATION,    // Client sends Order object (Date, Time, Guests)
@@ -34,5 +34,19 @@ public enum TaskType {
 
     // --- History & Data ---
     GET_USER_HISTORY,       // Client requests history for a User ID
-    HISTORY_IMPORTED        // Server returns ArrayList<Order>
+    HISTORY_IMPORTED,        // Server returns ArrayList<Order>
+    
+    GET_TABLES,         // Request all tables
+    UPDATE_TABLE,       // Update seats/status
+    UPDATE_TABLE_STATUS,// Specific status update
+    ADD_TABLE,          
+    REMOVE_TABLE,  
+    
+    GET_WAITING_LIST,
+    ADD_TO_WAITING_LIST,
+    REMOVE_FROM_WAITING_LIST,
+    
+    GET_ALL_SUBSCRIBERS, // Request list of all subscribers
+    REGISTER_USER,       // Register a new Subscriber/Casual
+    CHECK_USER_EXISTS, 
 }

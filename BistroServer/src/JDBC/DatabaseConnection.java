@@ -6,7 +6,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+
 import common.Order;
+import common.Table;
+import common.User;
+import common.WaitingList;
 
 /*
   Singleton class handling the JDBC connection to the MySQL database.
@@ -51,44 +55,48 @@ public class DatabaseConnection {
     /*
       Fetches all records from the 'orders' table.
     */
-    public ArrayList<Order> getAllOrders() { return null;}
-    	/*
+ // =========================================================================
+    // 1. ORDERS
+    // =========================================================================
+    public ArrayList<Order> getAllOrders() {
         ArrayList<Order> orders = new ArrayList<>();
-        if (conn == null) return orders; // Safety check
+        if (conn == null) return orders;
 
-        try {
-            PreparedStatement ps = conn.prepareStatement("SELECT * FROM orders");
-            ResultSet rs = ps.executeQuery();
+        String query = "SELECT * FROM orders";
+        try (PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            
             while (rs.next()) {
+                // Constructor matches common.Order:
+                // (orderNumber, userId, orderDate, orderTime, numOfDiners, status, confirmationCode, actualArrivalTime)
                 Order order = new Order(
                     rs.getInt("order_number"),
+                    rs.getInt("user_id"),
                     rs.getDate("order_date"),
-                    rs.getInt("number_of_guests"),
+                    rs.getTime("order_time"),
+                    rs.getInt("num_of_diners"),
+                    rs.getString("status"),
                     rs.getInt("confirmation_code"),
-                    rs.getInt("subscriber_id"),
-                    rs.getDate("date_of_placing_order")
+                    rs.getTime("actual_arrival_time")
                 );
                 orders.add(order);
             }
-            rs.close();
-            ps.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return orders;
     }
 
-    /*
-      Updates the date and number of guests for a specific orders.
-    */
-    public  boolean updateOrder(Order orderToUpdate) {
-        if (conn == null)
-        	return false; // Safety check
-        try {
-            PreparedStatement ps = conn.prepareStatement("UPDATE orders SET order_date = ?, number_of_guests = ? WHERE order_number = ?");
-            ps.setDate(1, orderToUpdate.getOrderDate());
-            ps.setInt(2, orderToUpdate.getNumberOfDiners());
-            ps.setInt(3, orderToUpdate.getOrderNumber());
+    public boolean updateOrder(Order order) {
+        if (conn == null) return false;
+        // Matches DB columns: num_of_diners
+        String query = "UPDATE orders SET order_date = ?, order_time = ?, num_of_diners = ?, status = ? WHERE order_number = ?";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setDate(1, order.getOrderDate());
+            ps.setTime(2, order.getOrderTime());
+            ps.setInt(3, order.getNumberOfDiners());
+            ps.setString(4, order.getStatus());
+            ps.setInt(5, order.getOrderNumber());
             
             ps.executeUpdate();
             return true;
@@ -96,5 +104,159 @@ public class DatabaseConnection {
             e.printStackTrace();
             return false;
         }
+    }
+
+    // =========================================================================
+    // 2. TABLES (restaurant_tables)
+    // =========================================================================
+    public ArrayList<Table> getAllTables() {
+        ArrayList<Table> tables = new ArrayList<>();
+        if (conn == null) return tables;
+
+        String query = "SELECT * FROM restaurant_tables";
+        try (PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                Table table = new Table(
+                    rs.getInt("table_id"),
+                    rs.getInt("seats"),
+                    rs.getString("status") // AVAILABLE, OCCUPIED, RESERVED
+                );
+                tables.add(table);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return tables;
+    }
+
+    public boolean updateTable(Table table) {
+        if (conn == null) return false;
+        // Allows updating seats and status
+        String query = "UPDATE restaurant_tables SET seats = ?, status = ? WHERE table_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, table.getSeats());
+            ps.setString(2, table.getStatus());
+            ps.setInt(3, table.getTableId());
+            ps.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    public boolean addTable(Table table) {
+        if (conn == null) return false;
+        String query = "INSERT INTO restaurant_tables (table_id, seats, status) VALUES (?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, table.getTableId());
+            ps.setInt(2, table.getSeats());
+            ps.setString(3, table.getStatus());
+            ps.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean removeTable(int tableId) {
+        if (conn == null) return false;
+        String query = "DELETE FROM restaurant_tables WHERE table_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, tableId);
+            ps.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // =========================================================================
+    // 3. USERS & SUBSCRIBERS
+    // =========================================================================
+    public User loginUser(String username, String password) {
+        if (conn == null) return null;
+        String query = "SELECT * FROM users WHERE username = ? AND password = ?";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, username);
+            ps.setString(2, password);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToUser(rs);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public ArrayList<User> getAllSubscribers() {
+        ArrayList<User> subscribers = new ArrayList<>();
+        if (conn == null) return subscribers;
+
+        // Fetch only Subscribers
+        String query = "SELECT * FROM users WHERE user_type = 'SUBSCRIBER'";
+        try (PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                subscribers.add(mapResultSetToUser(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return subscribers;
+    }
+    
+    // Helper to map User row
+    private User mapResultSetToUser(ResultSet rs) throws SQLException {
+        // Handle nullable integers (subscriber_number)
+        int subNum = rs.getInt("subscriber_number");
+        Integer subNumObj = rs.wasNull() ? null : subNum;
+
+        return new User(
+            rs.getInt("user_id"),
+            rs.getString("phone_number"),
+            rs.getString("email"),
+            rs.getString("first_name"),
+            rs.getString("last_name"),
+            rs.getString("user_type"),
+            subNumObj,
+            rs.getString("username"),
+            rs.getString("password")
+        );
+    }
+
+    // =========================================================================
+    // 4. WAITING LIST
+    // =========================================================================
+    public ArrayList<WaitingList> getAllWaitingList() {
+        ArrayList<WaitingList> list = new ArrayList<>();
+        if (conn == null) return list;
+
+        String query = "SELECT * FROM waiting_list";
+        try (PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                WaitingList item = new WaitingList(
+                    rs.getInt("waiting_id"),
+                    rs.getInt("user_id"),
+                    rs.getDate("date_requested"),
+                    rs.getTime("time_requested"),
+                    rs.getInt("num_of_diners"),
+                    rs.getString("status")
+                );
+                list.add(item);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 }
