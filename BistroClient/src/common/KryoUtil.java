@@ -7,6 +7,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.sql.Date;
+import java.sql.Time;
 
 /**
  * Utility class for handling Kryo serialization.
@@ -25,6 +26,8 @@ public class KryoUtil {
         kryo.register(Order.class);
         kryo.register(ArrayList.class);
         kryo.register(Date.class);
+        kryo.register(User.class);
+        kryo.register(Time.class);
         // Add any other classes you intend to send here
         
         return kryo;
