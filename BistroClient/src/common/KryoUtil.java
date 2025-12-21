@@ -16,19 +16,24 @@ import java.sql.Time;
 public class KryoUtil {
 
     // Kryo is not thread-safe, so we use ThreadLocal to ensure each thread has its own instance.
-    private static final ThreadLocal<Kryo> kryoThreadLocal = ThreadLocal.withInitial(() -> {
+private static final ThreadLocal<Kryo> kryoThreadLocal = ThreadLocal.withInitial(() -> {
         Kryo kryo = new Kryo();
         
         // --- Registration ---
-        // It is critical to register classes in the EXACT SAME ORDER on both client and server.
+        // EXACT SAME ORDER REQUIRED ON BOTH SIDES
         kryo.register(Message.class);
         kryo.register(TaskType.class);
+        
+        // Data Classes
+        kryo.register(User.class);        // Replaces Subscriber
+        kryo.register(Table.class); 
         kryo.register(Order.class);
+        kryo.register(WaitingList.class); // New
+        
+        // Java Utils
         kryo.register(ArrayList.class);
         kryo.register(Date.class);
-        kryo.register(User.class);
-        kryo.register(Time.class);
-        // Add any other classes you intend to send here
+        kryo.register(Time.class);       
         
         return kryo;
     });
