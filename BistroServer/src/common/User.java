@@ -9,11 +9,14 @@ public class User implements Serializable {
     private String firstName;
     private String lastName;
     private String userType; // 'CASUAL' or 'SUBSCRIBER'
-    private Integer subscriberNumber; // Nullable
     private String username;          // Nullable
     private String password;          // Nullable
 
     public User() {}
+    public User(String username, int userId) {
+    	this.username = username;
+    	this.userId = userId;
+    }
 
     // Full Constructor
     public User(int userId, String phoneNumber, String email, String firstName, String lastName, 
@@ -24,7 +27,6 @@ public class User implements Serializable {
         this.firstName = firstName;
         this.lastName = lastName;
         this.userType = userType;
-        this.subscriberNumber = subscriberNumber;
         this.username = username;
         this.password = password;
     }
@@ -48,9 +50,7 @@ public class User implements Serializable {
     public String getUserType() { return userType; }
     public void setUserType(String userType) { this.userType = userType; }
 
-    public Integer getSubscriberNumber() { return subscriberNumber; }
-    public void setSubscriberNumber(Integer subscriberNumber) { this.subscriberNumber = subscriberNumber; }
-
+   
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
 
