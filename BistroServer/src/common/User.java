@@ -13,11 +13,17 @@ public class User implements Serializable {
     private String password;          // Nullable
 
     public User() {}
+    //Cnstrucor for login request
     public User(String username, int userId) {
     	this.username = username;
     	this.userId = userId;
     }
 
+    //Cnstrucor for login request for manager and rep
+    public User(String username, String password) {
+    	this.username = username;
+    	this.password = password;
+    }
     // Full Constructor
     public User(int userId, String phoneNumber, String email, String firstName, String lastName, 
                 String userType, Integer subscriberNumber, String username, String password) {
