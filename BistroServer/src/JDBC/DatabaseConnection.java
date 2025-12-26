@@ -24,7 +24,7 @@ public class DatabaseConnection {
 
     private static final String URL = "jdbc:mysql://localhost:3306/bistro_db?serverTimezone=UTC";
     private static final String USER = "root";        
-    private static final String PASSWORD = "Aa123456";  
+    private static final String PASSWORD = "Onel1596321$";  
 
     /*
       Private Constructor to prevent instantiation from outside
@@ -50,6 +50,25 @@ public class DatabaseConnection {
             instance = new DatabaseConnection();
         }
         return instance;
+    }
+    
+    public boolean createCasualRecord(String phone) {
+        PreparedStatement stmt = null;
+        try {
+            // Prepare Insert Statement
+            // Assuming table 'users' has columns: username, password, role, phone_number
+            String query = "INSERT INTO users (phone_number) VALUES (?)";
+            stmt = conn.prepareStatement(query);
+
+            stmt.setString(1, phone); // Phone field
+
+            stmt.executeUpdate();
+            return true;
+
+        } catch (SQLException e) {
+            System.out.println("Error creating casual user: " + e.getMessage());
+            return false;
+        }
     }
 
     /*
