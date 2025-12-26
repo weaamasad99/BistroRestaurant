@@ -4,6 +4,16 @@ package common;
  * Enum defining the types of tasks/commands sent between Client and Server.
  */
 public enum TaskType {
+	// Success or Fail
+	SUCCESS,
+	FAIL,
+	
+	// Get User
+	GET_CASUAL,
+	
+	// Create User
+	CREATE_CASUAL,
+	
     // --- Orders---
     GET_ORDERS,
     UPDATE_ORDER,

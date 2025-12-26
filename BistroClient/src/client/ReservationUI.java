@@ -13,8 +13,11 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import common.Order;
+
 public class ReservationUI {
 
+	private CasualController casualController;
     private VBox mainLayout;
     private ClientUI mainUI;      // For alerts and global methods
     private Runnable onBack;    // To go back to the specific Casual Menu
@@ -25,6 +28,7 @@ public class ReservationUI {
         this.mainUI = mainUI;
         this.onBack = onBack;
         this.phoneNumber = phoneNumber;
+        this.casualController = new CasualController(mainUI.controller);
     }
 
     public void start() {
@@ -99,6 +103,8 @@ public class ReservationUI {
 
             if (validateInput(date, time, guestsStr)) {
                 // TODO: Send request to Server
+            	//casualController.requestReservation(new Order(date, time, Integer.parseInt(guestsStr)));
+            	
                 mainUI.showAlert("Request Sent", 
                     "Checking availability for:\n" + 
                     date + " at " + time + "\n" + 

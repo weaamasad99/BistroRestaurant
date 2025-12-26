@@ -1,5 +1,6 @@
 package client;
 
+import common.User;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -11,10 +12,12 @@ public class CasualUI {
 
     private VBox mainLayout;
     private ClientUI mainUI; // Reference back to main to handle navigation "Back"
+    private CasualController casualController;
 
     public CasualUI(VBox mainLayout, ClientUI mainUI) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
+        this.casualController = new CasualController(mainUI.controller);
     }
 
     public void start() {
@@ -58,6 +61,7 @@ public class CasualUI {
             	mainUI.showAlert("Invalid Input", "Please enter a valid phone number");
             } 
             else {
+            	casualController.createCasualUser(phone);
                 showOptionsScreen(phone,() -> mainUI.showRoleSelectionScreen());
             }
         });

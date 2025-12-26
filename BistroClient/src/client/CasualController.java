@@ -3,6 +3,7 @@ package client;
 import common.Message;
 import common.Order;
 import common.TaskType;
+import common.User;
 import common.WaitingList;
 
 public class CasualController {
@@ -12,9 +13,17 @@ public class CasualController {
     public CasualController(ClientController networkController) {
         this.networkController = networkController;
     }
+    
+    public void createCasualUser(String phone) {
+        networkController.accept(new Message(TaskType.CREATE_CASUAL, phone));
+    }
+    
+    /*public User getUserFromPhone(String phoneNumber) {
+    	
+    }*/
 
     public void requestReservation(Order order) {
-        // Sends order object (Date, Time, Guests, Phone/ID)
+        // Sends order object (userID, Date, Time, numOfGuests)
         networkController.accept(new Message(TaskType.REQUEST_RESERVATION, order));
     }
 

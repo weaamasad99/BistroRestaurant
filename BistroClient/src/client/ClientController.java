@@ -61,11 +61,18 @@ public class ClientController {
 
         // Ensure UI updates run on the JavaFX Application Thread
         Platform.runLater(() -> {
-
+        		
+        	String response = msg.getObject().toString();
             switch (msg.getTask()) {
 
-
-
+            	case SUCCESS:
+            		ui.showAlert("Success", response);
+                    getAllOrders(); // Refresh UI
+                    break;
+            	case FAIL:
+            		ui.showAlert("Error", response);
+                    getAllOrders(); // Refresh UI
+                    break;    
                 // Order updated successfully
                 case UPDATE_SUCCESS:
                     ui.showAlert("Success", "Order updated successfully!");

@@ -6,6 +6,8 @@ import common.KryoUtil;
 import common.Message;
 import common.Order;
 import common.TaskType;
+import controllers.UserController;
+
 import java.util.ArrayList;
 import java.util.function.BiConsumer;
 
@@ -14,6 +16,7 @@ import JDBC.DatabaseConnection;
 public class BistroServer extends AbstractServer {
     // Callback to update the GUI: (Client, IsConnected)
     private BiConsumer<ConnectionToClient, Boolean> connectionListener;
+    private UserController userController;
 
     public BistroServer(int port, BiConsumer<ConnectionToClient, Boolean> connectionListener) {
         super(port);
@@ -42,23 +45,36 @@ public class BistroServer extends AbstractServer {
     }
 
     private void processMessage(Message message, ConnectionToClient client) {
+    	boolean success;
+    	Message response;
+    	
         switch (message.getTask()) {
+        	case CREATE_CASUAL:
+        		System.out.println("Creating Casual User...");
+                String phone = (String) message.getObject();
+                success = DatabaseConnection.getInstance().createCasualRecord(phone);
+                String msg = success ? "Casual registered successfully" : "Faild to register casual";
+                
+                response = new Message(success ? TaskType.SUCCESS : TaskType.FAIL, msg);
+                sendKryoToClient(response, client);
+                break;
+                
             case GET_ORDERS:
                 System.out.println("Log: Fetching orders...");
                 ArrayList<Order> orders = DatabaseConnection.getInstance().getAllOrders();
                 
                 // Step 3: Serialize response using Kryo before sending
-                Message response = new Message(TaskType.ORDERS_IMPORTED, orders);
+                response = new Message(TaskType.ORDERS_IMPORTED, orders);
                 sendKryoToClient(response, client);
                 break;
 
             case UPDATE_ORDER:
                 System.out.println("Log: Updating order...");
                 Order orderToUpdate = (Order) message.getObject();
-                boolean success = DatabaseConnection.getInstance().updateOrder(orderToUpdate);
+                success = DatabaseConnection.getInstance().updateOrder(orderToUpdate);
                 
-                Message updateResponse = new Message(success ? TaskType.UPDATE_SUCCESS : TaskType.UPDATE_FAILED, null);
-                sendKryoToClient(updateResponse, client);
+                response = new Message(success ? TaskType.UPDATE_SUCCESS : TaskType.UPDATE_FAILED, null);
+                sendKryoToClient(response, client);
                 break;
             
         }
