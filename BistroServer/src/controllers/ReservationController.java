@@ -1,6 +1,7 @@
 package controllers;
 
 import JDBC.DatabaseConnection;
+import common.BistroSchedule;
 import common.Order;
 import common.Table;
 
@@ -129,6 +130,75 @@ public class ReservationController {
         String query = "DELETE FROM restaurant_tables WHERE table_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, tableId);
+            ps.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+ // ========================
+    // SCHEDULE / OPENING HOURS LOGIC
+    // ========================
+
+    // 1. Get All Schedule Items
+    public ArrayList<BistroSchedule> getSchedule() {
+        ArrayList<BistroSchedule> list = new ArrayList<>();
+        if (conn == null) return list;
+
+        try {
+            
+            PreparedStatement ps = conn.prepareStatement("SELECT * FROM schedule");
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(new BistroSchedule(
+                    rs.getString("identifier"),
+                    rs.getString("open_time"),
+                    rs.getString("close_time"),
+                    rs.getBoolean("is_closed"),
+                    rs.getString("schedule_type"),
+                    rs.getString("event_name")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // 2. Save Item (Update if exists, Insert if new)
+
+    public boolean saveScheduleItem(BistroSchedule item) {
+        if (conn == null) return false;
+
+        try {
+            // "REPLACE INTO" is required to overwrite the existing Monday/Tuesday/etc rows
+            String query = "REPLACE INTO schedule (identifier, open_time, close_time, is_closed, schedule_type, event_name) VALUES (?, ?, ?, ?, ?, ?)";
+            
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, item.getIdentifier());
+            ps.setString(2, item.getOpenTime());
+            ps.setString(3, item.getCloseTime());
+            ps.setBoolean(4, item.isClosed());
+            ps.setString(5, item.getType());
+            ps.setString(6, item.getEventName());
+            
+            int rows = ps.executeUpdate();
+            System.out.println("Server Log: Saved schedule for " + item.getIdentifier() + ". Rows affected: " + rows);
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // 3. Delete Item (For removing special dates)
+    public boolean deleteScheduleItem(String identifier) {
+        if (conn == null) return false;
+
+        try {
+            PreparedStatement ps = conn.prepareStatement("DELETE FROM schedule WHERE identifier = ?");
+            ps.setString(1, identifier);
             ps.executeUpdate();
             return true;
         } catch (SQLException e) {

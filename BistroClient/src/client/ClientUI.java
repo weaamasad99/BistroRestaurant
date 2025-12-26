@@ -1,5 +1,6 @@
 package client;
 
+import common.BistroSchedule;
 import common.Order;
 import common.Table;
 import common.User;
@@ -224,6 +225,12 @@ public class ClientUI extends Application {
         if (repUI != null) {
             // Ensure RepresentativeUI has this method!
             repUI.updateWaitingListData(list);
+        }
+    }
+    public void refreshScheduleData(ArrayList<BistroSchedule> schedule) {
+        // Only update if the Representative screen is currently active/loaded
+        if (repUI != null) {
+            repUI.updateScheduleData(schedule);
         }
     }
 

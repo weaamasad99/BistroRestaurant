@@ -2,6 +2,7 @@ package server;
 
 import ocsf.server.AbstractServer;
 import ocsf.server.ConnectionToClient;
+import common.BistroSchedule;
 import common.KryoUtil;
 import common.Message;
 import common.Order;
@@ -174,6 +175,47 @@ public class BistroServer extends AbstractServer {
                 response = new Message(TaskType.GET_WAITING_LIST, waitList);
                 sendKryoToClient(response, client);
                 break;
+            
+             // ===============================================================
+                // OPENING HOURS / SCHEDULE
+                // ===============================================================
+                case GET_SCHEDULE:
+                    System.out.println("Log: Fetching schedule...");
+                    ArrayList<BistroSchedule> schedule = reservationController.getSchedule();
+                    response = new Message(TaskType.GET_SCHEDULE, schedule);
+                    sendKryoToClient(response, client);
+                    break;
+
+                case SAVE_SCHEDULE_ITEM:
+                    System.out.println("Log: Saving full schedule...");
+                    
+                    // 1. Cast the object to ArrayList
+                    ArrayList<BistroSchedule> list = (ArrayList<BistroSchedule>) message.getObject();
+                    
+                    // 2. Loop and save each item silently
+                    boolean allSaved = true;
+                    for (BistroSchedule item : list) {
+                        if (!reservationController.saveScheduleItem(item)) {
+                            allSaved = false;
+                        }
+                    }
+                    
+                    // 3. Send  response back to the client
+                    if (allSaved) {
+                        response = new Message(TaskType.UPDATE_SUCCESS, null);
+                    } else {
+                        response = new Message(TaskType.UPDATE_FAILED, "Some items failed to save.");
+                    }
+                    sendKryoToClient(response, client);
+                    break;
+
+                case DELETE_SCHEDULE_ITEM:
+                    System.out.println("Log: Deleting schedule item...");
+                    String id = (String) message.getObject();
+                    success = reservationController.deleteScheduleItem(id);
+                    response = new Message(success ? TaskType.UPDATE_SUCCESS : TaskType.UPDATE_FAILED, null);
+                    sendKryoToClient(response, client);
+                    break;
 
             // DEFAULT
             default:

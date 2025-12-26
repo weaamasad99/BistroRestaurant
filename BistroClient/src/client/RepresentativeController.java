@@ -1,5 +1,7 @@
 package client;
 
+import java.util.ArrayList;
+
 import common.*;
 
 public class RepresentativeController {
@@ -45,10 +47,21 @@ public class RepresentativeController {
     public void getWaitingList() {
         networkController.accept(new Message(TaskType.GET_WAITING_LIST, null));
     }
+    
 
-    // --- Opening Hours (Placeholder for future DB integration) ---
-    public void saveOpeningHours(Object scheduleData) {
-        // networkController.accept(new Message(TaskType.SAVE_OPENING_HOURS, scheduleData));
-        System.out.println("Controller: Saving opening hours logic goes here.");
+    public void getSchedule() {
+        networkController.accept(new Message(TaskType.GET_SCHEDULE, null));
+    }
+
+
+    public void saveSchedule(ArrayList<BistroSchedule> scheduleList) {
+        networkController.accept(new Message(TaskType.SAVE_SCHEDULE_ITEM, scheduleList));
+    }
+    public void saveScheduleItem(BistroSchedule item) {
+        networkController.accept(new Message(TaskType.SAVE_SCHEDULE_ITEM, item));
+    }
+
+    public void deleteScheduleItem(String identifier) {
+        networkController.accept(new Message(TaskType.DELETE_SCHEDULE_ITEM, identifier));
     }
 }

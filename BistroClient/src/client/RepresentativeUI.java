@@ -11,11 +11,15 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Boundary class for Representative Dashboard.
  * Integrated with DB via RepresentativeController.
  */
+
+
 public class RepresentativeUI {
 
     protected VBox mainLayout;
@@ -42,6 +46,20 @@ public class RepresentativeUI {
     private TableView<User> subscribersView;
     private TableView<WaitingList> waitingListView;
     private TableView<Order> activeOrdersView;
+    private TableView<BistroSchedule> specialDatesView; 
+    private Map<String, DayRow> regularScheduleRows = new HashMap<>();
+    private Map<String, BistroSchedule> cachedScheduleMap = new HashMap<>();
+
+    // Helper class to hold inputs for one day
+    private class DayRow {
+        CheckBox isClosed;
+        ComboBox<String> openTime;
+        ComboBox<String> closeTime;
+
+        public DayRow(CheckBox c, ComboBox<String> o, ComboBox<String> cl) {
+            this.isClosed = c; this.openTime = o; this.closeTime = cl;
+        }
+    }
 
     public RepresentativeUI(VBox mainLayout, ClientUI mainUI) {
         this.mainLayout = mainLayout;
@@ -312,35 +330,63 @@ public class RepresentativeUI {
     }
 
     // =================================================================================
-    // 2. OPENING HOURS (Visual Only - kept local for now)
+    // 2. OPENING HOURS 
     // =================================================================================
-    public void setOpeningHours() {
+public void setOpeningHours() {
         mainLayout.getChildren().clear();
         Label header = new Label("Manage Opening Hours");
         header.setFont(new Font("Arial", 22));
-        header.setStyle("-fx-font-weight: bold;");
 
         TabPane tabPane = new TabPane();
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-        tabPane.getTabs().addAll(new Tab("Regular Week", createRegularScheduleContent()), new Tab("Special Dates", createSpecialDatesContent()));
+        
+
+        tabPane.getTabs().addAll(
+            new Tab("Regular Week", createRegularScheduleContent()), 
+            new Tab("Special Dates", createSpecialDatesContent())
+        );
 
         Button btnBack = new Button("Back to Dashboard");
         btnBack.setOnAction(e -> showDashboardScreen(currentUsername));
         
-        Button btnSaveGlobal = new Button("Save All Changes");
-        btnSaveGlobal.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;");
-        btnSaveGlobal.setOnAction(e -> {
-             // Future: controller.saveOpeningHours(...);
-             mainUI.showAlert("Success", "Hours saved to DB."); 
+        // 2. Create the Save Button for Regular Hours
+        Button btnSaveRegular = new Button("Save Regular Hours");
+        btnSaveRegular.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;");
+        
+        // 3. Logic: Read from UI Map -> Send to Server
+        btnSaveRegular.setOnAction(e -> {
+        	ArrayList<BistroSchedule> scheduleList = new ArrayList<>();
+            for (java.util.Map.Entry<String, DayRow> entry : regularScheduleRows.entrySet()) {
+                String dayName = entry.getKey();
+                DayRow row = entry.getValue();
+                
+                // Create the data object
+                BistroSchedule item = new BistroSchedule(
+                    dayName,
+                    row.openTime.getValue(),
+                    row.closeTime.getValue(),
+                    row.isClosed.isSelected(),
+                    "REGULAR",
+                    null
+                );
+                
+                // Send update to server
+                	scheduleList.add(item);            
+            }
+            controller.saveSchedule(scheduleList);
         });
 
-        VBox content = new VBox(15, header, tabPane, btnSaveGlobal, btnBack);
+        // 4. Layout
+        VBox content = new VBox(15, header, tabPane, btnSaveRegular, btnBack);
         content.setAlignment(Pos.CENTER);
         content.setMaxWidth(600);
         content.setPadding(new Insets(20));
         content.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);");
 
         mainLayout.getChildren().add(content);
+        
+        // 5. Load data immediately to populate the dropdowns
+        controller.getSchedule();
     }
 
     // =================================================================================
@@ -551,14 +597,11 @@ public class RepresentativeUI {
     }
 
     private VBox createRegularScheduleContent() {
-        Label lblInfo = new Label("Set standard opening hours (Check 'Closed' if not open):");
-        lblInfo.setFont(new Font("Arial", 14));
+        regularScheduleRows.clear(); // Reset map when recreating view
+        
+        Label lblInfo = new Label("Set standard opening hours:");
         javafx.scene.layout.GridPane grid = new javafx.scene.layout.GridPane();
         grid.setHgap(10); grid.setVgap(15); grid.setAlignment(Pos.CENTER); grid.setPadding(new Insets(10));
-        
-        javafx.scene.layout.ColumnConstraints colDay = new javafx.scene.layout.ColumnConstraints(); colDay.setMinWidth(90);
-        javafx.scene.layout.ColumnConstraints colCheck = new javafx.scene.layout.ColumnConstraints(); colCheck.setMinWidth(80);
-        grid.getColumnConstraints().addAll(colDay, colCheck);
         
         javafx.collections.ObservableList<String> timeSlots = generateTimeSlots();
         String[] days = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
@@ -567,17 +610,32 @@ public class RepresentativeUI {
         grid.add(new Label("Open"), 2, 0); grid.add(new Label("Close"), 4, 0);
 
         for (int i = 0; i < days.length; i++) {
-            addSmartHoursRow(grid, i + 1, days[i], "08:00", "22:00", false, timeSlots);
+            String dayName = days[i];
+            
+            //  Use DB data if we have it, otherwise default ---
+            String open = "08:00";
+            String close = "22:00";
+            boolean isClosed = false;
+
+            if (cachedScheduleMap.containsKey(dayName)) {
+                BistroSchedule s = cachedScheduleMap.get(dayName);
+                if (s.getOpenTime() != null) open = s.getOpenTime();
+                if (s.getCloseTime() != null) close = s.getCloseTime();
+                isClosed = s.isClosed();
+            }
+            // ---------------------------------------------------------------
+
+            addSmartHoursRow(grid, i + 1, dayName, open, close, isClosed, timeSlots);
         }
         
         ScrollPane scroll = new ScrollPane(grid);
-        scroll.setFitToWidth(true); scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        scroll.setFitToWidth(true); 
         scroll.setPrefHeight(350);
         return new VBox(10, lblInfo, scroll);
     }
     
     private void addSmartHoursRow(javafx.scene.layout.GridPane grid, int row, String day, String defaultOpen, String defaultClose, boolean isClosed, javafx.collections.ObservableList<String> times) {
-        Label lblDay = new Label(day + ":"); lblDay.setStyle("-fx-font-weight: bold; -fx-text-fill: black;"); 
+        Label lblDay = new Label(day + ":"); 
         CheckBox chkClosed = new CheckBox("Closed"); chkClosed.setSelected(isClosed);
         ComboBox<String> cmbOpen = new ComboBox<>(times); cmbOpen.setValue(defaultOpen); cmbOpen.setPrefWidth(90);
         ComboBox<String> cmbClose = new ComboBox<>(times); cmbClose.setValue(defaultClose); cmbClose.setPrefWidth(90);
@@ -585,52 +643,106 @@ public class RepresentativeUI {
 
         cmbOpen.disableProperty().bind(chkClosed.selectedProperty());
         cmbClose.disableProperty().bind(chkClosed.selectedProperty());
-        lblDash.disableProperty().bind(chkClosed.selectedProperty());
+
+        // ***  Save references to the Map ***
+        regularScheduleRows.put(day, new DayRow(chkClosed, cmbOpen, cmbClose));
 
         grid.add(lblDay, 0, row); grid.add(chkClosed, 1, row); grid.add(cmbOpen, 2, row); grid.add(lblDash, 3, row); grid.add(cmbClose, 4, row);
     }
-
     private VBox createSpecialDatesContent() {
         Label lblInfo = new Label("Define specific dates with different hours:");
-        // Keep MockSpecialDate internal as it's not DB connected yet in the prompt files
-        TableView<MockSpecialDate> table = new TableView<>();
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY); table.setPrefHeight(200);
-
-        TableColumn<MockSpecialDate, String> dateCol = new TableColumn<>("Date"); dateCol.setCellValueFactory(new PropertyValueFactory<>("date"));
-        TableColumn<MockSpecialDate, String> hoursCol = new TableColumn<>("Hours"); hoursCol.setCellValueFactory(new PropertyValueFactory<>("hours"));
-        TableColumn<MockSpecialDate, String> eventCol = new TableColumn<>("Event"); eventCol.setCellValueFactory(new PropertyValueFactory<>("event"));
-        table.getColumns().addAll(dateCol, hoursCol, eventCol);
-
-        javafx.collections.ObservableList<MockSpecialDate> data = javafx.collections.FXCollections.observableArrayList();
-        table.setItems(data);
-
-        DatePicker datePicker = new DatePicker(); datePicker.setPromptText("Select Date"); datePicker.setPrefWidth(110);
-        TextField txtOpen = new TextField(); txtOpen.setPromptText("Open"); txtOpen.setPrefWidth(55);
-        TextField txtClose = new TextField(); txtClose.setPromptText("Close"); txtClose.setPrefWidth(55);
-        TextField txtEvent = new TextField(); txtEvent.setPromptText("Event Name"); txtEvent.setPrefWidth(120);
         
-        Button btnAdd = new Button("Add"); btnAdd.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white;");
+        specialDatesView = new TableView<>();
+        specialDatesView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY); 
+        specialDatesView.setPrefHeight(200);
+
+        TableColumn<BistroSchedule, String> dateCol = new TableColumn<>("Date"); 
+        dateCol.setCellValueFactory(new PropertyValueFactory<>("identifier"));
+        
+        TableColumn<BistroSchedule, String> hoursCol = new TableColumn<>("Hours"); 
+        hoursCol.setCellValueFactory(new PropertyValueFactory<>("hoursString")); 
+        
+        TableColumn<BistroSchedule, String> eventCol = new TableColumn<>("Event"); 
+        eventCol.setCellValueFactory(new PropertyValueFactory<>("eventName"));
+        
+        specialDatesView.getColumns().addAll(dateCol, hoursCol, eventCol);
+
+        // Inputs
+        DatePicker datePicker = new DatePicker(); 
+        datePicker.setPromptText("Select Date");
+        TextField txtOpen = new TextField(); txtOpen.setPromptText("08:00");
+        TextField txtClose = new TextField(); txtClose.setPromptText("22:00");
+        TextField txtEvent = new TextField(); txtEvent.setPromptText("Event Name");
+        
+        Button btnAdd = new Button("Add / Update"); 
+        btnAdd.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white;");
+        
         btnAdd.setOnAction(e -> {
             if(datePicker.getValue() != null && !txtOpen.getText().isEmpty()) {
-                data.add(new MockSpecialDate(datePicker.getValue().toString(), txtOpen.getText() + " - " + txtClose.getText(), txtEvent.getText()));
+                BistroSchedule newItem = new BistroSchedule(
+                    datePicker.getValue().toString(),
+                    txtOpen.getText(),
+                    txtClose.getText(),
+                    false, 
+                    "SPECIAL",
+                    txtEvent.getText()
+                );
+                // Save to DB
+                controller.saveScheduleItem(newItem);
+                controller.getSchedule(); // Refresh
             }
         });
         
-        Button btnRemove = new Button("Remove"); btnRemove.setStyle("-fx-background-color: #F44336; -fx-text-fill: white;");
-        btnRemove.setOnAction(e -> data.remove(table.getSelectionModel().getSelectedItem()));
+        Button btnRemove = new Button("Remove"); 
+        btnRemove.setStyle("-fx-background-color: #F44336; -fx-text-fill: white;");
+        btnRemove.setOnAction(e -> {
+            BistroSchedule selected = specialDatesView.getSelectionModel().getSelectedItem();
+            if (selected != null) {
+                controller.deleteScheduleItem(selected.getIdentifier());
+                controller.getSchedule(); // Refresh
+            }
+        });
+     
 
-        javafx.scene.layout.HBox inputRow = new javafx.scene.layout.HBox(10, datePicker, txtOpen, new Label("-"), txtClose, txtEvent, btnAdd); inputRow.setAlignment(Pos.CENTER);
-        javafx.scene.layout.HBox actionRow = new javafx.scene.layout.HBox(10, btnRemove); actionRow.setAlignment(Pos.CENTER_RIGHT);
+
+        javafx.scene.layout.HBox inputRow = new javafx.scene.layout.HBox(10, datePicker, txtOpen, new Label("-"), txtClose, txtEvent); 
+        inputRow.setAlignment(Pos.CENTER);
         
-        VBox layout = new VBox(15, lblInfo, table, actionRow, new Separator(), new Label("Add New Exception:"), inputRow);
+        VBox layout = new VBox(15, lblInfo, specialDatesView, inputRow, new javafx.scene.layout.HBox(10, btnAdd, btnRemove));
         layout.setAlignment(Pos.CENTER); layout.setPadding(new Insets(15));
         return layout;
     }
-    
-    // Internal Helper for visual only (not yet DB connected )
-    public static class MockSpecialDate {
-        private String date; private String hours; private String event;
-        public MockSpecialDate(String d, String h, String e) { this.date = d; this.hours = h; this.event = e; }
-        public String getDate() { return date; } public String getHours() { return hours; } public String getEvent() { return event; }
+    public void updateScheduleData(ArrayList<BistroSchedule> scheduleList) {
+        Platform.runLater(() -> {
+            
+            // 1. Update the Local Cache
+            for (BistroSchedule s : scheduleList) {
+                cachedScheduleMap.put(s.getIdentifier(), s);
+            }
+
+            // 2. Update the UI
+            if (specialDatesView != null) specialDatesView.getItems().clear();
+
+            for (BistroSchedule s : scheduleList) {
+                
+                // Update Regular Days (Dropdowns)
+                if ("REGULAR".equals(s.getType())) {
+                    DayRow row = regularScheduleRows.get(s.getIdentifier()); 
+                    if (row != null) {
+                        row.isClosed.setSelected(s.isClosed());
+                        if(s.getOpenTime() != null) row.openTime.setValue(s.getOpenTime());
+                        if(s.getCloseTime() != null) row.closeTime.setValue(s.getCloseTime());
+                    }
+                }
+                
+                // Update Special Dates (Table)
+                else if ("SPECIAL".equals(s.getType())) {
+                    if (specialDatesView != null) {
+                        specialDatesView.getItems().add(s);
+                    }
+                }
+            }
+        });
     }
+    
 }

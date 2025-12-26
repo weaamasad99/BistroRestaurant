@@ -58,5 +58,8 @@ public enum TaskType {
     
     GET_ALL_SUBSCRIBERS, // Request list of all subscribers
     REGISTER_USER,       // Register a new Subscriber/Casual
-    CHECK_USER_EXISTS, 
+    CHECK_USER_EXISTS,
+    GET_SCHEDULE,
+    SAVE_SCHEDULE_ITEM,
+    DELETE_SCHEDULE_ITEM
 }

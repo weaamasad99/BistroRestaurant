@@ -1,5 +1,6 @@
 package client;
 
+import common.BistroSchedule;
 import common.Message;
 import common.Order;
 import common.TaskType;
@@ -202,6 +203,11 @@ public class ClientController {
                 case ERROR:
                     String errorMsg = (String) msg.getObject();
                     ui.showAlert("Server Error", errorMsg);
+                    break;
+                case GET_SCHEDULE:
+                    ArrayList<BistroSchedule> schedule = (ArrayList<BistroSchedule>) msg.getObject();
+                    // Pass data to the UI manager
+                    ui.refreshScheduleData(schedule);
                     break;
 
                 default:

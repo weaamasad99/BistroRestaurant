@@ -33,7 +33,9 @@ private static final ThreadLocal<Kryo> kryoThreadLocal = ThreadLocal.withInitial
         // Java Utils
         kryo.register(ArrayList.class);
         kryo.register(Date.class);
-        kryo.register(Time.class);       
+        kryo.register(Time.class);   
+        
+        kryo.register(BistroSchedule.class);
         
         return kryo;
     });
