@@ -414,7 +414,7 @@ public void setOpeningHours() {
         phoneCol.setCellValueFactory(new PropertyValueFactory<>("phoneNumber"));
         
         TableColumn<User, Integer> subNumCol = new TableColumn<>("Sub #");
-        subNumCol.setCellValueFactory(new PropertyValueFactory<>("subscriberNumber"));
+        subNumCol.setCellValueFactory(new PropertyValueFactory<>("userId"));
 
         subscribersView.getColumns().addAll(idCol, fNameCol, lNameCol, phoneCol, subNumCol);
         subscribersView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
