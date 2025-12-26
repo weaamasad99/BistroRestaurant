@@ -412,11 +412,8 @@ public void setOpeningHours() {
         
         TableColumn<User, String> phoneCol = new TableColumn<>("Phone");
         phoneCol.setCellValueFactory(new PropertyValueFactory<>("phoneNumber"));
-        
-        TableColumn<User, Integer> subNumCol = new TableColumn<>("Sub #");
-        subNumCol.setCellValueFactory(new PropertyValueFactory<>("userId"));
 
-        subscribersView.getColumns().addAll(idCol, fNameCol, lNameCol, phoneCol, subNumCol);
+        subscribersView.getColumns().addAll(idCol, fNameCol, lNameCol, phoneCol);
         subscribersView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         Button btnBack = new Button("Back");
