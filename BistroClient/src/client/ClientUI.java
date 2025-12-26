@@ -1,30 +1,29 @@
 package client;
 
 import common.Order;
+import common.Table;
+import common.User;
+import common.WaitingList;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-// import javafx.scene.control.cell.PropertyValueFactory; // Commented out
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
-
-//import java.sql.Date;
-import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import common.Table;
-import common.User;
-import common.WaitingList;
 
 public class ClientUI extends Application {
-	public RepresentativeUI repUI;
-	public ClientController controller;
-    private VBox mainLayout; // Main container for swapping views
+
+    // Reference to the active Representative/Manager screen
+    // This allows us to pass data (tables, orders) from the server to the screen.
+    public RepresentativeUI repUI;
+    
+    public ClientController controller;
+    private VBox mainLayout; 
 
     // Connection Fields
     private TextField txtIp;
@@ -32,19 +31,6 @@ public class ClientUI extends Application {
     private Label lblStatus;
     private Button btnConnect; 
 
-    // --- OLD FIELDS (Commented out per request) ---
-    /*
-    private TableView<Order> table;
-    private Button btnLoadOrders; 
-    private TextField txtEditGuests;
-    private DatePicker datePicker;
-    private Label lblSelectedOrder;
-    private Order currentSelectedOrder;
-    private Button btnUpdate;
-    */
-
-    
-    //
     public static void main(String[] args) {
         launch(args);
     }
@@ -54,20 +40,16 @@ public class ClientUI extends Application {
         controller = new ClientController(this);
         primaryStage.setTitle("Bistro Management System");
 
-        // Use a VBox as the main layout that we will clear and refill
         mainLayout = new VBox(20);
         mainLayout.setAlignment(Pos.CENTER);
         mainLayout.setStyle("-fx-background-color: #f4f4f4;");
         mainLayout.setPadding(new Insets(20));
 
-        // --- NEW FLOW: Start with Connection Screen ---
         showConnectionScreen();
 
-        // Set the scene with our dynamic mainLayout
         Scene scene = new Scene(mainLayout, 600, 500);
         primaryStage.setScene(scene);
         
-        // Handle window close
         primaryStage.setOnCloseRequest(e -> {
             try { stop(); } catch (Exception ex) { ex.printStackTrace(); }
         });
@@ -79,7 +61,7 @@ public class ClientUI extends Application {
     // SCREEN 1: Connection UI
     // =========================================================
     private void showConnectionScreen() {
-        mainLayout.getChildren().clear(); // Clear any existing content
+        mainLayout.getChildren().clear();
 
         Label header = new Label("Connect to Server");
         header.setFont(new Font("Arial", 24));
@@ -101,7 +83,6 @@ public class ClientUI extends Application {
         lblStatus.setTextFill(Color.RED);
         lblStatus.setFont(Font.font("Arial", 14));
 
-        // Connect Action
         btnConnect.setOnAction(e -> {
             String ip = txtIp.getText().trim();
             String portStr = txtPort.getText().trim();
@@ -115,7 +96,6 @@ public class ClientUI extends Application {
             lblStatus.setText("Connecting...");
             lblStatus.setTextFill(Color.ORANGE);
 
-            // Thread for connection
             new Thread(() -> {
                 boolean success = false;
                 try {
@@ -123,7 +103,6 @@ public class ClientUI extends Application {
                     success = controller.connect(ip, port);
                 } catch (NumberFormatException ex) {
                     System.err.println("Error parsing port: " + ex.getMessage());
-                    success = false;
                 }
 
                 final boolean isConnected = success;
@@ -134,10 +113,7 @@ public class ClientUI extends Application {
                     if (isConnected) {
                         lblStatus.setText("Connected");
                         lblStatus.setTextFill(Color.GREEN);
-                        
-                        // --- NAVIGATION: Go to Role Selection ---
                         showRoleSelectionScreen();
-
                     } else {
                         lblStatus.setText("Connection Failed");
                         lblStatus.setTextFill(Color.RED);
@@ -156,7 +132,7 @@ public class ClientUI extends Application {
     }
 
     // =========================================================
-    // SCREEN 2: Role Selection (The 4 Buttons)
+    // SCREEN 2: Role Selection
     // =========================================================
     public void showRoleSelectionScreen() {
         mainLayout.getChildren().clear(); 
@@ -165,45 +141,47 @@ public class ClientUI extends Application {
         header.setFont(new Font("Arial", 24));
         header.setStyle("-fx-font-weight: bold; -fx-text-fill: #333;");
 
-        // 1. Casual Diner
         Button btnCasual = new Button("Casual Diner");
-        styleRoleButton(btnCasual, "#4CAF50"); // Green
+        styleRoleButton(btnCasual, "#4CAF50");
 
-        // 2. Customer (Updated to Subscriber)
-        Button btnCustomer = new Button("Subscriber"); // Changed label to Subscriber
-        styleRoleButton(btnCustomer, "#2196F3"); // Blue
+        Button btnSubscriber = new Button("Subscriber");
+        styleRoleButton(btnSubscriber, "#2196F3");
 
-        // 3. Representative
         Button btnRep = new Button("Representative");
-        styleRoleButton(btnRep, "#FF9800"); // Orange
+        styleRoleButton(btnRep, "#FF9800");
 
-        // 4. Manager
         Button btnManager = new Button("Manager");
-        styleRoleButton(btnManager, "#9C27B0"); // Purple
+        styleRoleButton(btnManager, "#9C27B0");
 
-        // Actions
+        // --- ACTIONS ---
+
         btnCasual.setOnAction(e -> {
             CasualUI casualScreen = new CasualUI(mainLayout, this);
             casualScreen.start();
         });
 
-        // --- NEW SUBSCRIBER ACTION ADDED HERE ---
-        btnCustomer.setOnAction(e -> {
+        btnSubscriber.setOnAction(e -> {
             SubscriberUI subscriberScreen = new SubscriberUI(mainLayout, this);
             subscriberScreen.start();
         });
 
         btnRep.setOnAction(e -> {
-        	this.repUI = new RepresentativeUI(mainLayout, this); 
-        	this.repUI.start();
+            // Create Rep UI and save reference so we can update it later
+            RepresentativeUI repScreen = new RepresentativeUI(mainLayout, this);
+            this.repUI = repScreen; 
+            repScreen.start();
         });
-     // 4. Manager (Launches Login -> Manager Dashboard)
+
         btnManager.setOnAction(e -> {
-            //  ManagerUI inherits from RepUI but has extra buttons
+             // Create Manager UI
              ManagerUI managerScreen = new ManagerUI(mainLayout, this);
+             // CRITICAL FIX: Assign managerScreen to repUI. 
+             // Since ManagerUI extends RepresentativeUI, this allows us to use the same refresh methods.
+             this.repUI = managerScreen; 
              managerScreen.start();
         });
-        VBox menuBox = new VBox(20, header, btnCasual, btnCustomer, btnRep, btnManager);
+
+        VBox menuBox = new VBox(20, header, btnCasual, btnSubscriber, btnRep, btnManager);
         menuBox.setAlignment(Pos.CENTER);
         menuBox.setMaxWidth(400);
         menuBox.setPadding(new Insets(30));
@@ -219,21 +197,16 @@ public class ClientUI extends Application {
         btn.setStyle("-fx-background-color: " + colorHex + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
     }
 
-    public void updateOrderTable(ArrayList<Order> orders) {
-        // Not used yet in this screen, but method kept for controller compatibility
-        /*
-        table.getItems().clear();
-        table.getItems().addAll(orders);
-        */
-    }
+    // =========================================================
+    // DATA REFRESH METHODS (Called by ClientController)
+    // =========================================================
+
     public void refreshTableData(ArrayList<Table> tables) {
-        // This passes the data to the specific screen
         if (repUI != null) {
             repUI.updateTableData(tables);
-        } else {
-            System.out.println("Error: RepresentativeUI is null. Make sure you saved the reference when opening the dashboard.");
         }
     }
+
     public void refreshSubscriberData(ArrayList<User> subscribers) {
         if (repUI != null) {
             repUI.updateSubscriberData(subscribers);
@@ -242,39 +215,43 @@ public class ClientUI extends Application {
 
     public void refreshOrderData(ArrayList<Order> orders) {
         if (repUI != null) {
+            // Ensure RepresentativeUI has this method!
             repUI.updateOrdersData(orders);
-        } else {
-            System.out.println("Error: RepresentativeUI is not open, cannot update orders.");
         }
     }
 
     public void refreshWaitingListData(ArrayList<WaitingList> list) {
         if (repUI != null) {
+            // Ensure RepresentativeUI has this method!
             repUI.updateWaitingListData(list);
         }
     }
+
+    // =========================================================
+    // UTILS
+    // =========================================================
+
     public void showAlert(String title, String content) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(content);
-        alert.showAndWait();
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(content);
+            alert.showAndWait();
+        });
     }
 
     public void handleServerDisconnect() {
         showAlert("Connection Lost", "The server has stopped or crashed.\nRestart client.");
-        // Optional: Go back to connection screen
         showConnectionScreen();
     }
 
     @Override
     public void stop() throws Exception {
-        System.out.println("Stopping client...");
         if (controller != null) {
             controller.disconnect(); 
         }
         super.stop();
         System.exit(0); 
     }
-    
 }

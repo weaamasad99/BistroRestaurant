@@ -10,11 +10,13 @@ import javafx.scene.text.Font;
 public class SubscriberUI {
 
     private VBox mainLayout;
-    private ClientUI mainUI; // Reference back to main to handle navigation
+    private ClientUI mainUI; 
+    private SubscriberController controller; 
 
     public SubscriberUI(VBox mainLayout, ClientUI mainUI) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
+        this.controller = new SubscriberController(mainUI.controller);
     }
 
     public void start() {
@@ -22,7 +24,7 @@ public class SubscriberUI {
     }
 
     /**
-     * SCREEN 1: Subscriber Login (Username & ID)
+     * SCREEN 1: Subscriber Login (Username & Int ID)
      */
     private void showLoginScreen() {
         mainLayout.getChildren().clear();
@@ -33,17 +35,20 @@ public class SubscriberUI {
 
         Label lblInstruction = new Label("Please enter your credentials:");
 
-        // Username Field
         TextField txtUsername = new TextField();
         txtUsername.setPromptText("Username");
         txtUsername.setMaxWidth(300);
-        txtUsername.setStyle("-fx-font-size: 14px;");
 
-        // ID Field
         TextField txtId = new TextField();
-        txtId.setPromptText("Subscriber ID");
+        txtId.setPromptText("Subscriber ID (Numbers only)");
         txtId.setMaxWidth(300);
-        txtId.setStyle("-fx-font-size: 14px;");
+
+        // Optional: Force the text field to only accept numbers while typing
+        txtId.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.matches("\\d*")) {
+                txtId.setText(newValue.replaceAll("[^\\d]", ""));
+            }
+        });
 
         Button btnLogin = new Button("Login");
         btnLogin.setPrefWidth(150);
@@ -51,20 +56,31 @@ public class SubscriberUI {
 
         Button btnBack = new Button("Back");
         btnBack.setStyle("-fx-background-color: transparent; -fx-text-fill: #555; -fx-underline: true; -fx-cursor: hand;");
-
-        // Navigation: Go back to Role Selection
         btnBack.setOnAction(e -> mainUI.showRoleSelectionScreen());
 
-        // Action: Validate & Login
+        // --- LOGIN ACTION ---
         btnLogin.setOnAction(e -> {
             String user = txtUsername.getText().trim();
-            String id = txtId.getText().trim();
+            String idString = txtId.getText().trim();
 
-            if (user.isEmpty() || id.isEmpty()) {
+            if (user.isEmpty() || idString.isEmpty()) {
                 mainUI.showAlert("Invalid Input", "Please enter both Username and Subscriber ID.");
-            } else {
-                // Future: Send to server for real authentication
-            	showDashboardScreen(user, id, () -> mainUI.showRoleSelectionScreen());            }
+                return;
+            }
+
+            try {
+                // Parse ID to Integer
+                int subscriberId = Integer.parseInt(idString);
+
+                // Pass the int to the controller
+                controller.login(user, subscriberId);
+                
+                // --- Temporary Navigation for Testing (Remove when server logic is live) ---
+                showDashboardScreen(user, subscriberId, () -> mainUI.showRoleSelectionScreen());
+
+            } catch (NumberFormatException ex) {
+                mainUI.showAlert("Input Error", "Subscriber ID must be a number.");
+            }
         });
 
         VBox content = new VBox(15, header, lblInstruction, txtUsername, txtId, btnLogin, btnBack);
@@ -77,9 +93,9 @@ public class SubscriberUI {
     }
 
     /**
-     * SCREEN 2: Dashboard with Options + History
+     * SCREEN 2: Dashboard
      */
-    public void showDashboardScreen(String username, String id, Runnable onExit) { 
+    public void showDashboardScreen(String username, int id, Runnable onExit) { 
         mainLayout.getChildren().clear();
 
         Label header = new Label("Welcome, " + username);
@@ -88,56 +104,38 @@ public class SubscriberUI {
 
         Label subHeader = new Label("Subscriber #" + id);
         subHeader.setTextFill(Color.GRAY);
+        
         Runnable stayHere = () -> showDashboardScreen(username, id, onExit);
 
-        // 1. Make Reservation
         Button btnReservation = createOptionButton("Make Reservation", "📅");
         btnReservation.setOnAction(e -> {
-        	
+            // Note: ReservationUI might need updating to accept 'int id' if it uses it
             ReservationUI resUI = new ReservationUI(mainLayout, mainUI, stayHere, username);
             resUI.start();
         });
 
-        // 2. Enter Waiting List
         Button btnWaitingList = createOptionButton("Enter Waiting List", "⏳");
         btnWaitingList.setOnAction(e -> {
-            // Define Back Action
-            
-            
-            // Open Waiting List (isCasual = false)
-            WaitingListUI waitScreen = new WaitingListUI(mainLayout, mainUI, stayHere, id, false);
+            // Passing int ID formatted as String for now, or update WaitingListUI to take int
+            WaitingListUI waitScreen = new WaitingListUI(mainLayout, mainUI, stayHere, String.valueOf(id), false);
             waitScreen.start();
         });
 
-        // 3. Identify
         Button btnIdentify = createOptionButton("Check-In", "📋");
         btnIdentify.setOnAction(e -> {
-            
-            
-            IdentificationUI identifyScreen = new IdentificationUI(mainLayout, mainUI, stayHere, id);
+             // Passing int ID formatted as String for now
+            IdentificationUI identifyScreen = new IdentificationUI(mainLayout, mainUI, stayHere, String.valueOf(id));
             identifyScreen.start();
         });
 
-     // 4. History
         Button btnHistory = createOptionButton("Order History", "📜");
-        btnHistory.setStyle("-fx-background-color: #E3F2FD; -fx-border-color: #2196F3; -fx-font-size: 14px; -fx-cursor: hand;");
-        
         btnHistory.setOnAction(e -> {
-            
-           
-
-            // Open SubscriberHistoryUI (Updated Name)
-            SubscriberHistoryUI historyScreen = new SubscriberHistoryUI(mainLayout, mainUI, stayHere, id);
-            historyScreen.start();
+            controller.getHistory(id);
         });
 
-     // 5. Check Out
         Button btnCheckout = createOptionButton("Check Out", "💳");
-        btnCheckout.setStyle("-fx-background-color: #FF5722; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand;");
-        
+        btnCheckout.setStyle("-fx-background-color: #FF5722; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px;");
         btnCheckout.setOnAction(e -> {
-            
-            // Open Checkout
             CheckoutUI checkoutScreen = new CheckoutUI(mainLayout, mainUI, stayHere);
             checkoutScreen.start();
         });
@@ -147,12 +145,7 @@ public class SubscriberUI {
         actionsBox.setPadding(new Insets(15, 0, 0, 0));
 
         Button btnLogout = new Button("Logout");
-        btnLogout.setStyle("-fx-background-color: #ddd; -fx-text-fill: black;");
-        btnLogout.setOnAction(e -> {
-            if(onExit != null) onExit.run(); // Return to Rep Dashboard or Main Menu
-            else mainUI.showRoleSelectionScreen();
-       });
-
+        btnLogout.setOnAction(e -> { if(onExit != null) onExit.run(); else mainUI.showRoleSelectionScreen(); });
 
         VBox content = new VBox(15, header, subHeader, actionsBox, btnLogout);
         content.setAlignment(Pos.CENTER);
@@ -166,18 +159,7 @@ public class SubscriberUI {
     private Button createOptionButton(String text, String icon) {
         Button btn = new Button(icon + "  " + text);
         btn.setPrefWidth(250);
-        btn.setPrefHeight(40); // Slightly smaller height to fit more buttons
-        btn.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #ccc; -fx-font-size: 14px; -fx-cursor: hand;");
-
-        btn.setOnMouseEntered(e -> {
-            if (!text.contains("Check Out") && !text.contains("History")) // Don't override special styles
-                btn.setStyle("-fx-background-color: #e0e0e0; -fx-border-color: #bbb; -fx-font-size: 14px; -fx-cursor: hand;");
-        });
-        btn.setOnMouseExited(e -> {
-            if (!text.contains("Check Out") && !text.contains("History"))
-                btn.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #ccc; -fx-font-size: 14px; -fx-cursor: hand;");
-        });
-
+        btn.setPrefHeight(40);
         return btn;
     }
 }

@@ -11,15 +11,18 @@ public class SubscriberController extends CasualController {
     }
 
     /**
-     * Sends login request using Username and Subscriber ID.
-     * We map Subscriber ID to the 'password' field of the User object for transport.
+     * Sends login request using Username and INT Subscriber ID.
      */
     public void login(String username, int subscriberId) {
-        User loginUser = new User(username, subscriberId);
+        // Assuming your User class has a constructor: User(String username, int id)
+        // If your User class only stores strings, use: new User(username, String.valueOf(subscriberId));
+        User loginUser = new User(username, subscriberId); 
+        
         networkController.accept(new Message(TaskType.LOGIN_REQUEST, loginUser));
     }
 
-    public void getHistory(String subscriberId) {
+    public void getHistory(int subscriberId) {
+        // We pass the ID as an object (Integer)
         networkController.accept(new Message(TaskType.GET_USER_HISTORY, subscriberId));
     }
 }

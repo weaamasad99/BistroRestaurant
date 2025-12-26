@@ -1,6 +1,6 @@
 package client;
 
-import common.*; // Import the real entities (Table, User, Order, TaskType, Message)
+import common.*; 
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -14,12 +14,13 @@ import java.util.ArrayList;
 
 /**
  * Boundary class for Representative Dashboard.
- *  integrated with DB via Client-Server.
+ * Integrated with DB via RepresentativeController.
  */
 public class RepresentativeUI {
 
     protected VBox mainLayout;
     protected ClientUI mainUI; 
+    protected RepresentativeController controller; // Specific Controller
 
     private String currentUsername;
 
@@ -36,7 +37,7 @@ public class RepresentativeUI {
     protected Button viewCurrentDinersButton;
     protected Button viewWaitingListButton;
 
-    // --- Data Views (Promoted to fields so we can update them from Server) ---
+    // --- Data Views ---
     private TableView<Table> tablesView;
     private TableView<User> subscribersView;
     private TableView<WaitingList> waitingListView;
@@ -45,6 +46,8 @@ public class RepresentativeUI {
     public RepresentativeUI(VBox mainLayout, ClientUI mainUI) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
+        // Initialize the specific controller using the main network controller
+        this.controller = new RepresentativeController(mainUI.controller);
     }
 
     public void start() {
@@ -78,18 +81,10 @@ public class RepresentativeUI {
             String user = txtUsername.getText();
             String pass = txtPassword.getText();
             
-            // Send Login Request to Server
-            User loginReq = new User();
-            loginReq.setUsername(user);
-            loginReq.setPassword(pass);
-            Message msg = new Message(TaskType.LOGIN_REQUEST, loginReq);
+            // 1. Send Login Request via Controller
+            controller.staffLogin(user, pass);
             
-            
-            if (mainUI.controller != null) {
-                mainUI.controller.accept(msg); 
-            }
-           
-            
+            // 2. UI Transition (Simulated for now, ideally waits for Server Response)
             if ((user.equals("rep") && pass.equals("1234")) || (user.equals("admin") && pass.equals("admin"))) {
                 showDashboardScreen(user);
             } else {
@@ -147,7 +142,7 @@ public class RepresentativeUI {
         // --- 4. View Section ---
         Label lblView = sectionTitle("View", "#4CAF50");
         viewCurrentDinersButton = createWideButton("View Current Diners (Active)", "🍽");
-        viewOrdersButton = createWideButton("View Active Orders", "🍜"); // Reuses Active logic
+        viewOrdersButton = createWideButton("View Active Orders", "🍜"); 
         viewWaitingListButton = createWideButton("View Full Waiting List", "⏳");
         viewSubscriberButton = createWideButton("View All Subscribers", "👥");
 
@@ -164,7 +159,7 @@ public class RepresentativeUI {
 
         VBox centralContainer = new VBox(20, groupAccess, new Separator(), groupOps, new Separator(), groupMgmt, new Separator(), groupView);
         centralContainer.setAlignment(Pos.CENTER);
-        addManagerContent(centralContainer); // Hook
+        addManagerContent(centralContainer); // Hook for ManagerUI subclass
 
         Button btnLogout = new Button("Logout");
         btnLogout.setOnAction(e -> mainUI.showRoleSelectionScreen());
@@ -180,11 +175,13 @@ public class RepresentativeUI {
         mainLayout.getChildren().add(scroll);
     }
     
+    // Method to be overridden by ManagerUI
     protected void addManagerContent(VBox container) {}
 
     // --- Actions ---
 
     public void registerNewSubscriber(String returnUser) {
+        // Assuming SubscriberRegistrationUI exists and works
         SubscriberRegistrationUI regUI = new SubscriberRegistrationUI(mainLayout, mainUI, () -> showDashboardScreen(returnUser));
         regUI.start();
     }
@@ -192,14 +189,13 @@ public class RepresentativeUI {
     // =================================================================================
     // 1. MANAGE TABLES UI (Integrated with DB)
     // =================================================================================
-  public void updateTableDetails() {
+    public void updateTableDetails() {
         mainLayout.getChildren().clear();
 
         Label header = new Label("Manage Tables");
         header.setFont(new Font("Arial", 22));
         header.setStyle("-fx-font-weight: bold;");
 
-        
         tablesView = new TableView<>();
         
         TableColumn<Table, Integer> idCol = new TableColumn<>("Table ID");
@@ -214,7 +210,6 @@ public class RepresentativeUI {
         tablesView.getColumns().addAll(idCol, seatsCol, statusCol);
         tablesView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-        
         TextField txtId = new TextField(); 
         txtId.setPromptText("ID"); 
         txtId.setPrefWidth(80);
@@ -223,16 +218,13 @@ public class RepresentativeUI {
         txtSeats.setPromptText("Seats"); 
         txtSeats.setPrefWidth(80);
 
-        // 3. Selection Listener
+        // Selection Listener
         tablesView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 txtId.setText(String.valueOf(newVal.getTableId()));
                 txtSeats.setText(String.valueOf(newVal.getSeats()));
-                
             }
         });
-
-        // 4. Buttons 
 
         // --- ADD BUTTON ---
         Button btnAdd = new Button("Add New Table");
@@ -241,11 +233,10 @@ public class RepresentativeUI {
             try {
                 int id = Integer.parseInt(txtId.getText());
                 int seats = Integer.parseInt(txtSeats.getText());
-                
-                // DEFAULT STATUS IS ALWAYS "AVAILABLE" FOR NEW TABLES
                 Table newTable = new Table(id, seats, "AVAILABLE");
                 
-                mainUI.controller.accept(new Message(TaskType.ADD_TABLE, newTable));
+                // Use Controller
+                controller.addTable(newTable);
                 refreshTableRequest();
             } catch (Exception ex) { mainUI.showAlert("Error", "Invalid Input (ID/Seats must be numbers)"); }
         });
@@ -257,17 +248,15 @@ public class RepresentativeUI {
             Table selected = tablesView.getSelectionModel().getSelectedItem();
             if (selected != null) {
                 try {
-
                     selected.setSeats(Integer.parseInt(txtSeats.getText()));
                     
-                    mainUI.controller.accept(new Message(TaskType.UPDATE_TABLE, selected));
+                    // Use Controller
+                    controller.updateTable(selected);
                     refreshTableRequest();
-                    
                     
                     tablesView.getSelectionModel().clearSelection();
                     txtId.clear();
                     txtSeats.clear();
-                    
                 } catch (Exception ex) { mainUI.showAlert("Error", "Invalid Seat Number"); }
             } else {
                 mainUI.showAlert("Error", "Please select a table from the list first.");
@@ -280,13 +269,13 @@ public class RepresentativeUI {
         btnRemove.setOnAction(e -> {
             Table selected = tablesView.getSelectionModel().getSelectedItem();
             if (selected != null) {
-                mainUI.controller.accept(new Message(TaskType.REMOVE_TABLE, selected.getTableId()));
+                // Use Controller
+                controller.removeTable(selected.getTableId());
                 refreshTableRequest();
             }
         });
 
         // Layout
-
         javafx.scene.layout.HBox inputRow = new javafx.scene.layout.HBox(10, new Label("ID:"), txtId, new Label("Seats:"), txtSeats); 
         inputRow.setAlignment(Pos.CENTER);
         
@@ -308,13 +297,11 @@ public class RepresentativeUI {
     }
 
     private void refreshTableRequest() {
-       
-        mainUI.controller.accept(new Message(TaskType.GET_TABLES, null));
+        controller.getAllTables();
     }
     
-
     /**
-     * CALLED BY CLIENT CONTROLLER WHEN SERVER SENDS 'GET_TABLES'
+     * CALLED BY CLIENT CONTROLLER WHEN SERVER SENDS 'GET_TABLES' RESPONSE
      */
     public void updateTableData(ArrayList<Table> tables) {
         Platform.runLater(() -> {
@@ -342,7 +329,10 @@ public class RepresentativeUI {
         
         Button btnSaveGlobal = new Button("Save All Changes");
         btnSaveGlobal.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;");
-        btnSaveGlobal.setOnAction(e -> mainUI.showAlert("Success", "Hours saved to DB.")); // Could implement SAVE_OPENING_HOURS
+        btnSaveGlobal.setOnAction(e -> {
+             // Future: controller.saveOpeningHours(...);
+             mainUI.showAlert("Success", "Hours saved to DB."); 
+        });
 
         VBox content = new VBox(15, header, tabPane, btnSaveGlobal, btnBack);
         content.setAlignment(Pos.CENTER);
@@ -394,14 +384,10 @@ public class RepresentativeUI {
         
         mainLayout.getChildren().add(content);
 
-        // Request Data
-
-        mainUI.controller.accept(new Message(TaskType.GET_ALL_SUBSCRIBERS, null));
+        // Request Data via Controller
+        controller.getAllSubscribers();
     }
 
-    /**
-     * CALLED BY CLIENT CONTROLLER
-     */
     public void updateSubscriberData(ArrayList<User> subscribers) {
         Platform.runLater(() -> {
             if (subscribersView != null) {
@@ -451,9 +437,8 @@ public class RepresentativeUI {
         
         mainLayout.getChildren().add(content);
 
-        // Request Data
-
-        mainUI.controller.accept(new Message(TaskType.GET_WAITING_LIST, null));
+        // Request Data via Controller
+        controller.getWaitingList();
     }
     
     public void updateWaitingListData(ArrayList<WaitingList> list) {
@@ -500,8 +485,8 @@ public class RepresentativeUI {
         
         mainLayout.getChildren().add(content);
         
-        // Request Data
-        mainUI.controller.accept(new Message(TaskType.GET_ORDERS, null));
+        // Request Data via Controller
+        controller.getActiveOrders();
     }
     
     public void updateOrdersData(ArrayList<Order> orders) {
@@ -530,8 +515,14 @@ public class RepresentativeUI {
         dialog.setTitle("Access"); dialog.setHeaderText("Enter Subscriber ID:");
         dialog.showAndWait().ifPresent(id -> {
             if(!id.isEmpty()) {
-                 SubscriberUI subUI = new SubscriberUI(mainLayout, mainUI);
-                 subUI.showDashboardScreen("Client(Via Rep)", id, () -> showDashboardScreen(returnUser));
+                 try {
+                     // Pass the ID as int if required by SubscriberUI
+                     int subId = Integer.parseInt(id);
+                     SubscriberUI subUI = new SubscriberUI(mainLayout, mainUI);
+                     subUI.showDashboardScreen("Client(Via Rep)", subId, () -> showDashboardScreen(returnUser));
+                 } catch (NumberFormatException e) {
+                     mainUI.showAlert("Error", "Subscriber ID must be a number.");
+                 }
             }
         });
     }
@@ -542,6 +533,7 @@ public class RepresentativeUI {
         dialog.showAndWait().ifPresent(phone -> {
             if(!phone.isEmpty()) {
                  CasualUI casualUI = new CasualUI(mainLayout, mainUI);
+                 // Assuming CasualUI has a showOptionsScreen method
                  casualUI.showOptionsScreen(phone, () -> showDashboardScreen(returnUser));
             }
         });
