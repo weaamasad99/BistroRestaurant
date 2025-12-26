@@ -101,7 +101,9 @@ public class ClientController {
 
         // Ensure UI updates run on the JavaFX Application Thread
         Platform.runLater(() -> {
-
+        	
+        	User user;
+        	
             switch (msg.getTask()) {
 		
 		        // --- NEW CASES FOR GENERIC SUCCESS/FAIL ---
@@ -114,10 +116,13 @@ public class ClientController {
 		            String failText = (String) msg.getObject();
 		            ui.showAlert("Operation Failed", failText);
 		            break;
+		        case SET_USER:
+		        	user = (User) msg.getObject();
+		        	this.ui.currentUser = user;    
             
                 // --- LOGIN PROCESS ---
                 case LOGIN_RESPONSE:
-                    User user = (User) msg.getObject();
+                    user = (User) msg.getObject();
                     if (user != null) {
                         ui.showAlert("Login Success", "Welcome back, " + user.getUsername());
                         // Note: You can add logic here to auto-navigate based on user role if needed

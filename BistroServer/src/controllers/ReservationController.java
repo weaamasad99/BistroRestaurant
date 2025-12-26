@@ -6,9 +6,12 @@ import common.Order;
 import common.Table;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Time;
+import java.time.LocalTime;
 import java.util.ArrayList;
 
 /**
@@ -67,6 +70,58 @@ public class ReservationController {
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
+        }
+    }
+    
+    public boolean createReservation(Order order) {
+        try {
+        	int userID = order.getUserId();
+            Date sqlDate = Date.valueOf(order.getOrderDate().toString()); // String "YYYY-MM-DD" -> sql.Date
+            Time sqlTime = order.getOrderTime(); // String "HH:mm" -> sql.Time
+
+            // 3. CHECK DUPLICATE: Does this user already have a booking at this exact time?
+            if (checkIfReservationExists(sqlDate, sqlTime)) {
+                System.out.println("Reservation failed: User already has a booking at this time.");
+                return false; 
+            }
+
+            // 4. INSERT the new reservation
+            String insertSQL = "INSERT INTO orders (user_id, order_date, order_time, num_of_diners, status) VALUES (?, ?, ?, ?, ?)";
+            PreparedStatement ps = conn.prepareStatement(insertSQL)	;
+
+            ps.setInt(1, userID);
+            ps.setDate(2, sqlDate);
+            ps.setTime(3, sqlTime);
+            ps.setInt(4, order.getNumberOfDiners());
+            ps.setString(5, "APPROVED");
+            ps.executeUpdate();
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Helper Method: Checks DB for existing reservation for a specific user.
+     * @return true if reservation exists, false if clear.
+     */
+    private boolean checkIfReservationExists(Date date, Time time) {
+        String query = "SELECT order_number FROM orders WHERE order_date = ? AND order_time = ? AND status != 'CANCELLED'";
+        
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setDate(1, date);
+            ps.setTime(2, time);
+            
+            ResultSet rs = ps.executeQuery();
+            
+            // If rs.next() is true, it means a row was found -> Reservation exists
+            return rs.next(); 
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false; // Assume false or handle error appropriately
         }
     }
 

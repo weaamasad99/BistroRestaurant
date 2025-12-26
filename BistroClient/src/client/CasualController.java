@@ -21,6 +21,10 @@ public class CasualController {
     public void createCasualUser(String phone) {
         networkController.accept(new Message(TaskType.CREATE_CASUAL, phone));
     }
+    
+    public void setCurrentUserByPhone(String phone) {
+        networkController.accept(new Message(TaskType.SET_USER, phone));
+    }
 
     public void requestReservation(Order order) {
         networkController.accept(new Message(TaskType.REQUEST_RESERVATION, order));

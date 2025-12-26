@@ -8,6 +8,9 @@ public enum TaskType {
 	SUCCESS,
 	FAIL,
 	
+	// Set User
+	SET_USER,
+	
 	// Get User
 	GET_CASUAL,
 	

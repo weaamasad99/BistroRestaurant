@@ -97,6 +97,36 @@ public class UserController {
         return null;
     }
 
+    public User getUserByPhone(String phone) {
+        User user = null;
+        
+        try {
+            // 1. SEARCH: Check if user exists by phone number
+            String searchSQL = "SELECT * FROM users WHERE phone_number = ?";
+            PreparedStatement searchStmt = conn.prepareStatement(searchSQL);
+            searchStmt.setString(1, phone);
+            ResultSet rs = searchStmt.executeQuery();
+
+            rs.next();
+            
+        	user = new User(
+                rs.getInt("user_id"),
+                rs.getString("phone_number"),
+                rs.getString("email"),
+                rs.getString("first_name"),
+                rs.getString("last_name"),
+                rs.getString("user_type"),
+                rs.getInt("subscriber_number"),
+                rs.getString("username"),
+                rs.getString("password")
+            );
+        } catch (SQLException e) {
+            System.out.println("SQL Error in getOrInsertCasualUser: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return user;
+    }
     /**
      * Registers a temporary/casual user. 
      * Handles the case where the user ALREADY exists (treats it as a login).

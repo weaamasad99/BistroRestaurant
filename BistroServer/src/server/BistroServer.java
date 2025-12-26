@@ -75,8 +75,9 @@ public class BistroServer extends AbstractServer {
      */
     private void processMessage(Message message, ConnectionToClient client) {
         Message response = null;
+        String resultMsg;
         boolean success;
-
+        
         switch (message.getTask()) {
 
             // ===============================================================
@@ -92,13 +93,21 @@ public class BistroServer extends AbstractServer {
                 response = new Message(TaskType.LOGIN_RESPONSE, loggedInUser);
                 sendKryoToClient(response, client);
                 break;
+            case SET_USER:
+        		System.out.println("Log: Retrieving user...");
+        		String phone = (String) message.getObject();
+                User user = userController.getUserByPhone(phone);
+                
+                response = new Message(TaskType.SET_USER, user);
+                sendKryoToClient(response, client);
+                break;    
 
             case CREATE_CASUAL:
                 System.out.println("Log: Creating Casual User...");
-                String phone = (String) message.getObject();
-                success = userController.createCasualRecord(phone);
+                String phoneNumber = (String) message.getObject();
+                success = userController.createCasualRecord(phoneNumber);
                 
-                String resultMsg = success ? "Casual registered successfully" : "Failed to register casual";
+                resultMsg = success ? "Casual registered successfully" : "Failed to register casual";
                 response = new Message(success ? TaskType.SUCCESS : TaskType.FAIL, resultMsg);
                 sendKryoToClient(response, client);
                 break;
@@ -110,6 +119,16 @@ public class BistroServer extends AbstractServer {
             // ===============================================================
             // ORDERS & RESERVATIONS
             // ===============================================================
+            case REQUEST_RESERVATION:
+            	System.out.println("Log: Creating Reservation...");
+            	Order order = (Order) message.getObject();
+            	success = reservationController.createReservation(order);
+            	
+            	resultMsg = success ? "registered reservation successfully" : "reservation is booked";
+                response = new Message(success ? TaskType.SUCCESS : TaskType.FAIL, resultMsg);
+                sendKryoToClient(response, client);
+                break;
+            	
             case GET_ORDERS:
                 System.out.println("Log: Fetching all orders...");
                 ArrayList<Order> orders = reservationController.getAllOrders();
@@ -176,46 +195,46 @@ public class BistroServer extends AbstractServer {
                 sendKryoToClient(response, client);
                 break;
             
-             // ===============================================================
-                // OPENING HOURS / SCHEDULE
-                // ===============================================================
-                case GET_SCHEDULE:
-                    System.out.println("Log: Fetching schedule...");
-                    ArrayList<BistroSchedule> schedule = reservationController.getSchedule();
-                    response = new Message(TaskType.GET_SCHEDULE, schedule);
-                    sendKryoToClient(response, client);
-                    break;
+            // ===============================================================
+            // OPENING HOURS / SCHEDULE
+            // ===============================================================
+            case GET_SCHEDULE:
+                System.out.println("Log: Fetching schedule...");
+                ArrayList<BistroSchedule> schedule = reservationController.getSchedule();
+                response = new Message(TaskType.GET_SCHEDULE, schedule);
+                sendKryoToClient(response, client);
+                break;
 
-                case SAVE_SCHEDULE_ITEM:
-                    System.out.println("Log: Saving full schedule...");
-                    
-                    // 1. Cast the object to ArrayList
-                    ArrayList<BistroSchedule> list = (ArrayList<BistroSchedule>) message.getObject();
-                    
-                    // 2. Loop and save each item silently
-                    boolean allSaved = true;
-                    for (BistroSchedule item : list) {
-                        if (!reservationController.saveScheduleItem(item)) {
-                            allSaved = false;
-                        }
+            case SAVE_SCHEDULE_ITEM:
+                System.out.println("Log: Saving full schedule...");
+                
+                // 1. Cast the object to ArrayList
+                ArrayList<BistroSchedule> list = (ArrayList<BistroSchedule>) message.getObject();
+                
+                // 2. Loop and save each item silently
+                boolean allSaved = true;
+                for (BistroSchedule item : list) {
+                    if (!reservationController.saveScheduleItem(item)) {
+                        allSaved = false;
                     }
-                    
-                    // 3. Send  response back to the client
-                    if (allSaved) {
-                        response = new Message(TaskType.UPDATE_SUCCESS, null);
-                    } else {
-                        response = new Message(TaskType.UPDATE_FAILED, "Some items failed to save.");
-                    }
-                    sendKryoToClient(response, client);
-                    break;
+                }
+                
+                // 3. Send  response back to the client
+                if (allSaved) {
+                    response = new Message(TaskType.UPDATE_SUCCESS, null);
+                } else {
+                    response = new Message(TaskType.UPDATE_FAILED, "Some items failed to save.");
+                }
+                sendKryoToClient(response, client);
+                break;
 
-                case DELETE_SCHEDULE_ITEM:
-                    System.out.println("Log: Deleting schedule item...");
-                    String id = (String) message.getObject();
-                    success = reservationController.deleteScheduleItem(id);
-                    response = new Message(success ? TaskType.UPDATE_SUCCESS : TaskType.UPDATE_FAILED, null);
-                    sendKryoToClient(response, client);
-                    break;
+            case DELETE_SCHEDULE_ITEM:
+                System.out.println("Log: Deleting schedule item...");
+                String id = (String) message.getObject();
+                success = reservationController.deleteScheduleItem(id);
+                response = new Message(success ? TaskType.UPDATE_SUCCESS : TaskType.UPDATE_FAILED, null);
+                sendKryoToClient(response, client);
+                break;
 
             // DEFAULT
             default:

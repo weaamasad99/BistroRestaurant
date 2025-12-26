@@ -13,7 +13,11 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.sql.Date;
+import java.sql.Time;
+
 import common.Order;
+import common.User;
 
 public class ReservationUI {
 
@@ -95,20 +99,22 @@ public class ReservationUI {
         // Navigation: Go back to the Casual Options screen
         btnBack.setOnAction(e -> onBack.run());
 
+        casualController.setCurrentUserByPhone(phoneNumber);
         // Submit Logic
         btnSubmit.setOnAction(e -> {
-            LocalDate date = datePicker.getValue();
-            String time = timeComboBox.getValue();
+            LocalDate localdate = datePicker.getValue();
+            Date date = Date.valueOf(localdate);
+            
+            String timeStr = timeComboBox.getValue();
+            LocalTime localTime = LocalTime.parse(timeStr);
+            Time time = Time.valueOf(localTime);
+            
             String guestsStr = txtGuests.getText().trim();
 
-            if (validateInput(date, time, guestsStr)) {
+            if (validateInput(localdate, timeStr, guestsStr)) {
                 // TODO: Send request to Server
-            	//casualController.requestReservation(new Order(date, time, Integer.parseInt(guestsStr)));
             	
-                mainUI.showAlert("Request Sent", 
-                    "Checking availability for:\n" + 
-                    date + " at " + time + "\n" + 
-                    "Guests: " + guestsStr + "\n\n(Server integration coming next)");
+            	casualController.requestReservation(new Order(this.mainUI.currentUser.getUserId(), date, time, Integer.parseInt(guestsStr)));
             }
         });
 

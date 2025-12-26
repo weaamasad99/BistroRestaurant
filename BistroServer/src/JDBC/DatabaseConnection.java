@@ -15,7 +15,7 @@ public class DatabaseConnection {
 
     private static final String URL = "jdbc:mysql://localhost:3306/bistro_db?serverTimezone=UTC";
     private static final String USER = "root";        
-    private static final String PASSWORD = "Aa123456";  
+    private static final String PASSWORD = "Onel1596321$";
 
     // Private Constructor
     private DatabaseConnection() {

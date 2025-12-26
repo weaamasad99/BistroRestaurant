@@ -22,6 +22,7 @@ public class ClientUI extends Application {
     // Reference to the active Representative/Manager screen
     // This allows us to pass data (tables, orders) from the server to the screen.
     public RepresentativeUI repUI;
+    public User currentUser;
     
     public ClientController controller;
     private VBox mainLayout; 
