@@ -103,6 +103,17 @@ public class ClientController {
 
             switch (msg.getTask()) {
 
+            // --- NEW CASES FOR GENERIC SUCCESS/FAIL ---
+            case SUCCESS:
+                String successText = (String) msg.getObject();
+                ui.showAlert("Success", successText);
+                break;
+
+            case FAIL:
+                String failText = (String) msg.getObject();
+                ui.showAlert("Operation Failed", failText);
+                break;
+            
                 // --- LOGIN PROCESS ---
                 case LOGIN_RESPONSE:
                     User user = (User) msg.getObject();

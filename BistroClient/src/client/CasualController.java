@@ -14,16 +14,15 @@ public class CasualController {
         this.networkController = networkController;
     }
     
+    /**
+     * Fix: Sends the phone number as a String, because the Server
+     * casts message.getObject() to (String).
+     */
     public void createCasualUser(String phone) {
         networkController.accept(new Message(TaskType.CREATE_CASUAL, phone));
     }
-    
-    /*public User getUserFromPhone(String phoneNumber) {
-    	
-    }*/
 
     public void requestReservation(Order order) {
-        // Sends order object (userID, Date, Time, numOfGuests)
         networkController.accept(new Message(TaskType.REQUEST_RESERVATION, order));
     }
 
@@ -36,7 +35,6 @@ public class CasualController {
     }
     
     public void requestCheckout(String orderCode) {
-        // Placeholder for checkout logic
         System.out.println("Sending checkout request for: " + orderCode);
     }
 }

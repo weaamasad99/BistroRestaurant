@@ -98,16 +98,41 @@ public class UserController {
     }
 
     /**
-     * Registers a temporary/casual user (e.g., someone walking into the restaurant).
+     * Registers a temporary/casual user. 
+     * Handles the case where the user ALREADY exists (treats it as a login).
      * @param phone The phone number of the customer.
-     * @return true if successful.
+     * @return true if successful (either registered OR already exists).
      */
     public boolean createCasualRecord(String phone) {
         if (conn == null) return false;
-        String query = "INSERT INTO users (phone_number, user_type) VALUES (?, 'CASUAL')";
+
+        // --- STEP 1: Check if this phone number already exists ---
+        String checkQuery = "SELECT * FROM users WHERE phone_number = ?";
         
-        try (PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setString(1, phone);
+        try (PreparedStatement checkStmt = conn.prepareStatement(checkQuery)) {
+            checkStmt.setString(1, phone);
+            try (ResultSet rs = checkStmt.executeQuery()) {
+                if (rs.next()) {
+                    // User found! This is a successful "Login" for a casual diner.
+                    System.out.println("Log: Casual user " + phone + " already exists. proceeding.");
+                    return true; 
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error checking for existing user: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+
+        // --- STEP 2: If not found, INSERT a new record ---
+        // Note: We set 'username' to the phone number to ensure it satisfies any NOT NULL constraints on username.
+        String insertQuery = "INSERT INTO users (phone_number, username, user_type, password, first_name, last_name, email) " +
+                             "VALUES (?, ?, 'CASUAL', 'casual', 'Guest', 'Diner', 'no-email')";
+        
+        try (PreparedStatement stmt = conn.prepareStatement(insertQuery)) {
+            stmt.setString(1, phone); // phone_number
+            stmt.setString(2, phone); // username (using phone as username for casuals)
+            
             int affectedRows = stmt.executeUpdate();
             return affectedRows > 0;
         } catch (SQLException e) {
@@ -115,7 +140,6 @@ public class UserController {
             return false;
         }
     }
-
     /**
      * Helper method to map a SQL ResultSet row to a User object.
      */

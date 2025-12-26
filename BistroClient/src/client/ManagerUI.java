@@ -80,14 +80,9 @@ public class ManagerUI extends RepresentativeUI {
         viewReports.setStyle("-fx-background-color: #f3e5f5; -fx-border-color: #ba68c8; -fx-text-fill: #4a148c;");
         
         viewReports.setOnAction(e -> {
-            // Example: Request current month report
-            managerController.getMonthlyReport("Current", "Year"); 
-            
-            // Assuming you have this class, otherwise comment it out
-            // MonthlyReportUI reportUI = new MonthlyReportUI(mainLayout, mainUI, () -> showDashboardScreen("admin"));
-            // reportUI.start();
-            
-            mainUI.showAlert("Feature", "Opening Monthly Reports...");
+            // FIX: Initialize and start the Report UI
+            MonthlyReportUI reportUI = new MonthlyReportUI(mainLayout, mainUI, () -> showDashboardScreen("admin"));
+            reportUI.start();
         });
 
         container.getChildren().addAll(new Separator(), viewReports);
