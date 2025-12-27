@@ -62,6 +62,7 @@ public class CasualUI {
             } 
             else {
             	casualController.createCasualUser(phone);
+            	casualController.setCurrentUserByPhone(phone);
                 showOptionsScreen(phone,() -> mainUI.showRoleSelectionScreen());
             }
         });

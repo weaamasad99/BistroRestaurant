@@ -170,6 +170,36 @@ public class UserController {
             return false;
         }
     }
+    
+    public String generateConfirmationCode() {
+    	String code;
+        boolean isUnique = false;
+        
+        // Loop until we find a code that doesn't exist in the DB
+        do {
+            code = String.format("%04d", new java.util.Random().nextInt(10000));
+            
+            // Check database for existence
+            // Adjust "orders" to your actual table name if different (e.g., "reservations")
+            String query = "SELECT confirmation_code FROM orders WHERE confirmation_code = ?";
+            
+            try (PreparedStatement ps = conn.prepareStatement(query)) {
+                ps.setString(1, code);
+                try (ResultSet rs = ps.executeQuery()) {
+                    // If rs.next() is false, the code is not found -> it is unique
+                    if (!rs.next()) {
+                        isUnique = true;
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                // In case of error, break to avoid infinite loop (or handle appropriately)
+                break; 
+            }
+        } while (!isUnique);
+        
+        return code;
+    }
     /**
      * Helper method to map a SQL ResultSet row to a User object.
      */

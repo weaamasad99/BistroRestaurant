@@ -11,7 +11,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Time;
-import java.time.LocalTime;
 import java.util.ArrayList;
 
 /**
@@ -45,7 +44,7 @@ public class ReservationController {
                     rs.getTime("order_time"),
                     rs.getInt("num_of_diners"),
                     rs.getString("status"),
-                    rs.getInt("confirmation_code"),
+                    rs.getString("confirmation_code"),
                     rs.getTime("actual_arrival_time")
                 );
                 orders.add(order);
@@ -74,6 +73,8 @@ public class ReservationController {
     }
     
     public boolean createReservation(Order order) {
+    	UserController userController = new UserController();
+    	
         try {
         	int userID = order.getUserId();
             Date sqlDate = Date.valueOf(order.getOrderDate().toString()); // String "YYYY-MM-DD" -> sql.Date
@@ -86,15 +87,20 @@ public class ReservationController {
             }
 
             // 4. INSERT the new reservation
-            String insertSQL = "INSERT INTO orders (user_id, order_date, order_time, num_of_diners, status) VALUES (?, ?, ?, ?, ?)";
+            String insertSQL = "INSERT INTO orders (user_id, order_date, order_time, num_of_diners, status, confirmation_code) VALUES (?, ?, ?, ?, ?, ?)";
             PreparedStatement ps = conn.prepareStatement(insertSQL)	;
 
+            String code = userController.generateConfirmationCode();
+            
             ps.setInt(1, userID);
             ps.setDate(2, sqlDate);
             ps.setTime(3, sqlTime);
             ps.setInt(4, order.getNumberOfDiners());
             ps.setString(5, "APPROVED");
+            ps.setString(6, code);
             ps.executeUpdate();
+            
+            order.setConfirmationCode(code);
             return true;
 
         } catch (SQLException e) {

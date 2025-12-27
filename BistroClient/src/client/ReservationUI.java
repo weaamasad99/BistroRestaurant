@@ -99,7 +99,6 @@ public class ReservationUI {
         // Navigation: Go back to the Casual Options screen
         btnBack.setOnAction(e -> onBack.run());
 
-        casualController.setCurrentUserByPhone(phoneNumber);
         // Submit Logic
         btnSubmit.setOnAction(e -> {
             LocalDate localdate = datePicker.getValue();

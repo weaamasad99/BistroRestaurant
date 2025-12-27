@@ -7,7 +7,11 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 
+import java.sql.Date;
+import java.sql.Time;
 import java.util.Optional;
+
+import common.WaitingList;
 
 public class WaitingListUI {
 
@@ -16,6 +20,7 @@ public class WaitingListUI {
     private Runnable onBack;      // Action to go back to the previous menu
     private String userIdentifier; // Subscriber ID or Phone Number
     private boolean isCasual;     // Flag to toggle fields
+    private CasualController casualController;
 
     public WaitingListUI(VBox mainLayout, ClientUI mainUI, Runnable onBack, String userIdentifier, boolean isCasual) {
         this.mainLayout = mainLayout;
@@ -23,6 +28,7 @@ public class WaitingListUI {
         this.onBack = onBack;
         this.userIdentifier = userIdentifier;
         this.isCasual = isCasual;
+        this.casualController = new CasualController(mainUI.controller);
     }
 
     public void start() {
@@ -85,10 +91,28 @@ public class WaitingListUI {
 
         // --- Logic: Join ---
         btnJoin.setOnAction(e -> {
-            String guestsStr = txtGuests.getText().trim();
+        	String guestsStr = txtGuests.getText().trim();
             if (validateInput(guestsStr)) {
-                // Future: Send request to server
-                simulateJoinServer(guestsStr);
+                int diners = Integer.parseInt(guestsStr);
+                
+                WaitingList wl = new WaitingList();
+                wl.setNumOfDiners(diners);
+                long now = System.currentTimeMillis();
+
+                wl.setDateRequested(new Date(now));
+                wl.setTimeRequested(new Time(now));
+                wl.setStatus("WAITING");
+                
+                // We assume mainUI.currentUser was set during the identification phase
+                if (mainUI.currentUser != null) {
+                    wl.setUserId(mainUI.currentUser.getUserId()); 
+                    
+                    // Send only the object
+                    casualController.enterWaitingList(wl);
+                    onBack.run();
+                } else {
+                    mainUI.showAlert("Error", "User not identified. Please try logging in again.");
+                }
             }
         });
 

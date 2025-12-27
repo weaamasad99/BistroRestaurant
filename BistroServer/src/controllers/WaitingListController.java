@@ -50,5 +50,28 @@ public class WaitingListController {
         return list;
     }
     
+    public boolean addToWaitingList(WaitingList wlData) {
+        if (conn == null) return false;
+
+        String query = "INSERT INTO waiting_list (user_id, date_requested, time_requested, num_of_diners, status) " +
+                "VALUES (?, ?, ?, ?, ?)";
+        
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, wlData.getUserId()); // The phone number acts as username for casuals
+            ps.setDate(2, wlData.getDateRequested());
+            ps.setTime(3, wlData.getTimeRequested());
+            ps.setInt(4, wlData.getNumOfDiners());
+            ps.setString(5, wlData.getStatus());
+            
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+            
+        } catch (SQLException e) {
+            System.out.println("Error adding to waiting list: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
     // Future methods: addToWaitingList, removeFromWaitingList can be added here.
 }

@@ -18,7 +18,11 @@ import controllers.SubscriberController;
 import controllers.WaitingListController;
 import JDBC.DatabaseConnection;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.function.BiConsumer;
 
 public class BistroServer extends AbstractServer {
@@ -124,7 +128,7 @@ public class BistroServer extends AbstractServer {
             	Order order = (Order) message.getObject();
             	success = reservationController.createReservation(order);
             	
-            	resultMsg = success ? "registered reservation successfully" : "reservation is booked";
+            	resultMsg = success ? "Registered reservation successfully\nConfirmation code: " + order.getConfirmationCode() : "reservation is booked";
                 response = new Message(success ? TaskType.SUCCESS : TaskType.FAIL, resultMsg);
                 sendKryoToClient(response, client);
                 break;
@@ -143,6 +147,17 @@ public class BistroServer extends AbstractServer {
                 response = new Message(success ? TaskType.UPDATE_SUCCESS : TaskType.UPDATE_FAILED, null);
                 sendKryoToClient(response, client);
                 break;
+                
+            case ENTER_WAITING_LIST:
+                System.out.println("Log: Adding to Waiting List...");
+                WaitingList wlData = (WaitingList) message.getObject();
+
+                success = waitingListController.addToWaitingList(wlData);
+                resultMsg = success ? "Successfully joined waiting list!\n Confirmation code: " + userController.generateConfirmationCode() : "Failed to join waiting list";
+                response = new Message(success ? TaskType.SUCCESS : TaskType.FAIL, resultMsg);
+                
+                sendKryoToClient(response, client);
+                break;    
 
             // ===============================================================
             // TABLE MANAGEMENT

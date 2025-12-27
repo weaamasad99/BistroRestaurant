@@ -17,7 +17,7 @@ public class Order implements Serializable {
     private Time orderTime;         // Time of reservation
     private int numberOfDiners;     // Amount of guests
     private String status;          // PENDING, APPROVED, ACTIVE, FINISHED, CANCELLED
-    private int confirmationCode;   // Code sent to the customer
+    private String confirmationCode;   // Code sent to the customer
     private Time actualArrivalTime; // When the customer actually arrived
 
     /**
@@ -42,7 +42,7 @@ public class Order implements Serializable {
      * Full Constructor (Server -> Client).
      * Used when loading history or details from DB.
      */
-    public Order(int orderNumber, int userId, Date orderDate, Time orderTime, int numberOfDiners, String status, int confirmationCode, Time actualArrivalTime) {
+    public Order(int orderNumber, int userId, Date orderDate, Time orderTime, int numberOfDiners, String status, String confirmationCode, Time actualArrivalTime) {
         this.orderNumber = orderNumber;
         this.userId = userId;
         this.orderDate = orderDate;
@@ -70,8 +70,8 @@ public class Order implements Serializable {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
-    public int getConfirmationCode() { return confirmationCode; }
-    public void setConfirmationCode(int confirmationCode) { this.confirmationCode = confirmationCode; }
+    public String getConfirmationCode() { return confirmationCode; }
+    public void setConfirmationCode(String confirmationCode) { this.confirmationCode = confirmationCode; }
 
     public Time getActualArrivalTime() { return actualArrivalTime; }
     public void setActualArrivalTime(Time actualArrivalTime) { this.actualArrivalTime = actualArrivalTime; }

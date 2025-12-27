@@ -37,7 +37,7 @@ public class ReportController {
                         rs.getTime("order_time"),
                         rs.getInt("num_of_diners"),
                         rs.getString("status"),
-                        rs.getInt("confirmation_code"),
+                        rs.getString("confirmation_code"),
                         rs.getTime("actual_arrival_time")
                     );
                     reportData.add(order);
