@@ -13,6 +13,7 @@ import common.WaitingList;
 
 // Import the specific Controllers
 import controllers.UserController;
+import controllers.PaymentController;
 import controllers.ReservationController;
 import controllers.SubscriberController;
 import controllers.WaitingListController;
@@ -35,6 +36,7 @@ public class BistroServer extends AbstractServer {
     private ReservationController reservationController;
     private SubscriberController subscriberController;
     private WaitingListController waitingListController;
+    private PaymentController paymentController;
 
     public BistroServer(int port, BiConsumer<ConnectionToClient, Boolean> connectionListener) {
         super(port);
@@ -46,6 +48,7 @@ public class BistroServer extends AbstractServer {
         this.reservationController = new ReservationController();
         this.subscriberController = new SubscriberController();
         this.waitingListController = new WaitingListController();
+        this.paymentController = new PaymentController();
     }
 
     /**
@@ -79,8 +82,9 @@ public class BistroServer extends AbstractServer {
      */
     private void processMessage(Message message, ConnectionToClient client) {
         Message response = null;
-        String resultMsg;
+        String resultMsg,code;
         boolean success;
+        int tableId;
         
         switch (message.getTask()) {
 
@@ -158,7 +162,48 @@ public class BistroServer extends AbstractServer {
                 
                 sendKryoToClient(response, client);
                 break;    
+            case CHECK_IN_CUSTOMER:
+            	System.out.println("Log: Check-in request received...");
+                code = (String) message.getObject();
+                
+                tableId = reservationController.checkIn(code);
 
+                if (tableId > 0) {
+                    String msg = "Check-in Successful! Please proceed to Table " + tableId;
+                    response = new Message(TaskType.SUCCESS, msg); 
+                } 
+                else if (tableId == -2) {
+                    response = new Message(TaskType.FAIL, "Invalid confirmation code.");
+                } 
+                else if (tableId == -3) {
+                    response = new Message(TaskType.FAIL, "No tables available for your group size, please wait.");
+                } 
+                else {
+                    response = new Message(TaskType.FAIL, "Database error occurred.");
+                }
+                
+                sendKryoToClient(response, client);
+                break;
+            case GET_BILL:
+            	System.out.println("Log: Getting Bill...");
+                code = (String) message.getObject();
+                
+                success = paymentController.getBill(code);
+                resultMsg = success ? code : "Invalid confirmation code.";
+                response = new Message(success ? TaskType.GET_BILL : TaskType.FAIL, resultMsg);
+                              
+                sendKryoToClient(response, client);
+                break;
+            case PAY_BILL:
+            	System.out.println("Log: Paying Bill...");
+                code = (String) message.getObject();
+                
+                success = paymentController.payBill(code);
+                resultMsg = success ? "Thank you! Enjoy your evening" : "Your payment method failed";
+                response = new Message(success ? TaskType.SUCCESS : TaskType.FAIL, resultMsg);
+                              
+                sendKryoToClient(response, client);
+                break;
             // ===============================================================
             // TABLE MANAGEMENT
             // ===============================================================
@@ -188,7 +233,7 @@ public class BistroServer extends AbstractServer {
 
             case REMOVE_TABLE:
                 System.out.println("Log: Removing table...");
-                int tableId = (int) message.getObject();
+                tableId = (int) message.getObject();
                 success = reservationController.removeTable(tableId);
                 response = new Message(success ? TaskType.UPDATE_SUCCESS : TaskType.UPDATE_FAILED, null);
                 sendKryoToClient(response, client);

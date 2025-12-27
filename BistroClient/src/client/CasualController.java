@@ -34,11 +34,15 @@ public class CasualController {
         networkController.accept(new Message(TaskType.ENTER_WAITING_LIST, entry));
     }
 
-    public void identifyAndCheckIn(String code) {
+    public void checkIn(String code) {
         networkController.accept(new Message(TaskType.CHECK_IN_CUSTOMER, code));
     }
     
-    public void requestCheckout(String orderCode) {
-        System.out.println("Sending checkout request for: " + orderCode);
+    public void getBill(String code) {
+        networkController.accept(new Message(TaskType.GET_BILL, code));
+    }
+    
+    public void payBill(String code) {
+        networkController.accept(new Message(TaskType.PAY_BILL, code));
     }
 }

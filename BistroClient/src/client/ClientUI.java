@@ -23,6 +23,7 @@ public class ClientUI extends Application {
     // This allows us to pass data (tables, orders) from the server to the screen.
     public RepresentativeUI repUI;
     public User currentUser;
+    public CheckoutUI checkoutUI;
     
     public ClientController controller;
     private VBox mainLayout; 
@@ -233,6 +234,20 @@ public class ClientUI extends Application {
         if (repUI != null) {
             repUI.updateScheduleData(schedule);
         }
+    }
+    
+    public void activateBillView(String code) {
+        if (checkoutUI != null) {
+            // Triggers the next screen in CheckoutUI
+            checkoutUI.fetchBillDetails(code);
+        }
+        else {
+        	System.out.print("hhhhh");
+        }
+    }
+    
+    public void setCheckoutUI(CheckoutUI checkoutUI) {
+    	this.checkoutUI = checkoutUI;
     }
 
     // =========================================================

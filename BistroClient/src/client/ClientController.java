@@ -150,6 +150,12 @@ public class ClientController {
                     String reason = (String) msg.getObject();
                     ui.showAlert("Check-in Error", reason);
                     break;
+                case GET_BILL:
+                    String validCode = (String) msg.getObject();
+                    
+                    // Call the method in ClientUI, which calls CheckoutUI
+                    ui.activateBillView(validCode);
+                    break;
 
                 // --- WAITING LIST UPDATES ---
                 case WAITING_LIST_ADDED:

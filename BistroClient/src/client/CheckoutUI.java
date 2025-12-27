@@ -12,14 +12,17 @@ public class CheckoutUI {
     private VBox mainLayout;
     private ClientUI mainUI;
     private Runnable onBack;
+    private CasualController casualController;
 
     public CheckoutUI(VBox mainLayout, ClientUI mainUI, Runnable onBack) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
         this.onBack = onBack;
+        this.casualController = new CasualController(mainUI.controller);
     }
 
     public void start() {
+    	this.mainUI.checkoutUI = this;
         showCodeInputForm();
     }
 
@@ -56,7 +59,7 @@ public class CheckoutUI {
             if (code.isEmpty()) {
                 mainUI.showAlert("Error", "Please enter a code.");
             } else {
-                fetchBillDetails(code);
+                casualController.getBill(code);
             }
         });
 
@@ -136,11 +139,13 @@ public class CheckoutUI {
 
         // Payment Logic
         btnPay.setOnAction(e -> {
+            casualController.payBill(code);
+           
             // Future: Send payment to server
-            mainUI.showAlert("Payment Successful", 
+            /*mainUI.showAlert("Payment Successful", 
                 "Transaction Approved!\n" +
                 "Amount Paid: $" + String.format("%.2f", finalTotal) + "\n\n" +
-                "The table is now free.");
+                "The table is now free.");*/
             onBack.run();
         });
 
@@ -154,8 +159,8 @@ public class CheckoutUI {
     }
 
     // --- Mock Server Logic ---
-    private void fetchBillDetails(String code) {
-        // In the real system, you will send 'code' to the server.
+	public void fetchBillDetails(String code) {
+		// In the real system, you will send 'code' to the server.
         // The server will find the order and return: Amount + isSubscriber status.
 
         // MOCK: Validating input
@@ -173,6 +178,6 @@ public class CheckoutUI {
         // In reality, the server knows if the order belongs to a subscriber.
         boolean isSubscriber = Math.random() > 0.5; 
 
-        showBillDetails(code, randomAmount, isSubscriber);
-    }
+        showBillDetails(code, randomAmount, isSubscriber);		
+	}
 }

@@ -44,7 +44,9 @@ public enum TaskType {
     CHECK_IN_CUSTOMER,      // Client sends Confirmation Code
     CHECK_IN_APPROVED,      // Server assigns table
     CHECK_IN_DENIED,        // Reservation not found or too early
-
+    GET_BILL,
+    PAY_BILL,
+    
     // --- History & Data ---
     GET_USER_HISTORY,       // Client requests history for a User ID
     HISTORY_IMPORTED,        // Server returns ArrayList<Order>

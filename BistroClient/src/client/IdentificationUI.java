@@ -13,12 +13,14 @@ public class IdentificationUI {
     private ClientUI mainUI;       
     private Runnable onBack;      // Action to go back
     private String userIdentifier;    
+    private CasualController casualController;
 
     public IdentificationUI(VBox mainLayout, ClientUI mainUI, Runnable onBack, String userIdentifier) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
         this.onBack = onBack;
         this.userIdentifier = userIdentifier;
+        this.casualController = new CasualController(mainUI.controller);
     }
     
     public void start() {
@@ -73,10 +75,7 @@ public class IdentificationUI {
                 // TODO: Send request to Server (CLIENT_IDENTIFY)
                 // If server approves -> Show "Your Table is #5"
                 // If denied -> Show "Reservation not found or too early."
-                
-                mainUI.showAlert("Identifying...", 
-                    "Sending Request for Confirmation Code: " + bookingId + "\n" +
-                    "(Server validation coming next)");
+            	casualController.checkIn(bookingId);
             }
         });
 

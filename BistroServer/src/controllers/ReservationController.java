@@ -130,6 +130,84 @@ public class ReservationController {
             return false; // Assume false or handle error appropriately
         }
     }
+    
+    public int checkIn(String code) {
+    	if (conn == null) return -1;
+
+        int diners = 0;
+        int orderId = 0;
+        int userId = 0;
+
+        // --- PHASE 1: Check the Reservation Code ---
+        String orderQuery = "SELECT order_number, user_id, num_of_diners FROM orders WHERE confirmation_code = ? AND status = 'PENDING'";
+        
+        try (PreparedStatement ps = conn.prepareStatement(orderQuery)) {
+            ps.setString(1, code);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    orderId = rs.getInt("order_number");
+                    userId = rs.getInt("user_id");
+                    diners = rs.getInt("num_of_diners");
+                } else {
+                    return -2; // Error Code -2: Invalid Reservation
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1; // DB Error
+        }
+
+        // --- PHASE 2: Find a Suitable Table ---
+        // We look for an AVAILABLE table that has enough seats (seats >= diners)
+        // We order by seats ASC to find the "best fit" (smallest suitable table)
+        int assignedTableId = -1;
+        String tableQuery = "SELECT table_id FROM restaurant_tables WHERE status = 'AVAILABLE' AND seats >= ? ORDER BY seats ASC LIMIT 1";
+
+        try (PreparedStatement ps = conn.prepareStatement(tableQuery)) {
+            ps.setInt(1, diners);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    assignedTableId = rs.getInt("table_id");
+                } else {
+                    System.out.println("Check-in failed: No suitable table available.");
+                    return -3; // Error Code -3: No Table Available
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
+        }
+
+        // --- PHASE 3: Update Statuses (Commit the Check-in) ---
+        if (assignedTableId != -1) {
+            try {
+                // 1. Mark table as OCCUPIED
+                String updateTable = "UPDATE restaurant_tables SET status = 'OCCUPIED', user_id = ? WHERE table_id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(updateTable)) {
+                	ps.setInt(1, userId);          
+                    ps.setInt(2, assignedTableId);
+                    ps.executeUpdate();
+                }
+
+                // 2. Mark reservation as ACTIVE
+                String updateOrder = "UPDATE orders SET status = 'ACTIVE', actual_arrival_time = ? WHERE order_number = ?";
+                try (PreparedStatement ps = conn.prepareStatement(updateOrder)) {
+                	ps.setTime(1, new Time(System.currentTimeMillis()));
+                    ps.setInt(2, orderId);
+                    ps.executeUpdate();
+                }
+                                               
+                return assignedTableId; // SUCCESS: Return the table number
+                
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return -1;
+            }
+        }
+
+        return -1;
+    }
+    
 
     // ========================
     // TABLE MANAGEMENT LOGIC

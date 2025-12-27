@@ -102,7 +102,6 @@ public class CasualUI {
         Button btnWaitingList = createOptionButton("Enter Waiting List", "⏳");
         btnWaitingList.setOnAction(e -> {
  
-        	
         	WaitingListUI resUI = new WaitingListUI(mainLayout, mainUI, stayHere, phoneNumber, true);
             resUI.start();
         });
@@ -111,7 +110,6 @@ public class CasualUI {
         Button btnIdentify = createOptionButton("Check-In", "📋");
         btnIdentify.setOnAction(e -> {
         	
-        	
             IdentificationUI identifyUI = new IdentificationUI(mainLayout, mainUI, stayHere, phoneNumber);
             identifyUI.start();
         });
@@ -119,10 +117,9 @@ public class CasualUI {
         // 4. Check Out
         Button btnCheckout = createOptionButton("Check Out", "💳");
         btnCheckout.setOnAction(e -> {
-        	
-        	
-            CheckoutUI identifyUI = new CheckoutUI(mainLayout, mainUI, stayHere);
-            identifyUI.start();
+       
+            CheckoutUI checkoutUI = new CheckoutUI(mainLayout, mainUI, stayHere);
+            checkoutUI.start();
         });
 
         VBox actionsBox = new VBox(15, btnReservation, btnWaitingList, btnIdentify, new Separator(), btnCheckout);
