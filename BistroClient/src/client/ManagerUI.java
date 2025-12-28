@@ -80,7 +80,7 @@ public class ManagerUI extends RepresentativeUI {
         viewReports.setStyle("-fx-background-color: #f3e5f5; -fx-border-color: #ba68c8; -fx-text-fill: #4a148c;");
         
         viewReports.setOnAction(e -> {
-            // FIX: Initialize and start the Report UI
+            //Initialize and start the Report UI
             MonthlyReportUI reportUI = new MonthlyReportUI(mainLayout, mainUI, () -> showDashboardScreen("admin"));
             reportUI.start();
         });

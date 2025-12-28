@@ -66,5 +66,8 @@ public enum TaskType {
     CHECK_USER_EXISTS,
     GET_SCHEDULE,
     SAVE_SCHEDULE_ITEM,
-    DELETE_SCHEDULE_ITEM
+    DELETE_SCHEDULE_ITEM,
+    
+    GET_MONTHLY_REPORT, // Client -> Server (sends String "MM-YYYY")
+    REPORT_GENERATED    // Server -> Client (sends MonthlyReportData object)
 }
