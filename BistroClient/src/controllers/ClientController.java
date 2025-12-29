@@ -1,4 +1,4 @@
-package client;
+package controllers;
 
 import common.BistroSchedule;
 import common.Message;
@@ -10,6 +10,9 @@ import common.WaitingList;
 
 import javafx.application.Platform;
 import java.util.ArrayList;
+
+import client.BistroClient;
+import client.ClientUI;
 
 /**
  * The ClientController acts as the central "Network Manager".

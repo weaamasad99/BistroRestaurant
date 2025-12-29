@@ -5,6 +5,7 @@ import common.Order;
 import common.Table;
 import common.User;
 import common.WaitingList;
+import controllers.ClientController;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;

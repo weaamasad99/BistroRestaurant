@@ -18,6 +18,7 @@ import java.sql.Time;
 
 import common.Order;
 import common.User;
+import controllers.CasualController;
 
 public class ReservationUI {
 

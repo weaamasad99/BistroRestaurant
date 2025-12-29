@@ -12,6 +12,7 @@ import java.sql.Time;
 import java.util.Optional;
 
 import common.WaitingList;
+import controllers.CasualController;
 
 public class WaitingListUI {
 

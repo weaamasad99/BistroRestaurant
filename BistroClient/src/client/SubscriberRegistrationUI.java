@@ -9,6 +9,7 @@ import javafx.scene.text.Font;
 import java.util.Random;
 
 import common.User;
+import controllers.RepresentativeController;
 
 public class SubscriberRegistrationUI {
 

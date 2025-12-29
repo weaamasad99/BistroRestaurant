@@ -1,6 +1,7 @@
 package client;
 
-import common.*; 
+import common.*;
+import controllers.RepresentativeController;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;

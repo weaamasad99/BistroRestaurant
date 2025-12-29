@@ -1,4 +1,4 @@
-package client;
+package controllers;
 
 import common.Message;
 import common.TaskType;

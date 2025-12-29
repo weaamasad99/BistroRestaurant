@@ -3,6 +3,7 @@ package client;
 import common.Message;
 import common.TaskType;
 import common.User;
+import controllers.ManagerController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;

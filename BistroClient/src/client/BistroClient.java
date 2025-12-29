@@ -6,6 +6,8 @@ import common.KryoUtil; // Import the utility
 import common.Message;
 import common.Order;
 import common.TaskType;
+import controllers.ClientController;
+
 import java.util.ArrayList;
 
 public class BistroClient extends AbstractClient {

@@ -1,5 +1,6 @@
 package client;
 
+import controllers.SubscriberController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
