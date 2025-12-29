@@ -72,11 +72,10 @@ public class SubscriberUI {
                 // Parse ID to Integer
                 int subscriberId = Integer.parseInt(idString);
 
-                // Pass the int to the controller
+                // 1. Send request to server
                 controller.login(user, subscriberId);
-                
-                // --- Temporary Navigation for Testing (Remove when server logic is live) ---
-                showDashboardScreen(user, subscriberId, () -> mainUI.showRoleSelectionScreen());
+
+                // The screen will ONLY change when ClientController receives "LOGIN_RESPONSE"
 
             } catch (NumberFormatException ex) {
                 mainUI.showAlert("Input Error", "Subscriber ID must be a number.");

@@ -16,9 +16,13 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import java.util.ArrayList;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import java.io.IOException;
 
 public class ClientUI extends Application {
 
+	private Stage primaryStage;
     // Reference to the active Representative/Manager screen
     // This allows us to pass data (tables, orders) from the server to the screen.
     public RepresentativeUI repUI;
@@ -40,6 +44,7 @@ public class ClientUI extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+    	this.primaryStage = primaryStage;
         controller = new ClientController(this);
         primaryStage.setTitle("Bistro Management System");
 
@@ -203,6 +208,58 @@ public class ClientUI extends Application {
     // =========================================================
     // DATA REFRESH METHODS (Called by ClientController)
     // =========================================================
+    
+    
+    public void openSubscriberDashboard() {
+        Platform.runLater(() -> {
+            SubscriberUI subScreen = new SubscriberUI(mainLayout, this);
+            
+            // 1. Define the correct back action
+            Runnable backAction;
+            if (repUI != null) {
+                backAction = () -> repUI.restoreDashboard();
+            } else {
+                backAction = () -> showRoleSelectionScreen();
+            }
+            
+            if (currentUser != null && currentUser.getSubscriberNumber() != null) {
+                // 2. PASS 'backAction' HERE (You were passing showRoleSelectionScreen directly)
+                subScreen.showDashboardScreen(
+                    currentUser.getUsername(), 
+                    currentUser.getSubscriberNumber(), 
+                    backAction // <--- CHANGE THIS
+                );
+            } else {
+                showAlert("Error", "Subscriber data is missing.");
+            }
+        });
+    }
+    
+    
+    public void openCasualDashboard() {
+        Platform.runLater(() -> {
+            CasualUI casualScreen = new CasualUI(mainLayout, this);
+            
+            // 1. Define the correct back action
+            Runnable backAction;
+            if (repUI != null) {
+                backAction = () -> repUI.restoreDashboard();
+            } else {
+                backAction = () -> showRoleSelectionScreen();
+            }
+            
+            if (currentUser != null) {
+                // 2. PASS 'backAction' HERE
+                casualScreen.showOptionsScreen(
+                    currentUser.getPhoneNumber(), 
+                    backAction // <--- CHANGE THIS
+                );
+            } else {
+                showAlert("Error", "User data is missing.");
+            }
+        });
+    }
+    
 
     public void refreshTableData(ArrayList<Table> tables) {
         if (repUI != null) {

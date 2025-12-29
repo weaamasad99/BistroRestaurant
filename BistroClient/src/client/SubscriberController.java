@@ -16,8 +16,8 @@ public class SubscriberController extends CasualController {
     public void login(String username, int subscriberId) {
         // Assuming your User class has a constructor: User(String username, int id)
         // If your User class only stores strings, use: new User(username, String.valueOf(subscriberId));
-        User loginUser = new User(username, subscriberId); 
-        
+    	User loginUser = new User(username, String.valueOf(subscriberId));
+    	
         networkController.accept(new Message(TaskType.LOGIN_REQUEST, loginUser));
     }
 

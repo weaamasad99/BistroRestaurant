@@ -68,4 +68,9 @@ public class RepresentativeController {
     public void registerSubscriber(User newSubscriber) {
         networkController.accept(new Message(TaskType.REGISTER_USER, newSubscriber));
     }
+    
+    public void checkUserExists(String identifier) {
+        // identifier can be Subscriber ID or Phone Number
+        networkController.accept(new Message(TaskType.CHECK_USER_EXISTS, identifier));
+    }
 }

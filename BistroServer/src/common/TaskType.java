@@ -46,7 +46,7 @@ public enum TaskType {
     CHECK_IN_DENIED,        // Reservation not found or too early
     GET_BILL,
     PAY_BILL,
-    
+
     // --- History & Data ---
     GET_USER_HISTORY,       // Client requests history for a User ID
     HISTORY_IMPORTED,        // Server returns ArrayList<Order>
@@ -63,13 +63,18 @@ public enum TaskType {
     
     GET_ALL_SUBSCRIBERS, // Request list of all subscribers
     REGISTER_USER,       // Register a new Subscriber/Casual
-    CHECK_USER_EXISTS,
+    CHECK_USER_EXISTS, 
     GET_SCHEDULE,
     SAVE_SCHEDULE_ITEM,
     DELETE_SCHEDULE_ITEM,
     
     GET_MONTHLY_REPORT, // Client -> Server (sends String "MM-YYYY")
     REPORT_GENERATED,    // Server -> Client (sends MonthlyReportData object)
+    REGISTRATION_SUCCESS,
     
-    REGISTRATION_SUCCESS
+  
+    USER_FOUND,        
+    USER_NOT_FOUND,
+
+
 }

@@ -555,29 +555,35 @@ public void setOpeningHours() {
     
     private void promptForSubscriberAccess(String returnUser) {
         TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Access"); dialog.setHeaderText("Enter Subscriber ID:");
+        dialog.setTitle("Access"); 
+        dialog.setHeaderText("Enter Subscriber ID:");
+        
         dialog.showAndWait().ifPresent(id -> {
             if(!id.isEmpty()) {
-                 try {
-                     // Pass the ID as int if required by SubscriberUI
-                     int subId = Integer.parseInt(id);
-                     SubscriberUI subUI = new SubscriberUI(mainLayout, mainUI);
-                     subUI.showDashboardScreen("Client(Via Rep)", subId, () -> showDashboardScreen(returnUser));
-                 } catch (NumberFormatException e) {
+                 // 1. Basic Validation (Optional, but good UX)
+                 if (!id.matches("\\d+")) {
                      mainUI.showAlert("Error", "Subscriber ID must be a number.");
+                     return;
                  }
+
+                 // 2. SEND REQUEST TO SERVER INSTEAD OF OPENING SCREEN
+                 // The ClientController will handle the response (USER_FOUND / USER_NOT_FOUND)
+                 controller.checkUserExists(id);
+                 
             }
         });
     }
 
     private void promptForCasualAccess(String returnUser) {
         TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Access"); dialog.setHeaderText("Enter Phone Number:");
+        dialog.setTitle("Access"); 
+        dialog.setHeaderText("Enter Phone Number:");
+        
         dialog.showAndWait().ifPresent(phone -> {
             if(!phone.isEmpty()) {
-                 CasualUI casualUI = new CasualUI(mainLayout, mainUI);
-                 // Assuming CasualUI has a showOptionsScreen method
-                 casualUI.showOptionsScreen(phone, () -> showDashboardScreen(returnUser));
+                 // SEND REQUEST TO SERVER
+                 controller.checkUserExists(phone);
+
             }
         });
     }
@@ -740,6 +746,21 @@ public void setOpeningHours() {
                 }
             }
         });
+    }
+    
+    
+    
+    /**
+     * Restores the dashboard view for the currently logged-in representative.
+     * Used when returning from a client's view.
+     */
+    public void restoreDashboard() {
+        if (currentUsername != null) {
+            showDashboardScreen(currentUsername);
+        } else {
+            // Fallback if username is lost (shouldn't happen in normal flow)
+            mainUI.showRoleSelectionScreen();
+        }
     }
     
 }

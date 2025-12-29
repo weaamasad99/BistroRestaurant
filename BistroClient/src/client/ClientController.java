@@ -121,15 +121,32 @@ public class ClientController {
 		        	this.ui.currentUser = user;    
             
                 // --- LOGIN PROCESS ---
-                case LOGIN_RESPONSE:
-                    user = (User) msg.getObject();
-                    if (user != null) {
-                        ui.showAlert("Login Success", "Welcome back, " + user.getUsername());
-                        // Note: You can add logic here to auto-navigate based on user role if needed
-                    } else {
-                        ui.showAlert("Login Failed", "Invalid credentials.");
-                    }
-                    break;
+		        	// Inside ClientController.java -> handleMessageFromClient
+
+		        case LOGIN_RESPONSE:
+		            user = (User) msg.getObject();
+		            
+		            if (user != null) {
+		                // 1. Save the user
+		                ui.currentUser = user; 
+		                
+		                ui.showAlert("Login Success", "Welcome back, " + user.getUsername());
+
+		                // 2. OPEN THE DASHBOARD NOW
+		                // Use the new helper methods you created in ClientUI
+		                if ("SUBSCRIBER".equalsIgnoreCase(user.getUserType())) {
+		                    ui.openSubscriberDashboard();
+		                } else {
+		                    // If you have casual login logic:
+		                    ui.openCasualDashboard();
+		                }
+
+		            } else {
+		                // 3. Handle Invalid Login
+		                ui.showAlert("Login Failed", "Invalid credentials.");
+		                // Do NOT switch screens. The user stays on the login screen.
+		            }
+		            break;
 
                 // --- RESERVATION PROCESS ---
                 case RESERVATION_CONFIRMED:
@@ -230,6 +247,25 @@ public class ClientController {
                     // 2. Launch the Digital Card Popup
                     Platform.runLater(() -> ui.showDigitalCard(newSub));
                     break;
+                    
+
+                case USER_FOUND:
+                    User validUser = (User) msg.getObject();
+                    this.ui.currentUser = validUser; 
+                    
+                    // ui.showAlert("Success", "User found! Redirecting..."); // Optional
+                    
+                    // Check type to know which Java Class to load
+                    if ("SUBSCRIBER".equalsIgnoreCase(validUser.getUserType())) {
+                        ui.openSubscriberDashboard(); // Call the new method
+                    } else {
+                        ui.openCasualDashboard();     // Call the new method
+                    }
+                    break;
+
+                case USER_NOT_FOUND:
+                    ui.showAlert("Login Error", "No user found with that ID or Phone Number.");
+                    break;    
 
                 default:
                     System.out.println("Log: Unknown TaskType received: " + msg.getTask());

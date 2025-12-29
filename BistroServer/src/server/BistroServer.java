@@ -308,6 +308,31 @@ public class BistroServer extends AbstractServer {
                 response = new Message(success ? TaskType.UPDATE_SUCCESS : TaskType.UPDATE_FAILED, null);
                 sendKryoToClient(response, client);
                 break;
+                
+             // Add this case inside the switch(message.getTask()) block
+            case CHECK_USER_EXISTS:
+                System.out.println("Log: Verifying user existence...");
+                String inputId = (String) message.getObject();
+                User foundUser = null;
+
+                // 1. Try to find by Subscriber ID first
+                // (Assuming userController has getSubscriber or you add it)
+                foundUser = userController.getSubscriber(inputId); 
+
+                // 2. If not found, try to find by Phone Number (for Casuals)
+                if (foundUser == null) {
+                    foundUser = userController.getUserByPhone(inputId);
+                }
+
+                // 3. Send result back
+                if (foundUser != null) {
+                    response = new Message(TaskType.USER_FOUND, foundUser);
+                } else {
+                    response = new Message(TaskType.USER_NOT_FOUND, null);
+                }
+                sendKryoToClient(response, client);
+                break;    
+            
 
             // DEFAULT
             default:

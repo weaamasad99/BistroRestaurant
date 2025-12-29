@@ -96,37 +96,79 @@ public class UserController {
         }
         return null;
     }
+    
+    
+    /**
+     * Checks if a subscriber exists by their Subscriber Number.
+     * Used for the dashboard validation check.
+     * @param subscriberIdString The ID entered by the Representative (as a String).
+     * @return The User object if found, null otherwise.
+     */
+    public User getSubscriber(String subscriberIdString) {
+        if (conn == null) return null;
+        User user = null;
+
+        try {
+            // 1. Parse string to int (since database column is likely INT)
+            int subId = Integer.parseInt(subscriberIdString);
+
+            // 2. Query the users table
+            String query = "SELECT * FROM users WHERE subscriber_number = ?";
+            
+            try (PreparedStatement ps = conn.prepareStatement(query)) {
+                ps.setInt(1, subId);
+                
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        // 3. Use your existing helper method to map the result
+                        user = mapResultSetToUser(rs);
+                    }
+                }
+            }
+        } catch (NumberFormatException e) {
+            // This handles cases where the Rep types "abc" instead of numbers
+            System.out.println("Log: Validation failed - ID is not a number: " + subscriberIdString);
+        } catch (SQLException e) {
+            System.err.println("SQL Error in getSubscriber: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return user;
+    }
 
     public User getUserByPhone(String phone) {
         User user = null;
         
         try {
-            // 1. SEARCH: Check if user exists by phone number
             String searchSQL = "SELECT * FROM users WHERE phone_number = ?";
             PreparedStatement searchStmt = conn.prepareStatement(searchSQL);
             searchStmt.setString(1, phone);
             ResultSet rs = searchStmt.executeQuery();
 
-            rs.next();
-            
-        	user = new User(
-                rs.getInt("user_id"),
-                rs.getString("phone_number"),
-                rs.getString("email"),
-                rs.getString("first_name"),
-                rs.getString("last_name"),
-                rs.getString("user_type"),
-                rs.getInt("subscriber_number"),
-                rs.getString("username"),
-                rs.getString("password")
-            );
+            // FIX: Change 'rs.next();' to 'if (rs.next())'
+            if (rs.next()) { 
+                user = new User(
+                    rs.getInt("user_id"),
+                    rs.getString("phone_number"),
+                    rs.getString("email"),
+                    rs.getString("first_name"),
+                    rs.getString("last_name"),
+                    rs.getString("user_type"),
+                    rs.getInt("subscriber_number"),
+                    rs.getString("username"),
+                    rs.getString("password")
+                );
+            }
         } catch (SQLException e) {
-            System.out.println("SQL Error in getOrInsertCasualUser: " + e.getMessage());
+            System.out.println("SQL Error in getUserByPhone: " + e.getMessage());
             e.printStackTrace();
         }
         
         return user;
     }
+    
+    
+    
     /**
      * Registers a temporary/casual user. 
      * Handles the case where the user ALREADY exists (treats it as a login).
