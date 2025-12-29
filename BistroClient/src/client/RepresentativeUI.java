@@ -99,15 +99,14 @@ public class RepresentativeUI {
             String user = txtUsername.getText();
             String pass = txtPassword.getText();
             
-            // 1. Send Login Request via Controller
+            if (user.isEmpty() || pass.isEmpty()) {
+                mainUI.showAlert("Error", "Please enter username and password.");
+                return;
+            }
+            
+            // Send Login Request to Server
             controller.staffLogin(user, pass);
             
-            // 2. UI Transition (Simulated for now, ideally waits for Server Response)
-            if ((user.equals("rep") && pass.equals("1234")) || (user.equals("admin") && pass.equals("admin"))) {
-                showDashboardScreen(user);
-            } else {
-                mainUI.showAlert("Error", "Invalid Credentials (Try: rep/1234)");
-            }
         });
 
         VBox content = new VBox(15, header, txtUsername, txtPassword, btnLogin, btnBack);

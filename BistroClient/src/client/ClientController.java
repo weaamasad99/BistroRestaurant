@@ -127,24 +127,26 @@ public class ClientController {
 		            user = (User) msg.getObject();
 		            
 		            if (user != null) {
-		                // 1. Save the user
 		                ui.currentUser = user; 
-		                
-		                ui.showAlert("Login Success", "Welcome back, " + user.getUsername());
+		                ui.showAlert("Login Success", "Welcome, " + user.getUsername());
 
-		                // 2. OPEN THE DASHBOARD NOW
-		                // Use the new helper methods you created in ClientUI
-		                if ("SUBSCRIBER".equalsIgnoreCase(user.getUserType())) {
+		                String type = user.getUserType();
+
+		                if ("SUBSCRIBER".equalsIgnoreCase(type)) {
 		                    ui.openSubscriberDashboard();
-		                } else {
-		                    // If you have casual login logic:
+		                } 
+		                // --- ADD THIS BLOCK ---
+		                else if ("REPRESENTATIVE".equalsIgnoreCase(type) || "MANAGER".equalsIgnoreCase(type)) {
+		                    ui.openRepresentativeDashboard(user);
+		                } 
+		                // ----------------------
+		                else {
+		                    // Only defaults to casual if it's not the others
 		                    ui.openCasualDashboard();
 		                }
 
 		            } else {
-		                // 3. Handle Invalid Login
 		                ui.showAlert("Login Failed", "Invalid credentials.");
-		                // Do NOT switch screens. The user stays on the login screen.
 		            }
 		            break;
 

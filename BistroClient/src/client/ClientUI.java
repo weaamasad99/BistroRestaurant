@@ -260,6 +260,18 @@ public class ClientUI extends Application {
         });
     }
     
+    
+    public void openRepresentativeDashboard(User user) {
+        Platform.runLater(() -> {
+            // 1. Initialize RepresentativeUI if null (though it should exist from login)
+            if (repUI == null) {
+                repUI = new RepresentativeUI(mainLayout, this);
+            }
+            
+            // 2. Open the dashboard
+            repUI.showDashboardScreen(user.getUsername());
+        });
+    }
 
     public void refreshTableData(ArrayList<Table> tables) {
         if (repUI != null) {
