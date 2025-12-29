@@ -120,8 +120,21 @@ public class BistroServer extends AbstractServer {
                 sendKryoToClient(response, client);
                 break;
 
+
             case REGISTER_USER:
-                // Logic for full registration would go here via UserController
+                System.out.println("Log: Processing Subscriber Registration...");
+                User subToRegister = (User) message.getObject();
+
+                // 1. Register in DB (This generates the ID)
+                User registeredSub = userController.registerNewSubscriber(subToRegister);
+
+                if (registeredSub != null) {
+                    // 2. CRITICAL: Send specific success message with the User object
+                    response = new Message(TaskType.REGISTRATION_SUCCESS, registeredSub);
+                } else {
+                    response = new Message(TaskType.FAIL, "Registration failed. User may already exist.");
+                }
+                sendKryoToClient(response, client);
                 break;
 
             // ===============================================================

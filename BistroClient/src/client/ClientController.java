@@ -220,6 +220,16 @@ public class ClientController {
                     // Pass data to the UI manager
                     ui.refreshScheduleData(schedule);
                     break;
+                    
+
+                case REGISTRATION_SUCCESS:
+                    User newSub = (User) msg.getObject();
+                    // 1. Show simple success alert
+                    ui.showAlert("Success", "Subscriber Registered Successfully!");
+                    
+                    // 2. Launch the Digital Card Popup
+                    Platform.runLater(() -> ui.showDigitalCard(newSub));
+                    break;
 
                 default:
                     System.out.println("Log: Unknown TaskType received: " + msg.getTask());

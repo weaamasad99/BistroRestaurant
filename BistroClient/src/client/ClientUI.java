@@ -249,6 +249,59 @@ public class ClientUI extends Application {
     public void setCheckoutUI(CheckoutUI checkoutUI) {
     	this.checkoutUI = checkoutUI;
     }
+    
+    
+    
+    /**
+     * Displays a professional "Digital Card" window with a live QR Code.
+     */
+    public void showDigitalCard(User user) {
+        javafx.stage.Stage cardStage = new javafx.stage.Stage();
+        cardStage.setTitle("Subscriber Card");
+
+        // --- 1. The Card Container (Styled to look like a plastic card) ---
+        javafx.scene.layout.VBox cardBox = new javafx.scene.layout.VBox(10);
+        cardBox.setAlignment(Pos.CENTER);
+        cardBox.setPadding(new Insets(20));
+        // Gold gradient background for a "Premium" feel
+        cardBox.setStyle("-fx-background-color: linear-gradient(to bottom right, #DAA520, #FFD700); " +
+                         "-fx-background-radius: 15; " +
+                         "-fx-border-color: #B8860B; -fx-border-width: 2; -fx-border-radius: 15; " +
+                         "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 10, 0, 0, 0);");
+
+        // --- 2. Bistro Logo / Header ---
+        Label lblTitle = new Label("BISTRO SUBSCRIBER");
+        lblTitle.setFont(Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 18));
+        lblTitle.setTextFill(Color.WHITE);
+
+        // --- 3. The QR Code (Generated on the fly) ---
+        // This API takes the ID and returns a QR image. No libraries needed.
+        String qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + user.getSubscriberNumber();
+        javafx.scene.image.ImageView qrView = new javafx.scene.image.ImageView(qrUrl);
+        qrView.setFitWidth(120);
+        qrView.setFitHeight(120);
+
+        // --- 4. User Details ---
+        Label lblName = new Label(user.getFirstName() + " " + user.getLastName());
+        lblName.setFont(Font.font("Arial", 16));
+        
+        Label lblNum = new Label("ID: " + user.getSubscriberNumber());
+        lblNum.setFont(Font.font("Monospaced", javafx.scene.text.FontWeight.BOLD, 20));
+
+        // --- 5. Close Button ---
+        Button btnClose = new Button("Close");
+        btnClose.setOnAction(e -> cardStage.close());
+        btnClose.setStyle("-fx-background-color: rgba(255,255,255,0.8); -fx-cursor: hand;");
+
+        // Assembly
+        cardBox.getChildren().addAll(lblTitle, qrView, lblName, lblNum, btnClose);
+
+        javafx.scene.Scene scene = new javafx.scene.Scene(cardBox, 320, 420);
+        scene.setFill(Color.TRANSPARENT); // Important for rounded corners
+        cardStage.setScene(scene);
+        cardStage.initStyle(javafx.stage.StageStyle.TRANSPARENT); // Removes OS window borders
+        cardStage.show();
+    }
 
     // =========================================================
     // UTILS

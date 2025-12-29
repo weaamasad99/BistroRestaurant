@@ -12,6 +12,8 @@ public class User implements Serializable {
     private String username;          // Nullable
     private String password;          // Nullable
 
+    private Integer subscriberNumber;
+    
     public User() {}
     //Cnstrucor for login request
     public User(String username, int userId) {
@@ -35,6 +37,8 @@ public class User implements Serializable {
         this.userType = userType;
         this.username = username;
         this.password = password;
+        this.subscriberNumber = subscriberNumber;
+        
     }
 
     // Getters and Setters
@@ -62,4 +66,8 @@ public class User implements Serializable {
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+    
+ // --- GETTER & SETTER for SubscriberNumber ---
+    public Integer getSubscriberNumber() { return subscriberNumber; }
+    public void setSubscriberNumber(Integer subscriberNumber) { this.subscriberNumber = subscriberNumber; }
 }

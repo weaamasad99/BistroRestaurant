@@ -70,4 +70,5 @@ public enum TaskType {
     
     GET_MONTHLY_REPORT, // Client -> Server (sends String "MM-YYYY")
     REPORT_GENERATED    // Server -> Client (sends MonthlyReportData object)
+,   REGISTRATION_SUCCESS
 }

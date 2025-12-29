@@ -64,4 +64,8 @@ public class RepresentativeController {
     public void deleteScheduleItem(String identifier) {
         networkController.accept(new Message(TaskType.DELETE_SCHEDULE_ITEM, identifier));
     }
+
+    public void registerSubscriber(User newSubscriber) {
+        networkController.accept(new Message(TaskType.REGISTER_USER, newSubscriber));
+    }
 }

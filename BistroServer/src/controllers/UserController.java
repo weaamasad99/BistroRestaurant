@@ -219,4 +219,51 @@ public class UserController {
             rs.getString("password")
         );
     }
+    
+ 
+    /**
+     * Registers a new subscriber in the DB.
+     * Generates a unique 6-digit Subscriber Number.
+     */
+    public User registerNewSubscriber(User user) {
+        if (conn == null) return null;
+
+        // 1. Generate a random 6-digit subscriber number (100000 - 999999)
+        int subNum = 100000 + new java.util.Random().nextInt(900000);
+
+        // 2. Insert into Database
+        String query = "INSERT INTO users (first_name, last_name, phone_number, email, username, password, user_type, subscriber_number) " +
+                       "VALUES (?, ?, ?, ?, ?, ?, 'SUBSCRIBER', ?)";
+
+        try (PreparedStatement ps = conn.prepareStatement(query, java.sql.Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, user.getFirstName());
+            ps.setString(2, user.getLastName());
+            ps.setString(3, user.getPhoneNumber());
+            ps.setString(4, user.getEmail());
+            ps.setString(5, user.getUsername());
+            ps.setString(6, user.getUsername()); // Default password = username (Requirement usually simpler for prototype)
+            ps.setInt(7, subNum);
+
+            int rows = ps.executeUpdate();
+            
+            if (rows > 0) {
+                // 3. Update the User object with the new IDs
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        user.setUserId(rs.getInt(1)); // The Auto-Increment DB ID
+                    }
+                }
+                user.setSubscriberNumber(subNum);
+                user.setUserType("SUBSCRIBER");
+                
+                System.out.println("Log: Registered new subscriber: " + user.getUsername() + " ID: " + subNum);
+                return user;
+            }
+        } catch (SQLException e) {
+            System.err.println("Registration Error: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
 }

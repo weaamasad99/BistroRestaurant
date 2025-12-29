@@ -69,5 +69,7 @@ public enum TaskType {
     DELETE_SCHEDULE_ITEM,
     
     GET_MONTHLY_REPORT, // Client -> Server (sends String "MM-YYYY")
-    REPORT_GENERATED    // Server -> Client (sends MonthlyReportData object)
+    REPORT_GENERATED,    // Server -> Client (sends MonthlyReportData object)
+    
+    REGISTRATION_SUCCESS
 }

@@ -8,8 +8,12 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import java.util.Random;
 
+import common.User;
+
 public class SubscriberRegistrationUI {
 
+	private RepresentativeController repController;
+	
     private VBox mainLayout;
     private ClientUI mainUI;
     private Runnable onBack;
@@ -27,6 +31,7 @@ public class SubscriberRegistrationUI {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
         this.onBack = onBack;
+        this.repController = new RepresentativeController(mainUI.controller);
     }
 
     public void start() {
@@ -98,19 +103,20 @@ public class SubscriberRegistrationUI {
     }
 
     public void createSubscriber(String userName, String phoneNumber, String Email) {
-        String newSubscriberID = String.valueOf(1000 + new Random().nextInt(9000)); 
-        generateDigitalCard(newSubscriberID);
+        String fName = txtFirstName.getText();
+        String lName = txtLastName.getText();
 
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Registration Successful");
-        alert.setHeaderText("New Subscriber Created!");
-        alert.setContentText("Username: " + userName + "\n" +
-                             "Generated Subscriber ID: " + newSubscriberID);
-        alert.showAndWait();
+        // Create the User object
+        // Note: ID is 0 and SubscriberNum is null because the Server generates them
+        User newUser = new common.User(0, phoneNumber, Email, fName, lName, "SUBSCRIBER", null, userName, null);
+
+        // Send to Server via the controller
+        repController.registerSubscriber(newUser);
         
-        // --- NAVIGATION BACK ON SUCCESS ---
+        // Navigate back immediately (The ClientController will show the success popup when the server responds)
         onBack.run();
     }
+        
 
     public void generateDigitalCard(String subscriberID) {
         System.out.println("LOG: Generating QR Digital Card for Subscriber ID: " + subscriberID);
