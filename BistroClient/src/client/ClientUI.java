@@ -38,6 +38,8 @@ public class ClientUI extends Application {
     private TextField txtPort;
     private Label lblStatus;
     private Button btnConnect; 
+    
+    private MonthlyReportUI monthlyReportUI;
 
     public static void main(String[] args) {
         launch(args);
@@ -321,6 +323,14 @@ public class ClientUI extends Application {
     }
     
     
+ // Setter
+    public void setMonthlyReportUI(MonthlyReportUI ui) {
+        this.monthlyReportUI = ui;
+    }
+    
+   public  MonthlyReportUI  getMonthlyReportUI() {
+        return this.monthlyReportUI;
+    }
     
     /**
      * Displays a professional "Digital Card" window with a live QR Code.

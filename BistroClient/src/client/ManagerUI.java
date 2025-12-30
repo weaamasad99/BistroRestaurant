@@ -82,8 +82,8 @@ public class ManagerUI extends RepresentativeUI {
         
         viewReports.setOnAction(e -> {
             //Initialize and start the Report UI
-            MonthlyReportUI reportUI = new MonthlyReportUI(mainLayout, mainUI, () -> showDashboardScreen("admin"));
-            reportUI.start();
+           MonthlyReportUI reportUI = new MonthlyReportUI(mainLayout, mainUI, this.managerController, () -> showDashboardScreen("admin"));
+           reportUI.start();
         });
 
         container.getChildren().addAll(new Separator(), viewReports);

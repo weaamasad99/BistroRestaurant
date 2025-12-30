@@ -19,6 +19,8 @@ public class KryoUtil {
 private static final ThreadLocal<Kryo> kryoThreadLocal = ThreadLocal.withInitial(() -> {
         Kryo kryo = new Kryo();
         
+        
+        kryo.register(java.util.HashMap.class);
         // --- Registration ---
         // EXACT SAME ORDER REQUIRED ON BOTH SIDES
         kryo.register(Message.class);
@@ -36,6 +38,8 @@ private static final ThreadLocal<Kryo> kryoThreadLocal = ThreadLocal.withInitial
         kryo.register(Time.class);       
         
         kryo.register(BistroSchedule.class);
+        kryo.register(MonthlyReportData.class);
+
         return kryo;
     });
 

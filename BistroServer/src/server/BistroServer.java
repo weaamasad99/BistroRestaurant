@@ -5,6 +5,7 @@ import ocsf.server.ConnectionToClient;
 import common.BistroSchedule;
 import common.KryoUtil;
 import common.Message;
+import common.MonthlyReportData;
 import common.Order;
 import common.Table;
 import common.TaskType;
@@ -14,6 +15,7 @@ import common.WaitingList;
 // Import the specific Controllers
 import controllers.UserController;
 import controllers.PaymentController;
+import controllers.ReportController;
 import controllers.ReservationController;
 import controllers.SubscriberController;
 import controllers.WaitingListController;
@@ -37,6 +39,7 @@ public class BistroServer extends AbstractServer {
     private SubscriberController subscriberController;
     private WaitingListController waitingListController;
     private PaymentController paymentController;
+    private ReportController reportController;
 
     public BistroServer(int port, BiConsumer<ConnectionToClient, Boolean> connectionListener) {
         super(port);
@@ -49,6 +52,7 @@ public class BistroServer extends AbstractServer {
         this.subscriberController = new SubscriberController();
         this.waitingListController = new WaitingListController();
         this.paymentController = new PaymentController();
+        this.reportController = new ReportController();
     }
 
     /**
@@ -332,7 +336,29 @@ public class BistroServer extends AbstractServer {
                 }
                 sendKryoToClient(response, client);
                 break;    
-            
+            case GET_MONTHLY_REPORT:
+                try {
+                    // Payload comes as String "MM-YYYY" (e.g., "5-2025")
+                    String payload = (String) message.getObject();
+                    String[] parts = payload.split("-");
+                    
+                    int month = Integer.parseInt(parts[0]);
+                    int year = Integer.parseInt(parts[1]);
+
+                    System.out.println("Server: Generating report for " + month + "/" + year);
+
+                    // 1. Call the Server Controller to get the data DTO
+                    MonthlyReportData reportData = reportController.generateMonthlyReport(month, year);
+
+                    // 2. Wrap it in a response message
+                    response = new Message(TaskType.REPORT_GENERATED, reportData);
+
+                } catch (Exception e) {
+                    System.err.println("Server Error generating report: " + e.getMessage());
+                    response = new Message(TaskType.ERROR, "Failed to generate report.");
+                }
+                sendKryoToClient(response, client);
+                break;
 
             // DEFAULT
             default:

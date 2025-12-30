@@ -6,7 +6,7 @@ import common.*;
 
 public class RepresentativeController {
 
-    private ClientController networkController;
+    protected ClientController networkController;
 
     public RepresentativeController(ClientController networkController) {
         this.networkController = networkController;

@@ -167,6 +167,11 @@ public class ClientController {
                 case CHECK_IN_APPROVED:
                     ui.showAlert("Welcome", "Check-in Approved! Your table is ready.");
                     break;
+                case REPORT_GENERATED:
+                    common.MonthlyReportData reportData = (common.MonthlyReportData) msg.getObject();
+                    // Assuming you added the method to ClientUI:
+                    ui.getMonthlyReportUI().updateReportData(reportData); 
+                    break;
 
                 case CHECK_IN_DENIED:
                     String reason = (String) msg.getObject();

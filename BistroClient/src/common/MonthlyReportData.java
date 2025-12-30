@@ -22,6 +22,9 @@ public class MonthlyReportData implements Serializable {
     private Map<String, Integer> weeklyOrderCounts; 
     private Map<String, Integer> weeklyWaitingListCounts;
 
+    // Empty constructor is required by some serializers (like Kryo)
+    public MonthlyReportData() {}
+    
     public MonthlyReportData(int month, int year) {
         this.month = month;
         this.year = year;

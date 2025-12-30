@@ -9,16 +9,19 @@ public class ManagerController extends RepresentativeController {
         super(networkController);
     }
 
-    public void getMonthlyReport(String month, String year) {
-        // Construct a request for reports (Assuming TaskType.GET_REPORT exists)
-        // String payload = month + "-" + year;
-        // networkController.accept(new Message(TaskType.GET_REPORT, payload));
-        
-        System.out.println("Log: Manager requested report for " + month + "/" + year);
+    /**
+     * Sends a request to generate reports for a specific period.
+     * Payload format: "MM-YYYY" (e.g., "5-2025")
+     */
+    public void requestMonthlyReport(int month, int year) {
+        String payload = month + "-" + year;
+        Message msg = new Message(TaskType.GET_MONTHLY_REPORT, payload);
+        networkController.accept(msg);
+        System.out.println("Log: Requested report for " + payload);
     }
-    
+
     public void exportSystemData() {
-        // networkController.accept(new Message(TaskType.EXPORT_DATA, null));
         System.out.println("Log: Manager requested system data export...");
+        // Implement export logic if needed
     }
 }
