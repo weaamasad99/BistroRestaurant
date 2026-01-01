@@ -146,6 +146,12 @@ public class ClientUI extends Application {
     // SCREEN 2: Role Selection
     // =========================================================
     public void showRoleSelectionScreen() {
+    	
+        this.repUI = null;          // Forget the previous Representative/Manager
+        this.currentUser = null;    // Forget the previous User
+        this.checkoutUI = null;     // Clear any active checkout reference
+       
+    	
         mainLayout.getChildren().clear(); 
 
         Label header = new Label("Select Your Role");
