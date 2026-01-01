@@ -106,6 +106,19 @@ public class SubscriberUI {
         subHeader.setTextFill(Color.GRAY);
         
         Runnable stayHere = () -> showDashboardScreen(username, id, onExit);
+        
+        Button btnProfile = createOptionButton("My Profile", "👤");
+        btnProfile.setStyle("-fx-background-color: #E0F7FA; -fx-border-color: #006064; -fx-font-size: 14px;");
+        
+        btnProfile.setOnAction(e -> {
+            // Check if we have the full user object
+            if (mainUI.currentUser != null) {
+                SubscriberProfileUI profileScreen = new SubscriberProfileUI(mainLayout, mainUI, stayHere, mainUI.currentUser);
+                profileScreen.start();
+            } else {
+                mainUI.showAlert("Error", "User data not loaded.");
+            }
+        });
 
         Button btnReservation = createOptionButton("Make Reservation", "📅");
         btnReservation.setOnAction(e -> {
@@ -140,7 +153,7 @@ public class SubscriberUI {
             checkoutScreen.start();
         });
 
-        VBox actionsBox = new VBox(10, btnReservation, btnWaitingList, btnIdentify, btnHistory, new Separator(), btnCheckout);
+        VBox actionsBox = new VBox(10, btnProfile, btnReservation, btnWaitingList, btnIdentify, btnHistory, new Separator(), btnCheckout);
         actionsBox.setAlignment(Pos.CENTER);
         actionsBox.setPadding(new Insets(15, 0, 0, 0));
 

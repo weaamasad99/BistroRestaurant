@@ -25,4 +25,8 @@ public class SubscriberController extends CasualController {
         // We pass the ID as an object (Integer)
         networkController.accept(new Message(TaskType.GET_USER_HISTORY, subscriberId));
     }
+    
+    public void updateSubscriberDetails(User user) {
+        networkController.accept(new Message(TaskType.UPDATE_SUBSCRIBER, user));
+    }
 }

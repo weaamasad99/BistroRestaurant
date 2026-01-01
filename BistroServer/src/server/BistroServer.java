@@ -359,7 +359,19 @@ public class BistroServer extends AbstractServer {
                 }
                 sendKryoToClient(response, client);
                 break;
-
+                
+                
+            case UPDATE_SUBSCRIBER:
+                System.out.println("Log: Updating subscriber details...");
+                User userToUpdate = (User) message.getObject();
+                
+                success = subscriberController.updateSubscriberDetails(userToUpdate);
+                
+                response = new Message(success ? TaskType.SUCCESS : TaskType.FAIL, 
+                        success ? "Profile updated successfully!" : "Failed to update profile.");
+                sendKryoToClient(response, client);
+                break;
+               
             // DEFAULT
             default:
                 System.out.println("Log: Unknown TaskType received: " + message.getTask());

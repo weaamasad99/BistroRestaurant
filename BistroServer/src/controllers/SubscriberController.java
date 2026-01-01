@@ -57,4 +57,24 @@ public class SubscriberController {
         }
         return subscribers;
     }
+    
+    
+    public boolean updateSubscriberDetails(User user) {
+        if (conn == null) return false;
+
+        String query = "UPDATE users SET phone_number = ?, email = ? WHERE user_id = ?";
+        
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, user.getPhoneNumber());
+            ps.setString(2, user.getEmail());
+            ps.setInt(3, user.getUserId()); // Use the internal DB ID for safety
+            
+            int rows = ps.executeUpdate();
+            return rows > 0;
+        } catch (SQLException e) {
+            System.err.println("Error updating subscriber: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
