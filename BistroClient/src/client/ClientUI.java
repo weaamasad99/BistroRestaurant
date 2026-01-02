@@ -40,6 +40,9 @@ public class ClientUI extends Application {
     private Button btnConnect; 
     
     private MonthlyReportUI monthlyReportUI;
+    
+ 
+    public ArrayList<BistroSchedule> masterSchedule = new ArrayList<>();
 
     public static void main(String[] args) {
         launch(args);
@@ -124,6 +127,10 @@ public class ClientUI extends Application {
                     if (isConnected) {
                         lblStatus.setText("Connected");
                         lblStatus.setTextFill(Color.GREEN);
+                        
+                        // NEW: Pre-fetch schedule immediately!
+                        controller.accept(new common.Message(common.TaskType.GET_SCHEDULE, null));
+                        
                         showRoleSelectionScreen();
                     } else {
                         lblStatus.setText("Connection Failed");
@@ -270,6 +277,43 @@ public class ClientUI extends Application {
     }
     
     
+    public void showAlternativeTimesDialog(String[] options) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Restaurant Full");
+        alert.setHeaderText("The requested time is fully booked.");
+        alert.setContentText("We found available spots at nearby times.\nSelect a time to book it:");
+
+        // Create a button for each available time
+        ArrayList<ButtonType> buttons = new ArrayList<>();
+        for (String time : options) {
+            buttons.add(new ButtonType(time));
+        }
+        buttons.add(new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE));
+
+        alert.getButtonTypes().setAll(buttons);
+
+        // Show and wait for user action
+        java.util.Optional<ButtonType> result = alert.showAndWait();
+
+        if (result.isPresent() && result.get().getButtonData() != ButtonBar.ButtonData.CANCEL_CLOSE) {
+            // User picked a time
+            String newTimeStr = result.get().getText();
+            System.out.println("User switched to: " + newTimeStr);
+            
+            // We need to resend the request. 
+            // NOTE: We need the original Order object details (Date/Diners).
+            // Since we don't have the object here easily, the cleanest way 
+            // is to tell the user to re-enter, or simpler: 
+            // Just update the UI fields if you are on the reservation screen.
+            
+            // For now, let's just show an info message telling them what to do:
+            showAlert("Time Selected", "Please change the time to " + newTimeStr + " and click Submit again.");
+            
+            // OPTIONAL: If you want it fully automatic, you would need to store the 
+            // 'pendingOrder' in ClientController and re-trigger 'createReservation' here.
+        }
+    }
+    
     public void openRepresentativeDashboard(User user) {
         Platform.runLater(() -> {
             // 1. Initialize RepresentativeUI if null (though it should exist from login)
@@ -307,8 +351,13 @@ public class ClientUI extends Application {
             repUI.updateWaitingListData(list);
         }
     }
+    
     public void refreshScheduleData(ArrayList<BistroSchedule> schedule) {
-        // Only update if the Representative screen is currently active/loaded
+        // 1. ALWAYS save it to the client memory
+        this.masterSchedule = schedule;
+        System.out.println("Client: Schedule synced. Total items: " + schedule.size());
+
+        // 2. If the Rep screen is open, update it too
         if (repUI != null) {
             repUI.updateScheduleData(schedule);
         }
@@ -439,5 +488,46 @@ public class ClientUI extends Application {
         }
         super.stop();
         System.exit(0); 
+    }
+    
+    
+    
+    /**
+     * OFFLINE CHECK: Finds opening hours for a date from the local list.
+     * Returns string "HH:mm-HH:mm" or "CLOSED".
+     */
+    public String getOfflineHours(java.time.LocalDate date) {
+        if (masterSchedule == null || masterSchedule.isEmpty()) return "00:00-23:59"; // Default fallback
+
+        String dateId = date.toString(); // "2026-01-02"
+        String dayName = date.getDayOfWeek().getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH); // "Friday"
+
+        BistroSchedule found = null;
+
+        // 1. Search for SPECIAL DATE first
+        for (BistroSchedule item : masterSchedule) {
+            if (item.getIdentifier().equalsIgnoreCase(dateId)) {
+                found = item;
+                break;
+            }
+        }
+
+        // 2. If not found, search for WEEKDAY
+        if (found == null) {
+            for (BistroSchedule item : masterSchedule) {
+                if (item.getIdentifier().equalsIgnoreCase(dayName)) {
+                    found = item;
+                    break;
+                }
+            }
+        }
+
+        // 3. Process Result
+        if (found == null || found.isClosed()) {
+            return "CLOSED";
+        }
+
+        // Return format: "08:00-14:00"
+        return found.getOpenTime() + "-" + found.getCloseTime();
     }
 }

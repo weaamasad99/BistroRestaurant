@@ -72,9 +72,9 @@ public enum TaskType {
     REPORT_GENERATED,    // Server -> Client (sends MonthlyReportData object)
     REGISTRATION_SUCCESS,
     
-  
     USER_FOUND,        
     USER_NOT_FOUND,
 
     UPDATE_SUBSCRIBER
+   
 }

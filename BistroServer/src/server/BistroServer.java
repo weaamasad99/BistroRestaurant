@@ -145,12 +145,15 @@ public class BistroServer extends AbstractServer {
             // ORDERS & RESERVATIONS
             // ===============================================================
             case REQUEST_RESERVATION:
-            	System.out.println("Log: Creating Reservation...");
-            	Order order = (Order) message.getObject();
-            	success = reservationController.createReservation(order);
-            	
-            	resultMsg = success ? "Registered reservation successfully\nConfirmation code: " + order.getConfirmationCode() : "reservation is booked";
-                response = new Message(success ? TaskType.SUCCESS : TaskType.FAIL, resultMsg);
+                System.out.println("Log: Creating Reservation...");
+                Order order = (Order) message.getObject();
+                
+                // 1. Capture the String result (instead of boolean success)
+                String result = reservationController.createReservation(order);
+                
+                // 2. Send this String directly back to the client
+                // The client will check if it starts with "OK:", "SUGGEST:", or is an error.
+                response = new Message(TaskType.REQUEST_RESERVATION, result);
                 sendKryoToClient(response, client);
                 break;
             	
@@ -383,6 +386,7 @@ public class BistroServer extends AbstractServer {
                 response = new Message(TaskType.HISTORY_IMPORTED, history);
                 sendKryoToClient(response, client);
                 break;
+                
                
             // DEFAULT
             default:

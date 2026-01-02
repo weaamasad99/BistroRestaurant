@@ -96,6 +96,8 @@ public class ClientController {
     // HANDLING RESPONSES (Server -> Client)
     // =======================================================
 
+    
+    
     /**
      * Called when the client receives a message from the server.
      * Routes the data to the correct UI method.
@@ -154,6 +156,31 @@ public class ClientController {
 		            break;
 
                 // --- RESERVATION PROCESS ---
+		        case REQUEST_RESERVATION:
+	                String resResult = (String) msg.getObject();
+	                
+	                Platform.runLater(() -> {
+	                    if (resResult.startsWith("OK:")) {
+	                        // Success
+	                        String code = resResult.split(":", 2)[1];
+	                        ui.showAlert("Success", "Reservation Confirmed!\nYour Code: " + code);
+	                    } 
+	                    else if (resResult.startsWith("SUGGEST:")) {
+	                        // FIX IS HERE: split(":", 2) ensures we don't break the time string (15:00)
+	                        String timesStr = resResult.split(":", 2)[1]; 
+	                        String[] options = timesStr.split(",");
+	                        
+	                        ui.showAlternativeTimesDialog(options);
+	                    } 
+	                    else {
+	                        // Regular Error
+	                        ui.showAlert("Reservation Failed", resResult);
+	                    }
+	                });
+	                break;
+		            
+		            
+		            
                 case RESERVATION_CONFIRMED:
                     Order confirmedOrder = (Order) msg.getObject();
                     ui.showAlert("Success", "Reservation Confirmed!\nYour Code: " + confirmedOrder.getConfirmationCode());

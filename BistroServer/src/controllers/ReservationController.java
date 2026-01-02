@@ -169,31 +169,34 @@ public class ReservationController {
         return (reservedSeats + requestedSeats) <= totalCapacity;
     }
     
-    public boolean createReservation(Order order) {
-    	UserController userController = new UserController();
-    	
+    public String createReservation(Order order) {
+        UserController userController = new UserController();
         try {
-        	int userID = order.getUserId();
-            Date sqlDate = Date.valueOf(order.getOrderDate().toString()); // String "YYYY-MM-DD" -> sql.Date
-            Time sqlTime = order.getOrderTime(); // String "HH:mm" -> sql.Time
-            
-            
-         // 1. Check Capacity (The Missing Requirement)
+            int userID = order.getUserId();
+            Date sqlDate = Date.valueOf(order.getOrderDate().toString());
+            Time sqlTime = order.getOrderTime();
+
+            // --- 1. CAPACITY CHECK ---
             if (!checkRestaurantCapacity(sqlDate, sqlTime, order.getNumberOfDiners())) {
-                System.out.println("Reservation failed: Restaurant is fully booked at this time.");
-                return false; // Tells Client "Fully Booked"
+                // IT IS FULL. Find alternatives.
+                String alternatives = getAlternativeTimes(sqlDate, sqlTime, order.getNumberOfDiners());
+                
+                if (alternatives.isEmpty()) {
+                    return "Full: No tables available around this time.";
+                } else {
+                    // Return special protocol: "SUGGEST:18:30,19:30"
+                    return "SUGGEST:" + alternatives;
+                }
             }
 
-            // 3. CHECK DUPLICATE: Does this user already have a booking at this exact time?
+            // --- 2. DUPLICATE CHECK ---
             if (checkIfReservationExists(userID, sqlDate, sqlTime)) {
-            	System.out.println("Reservation failed: User already has a booking at this time.");
-                return false; 
+                return "Duplicate: You already have a reservation at this time.";
             }
 
-            // 4. INSERT the new reservation
+            // --- 3. PROCEED TO BOOK ---
             String insertSQL = "INSERT INTO orders (user_id, order_date, order_time, num_of_diners, status, confirmation_code) VALUES (?, ?, ?, ?, ?, ?)";
-            PreparedStatement ps = conn.prepareStatement(insertSQL)	;
-
+            PreparedStatement ps = conn.prepareStatement(insertSQL);
             String code = userController.generateConfirmationCode();
             
             ps.setInt(1, userID);
@@ -205,12 +208,12 @@ public class ReservationController {
             ps.executeUpdate();
             
             order.setConfirmationCode(code);
-            return true;
+            return "OK:" + code;
 
         } catch (SQLException e) {
             e.printStackTrace();
+            return "Error: Database error.";
         }
-        return false;
     }
 
     /**
@@ -309,6 +312,74 @@ public class ReservationController {
         return -1;
     }
     
+    
+    
+ 
+
+    private String getAlternativeTimes(Date date, Time targetTime, int diners) {
+        StringBuilder suggestions = new StringBuilder();
+        int[] offsets = {-30, 30, -60, 60}; 
+
+        // Default: Open 24/7 if no schedule found (failsafe)
+        Time openTime = Time.valueOf("00:00:00");
+        Time closeTime = Time.valueOf("23:59:59");
+        boolean isClosed = false;
+        boolean scheduleFound = false;
+
+        // --- STEP A: Check for SPECIAL DATE first (e.g., "2026-01-02") ---
+        String dateId = date.toString(); 
+        String query = "SELECT open_time, close_time, is_closed FROM schedule WHERE identifier = ?";
+        
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, dateId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    isClosed = rs.getBoolean("is_closed");
+                    openTime = parseTimeSafe(rs.getString("open_time"));   // <--- FIXED
+                    closeTime = parseTimeSafe(rs.getString("close_time")); // <--- FIXED
+                    scheduleFound = true;
+                }
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+
+        // --- STEP B: If no special date, check WEEKDAY (e.g., "Friday") ---
+        if (!scheduleFound) {
+            int dayInt = getDayOfWeek(date); 
+            String dayName = getDayName(dayInt); 
+            
+            try (PreparedStatement ps = conn.prepareStatement(query)) {
+                ps.setString(1, dayName); 
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        isClosed = rs.getBoolean("is_closed");
+                        openTime = parseTimeSafe(rs.getString("open_time"));   // <--- FIXED
+                        closeTime = parseTimeSafe(rs.getString("close_time")); // <--- FIXED
+                    }
+                }
+            } catch (SQLException e) { e.printStackTrace(); }
+        }
+
+        if (isClosed) return ""; // Closed for the day
+
+        // --- STEP C: Calculate Suggestions ---
+        for (int offset : offsets) {
+            Time altTime = addMinutesToTime(targetTime, offset);
+
+            // 1. Check Opening Hours
+            if (altTime.before(openTime) || altTime.after(closeTime)) {
+                continue; 
+            }
+
+            // 2. Check Capacity
+            if (checkRestaurantCapacity(date, altTime, diners)) {
+                if (suggestions.length() > 0) suggestions.append(",");
+                suggestions.append(altTime.toString().substring(0, 5));
+            }
+        }
+        return suggestions.toString();
+    }
+
+  
 
     // ========================
     // TABLE MANAGEMENT LOGIC
@@ -447,6 +518,47 @@ public class ReservationController {
         }
     }
     
+    
+    // --- HELPER METHODS ---
+    private Time parseTimeSafe(String timeStr) {
+        if (timeStr == null || timeStr.trim().isEmpty()) return Time.valueOf("00:00:00");
+        
+        // If DB has "08:00", append ":00" to make it "08:00:00" for Java
+        if (timeStr.length() == 5) {
+            timeStr += ":00";
+        }
+        try {
+            return Time.valueOf(timeStr);
+        } catch (IllegalArgumentException e) {
+            System.err.println("Error parsing time: " + timeStr + ". Defaulting to 00:00:00");
+            return Time.valueOf("00:00:00");
+        }
+    }
+    
+    
+    // 1. Add this helper to convert numbers to Names (matches your DB)
+    private String getDayName(int dayId) {
+        String[] days = {"", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+        if (dayId >= 1 && dayId <= 7) {
+            return days[dayId];
+        }
+        return "";
+    }
+    
+    // Helper to get day of week (1=Sunday, ..., 7=Saturday)
+    private int getDayOfWeek(Date date) {
+        java.util.Calendar c = java.util.Calendar.getInstance();
+        c.setTime(date);
+        return c.get(java.util.Calendar.DAY_OF_WEEK);
+    }
+    
+    
+    // Helper method
+    private Time addMinutesToTime(Time time, int minutesToAdd) {
+        long millis = time.getTime();
+        long extraMillis = minutesToAdd * 60 * 1000;
+        return new Time(millis + extraMillis);
+    }
     
     
 }
