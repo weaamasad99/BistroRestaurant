@@ -108,6 +108,67 @@ public class ReservationController {
         }
     }
     
+    
+    /**
+     * Checks if the restaurant has enough open seats for a specific time slot,
+     * accounting for the 2-hour dining duration.
+     */
+    private boolean checkRestaurantCapacity(Date date, Time time, int requestedSeats) {
+        if (conn == null) return false;
+
+        // 1. Get Total Restaurant Capacity
+        int totalCapacity = 0;
+        String capQuery = "SELECT SUM(seats) as total_seats FROM restaurant_tables";
+        try (PreparedStatement ps = conn.prepareStatement(capQuery);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                totalCapacity = rs.getInt("total_seats");
+            }
+        } catch (SQLException e) { 
+            e.printStackTrace(); 
+            return false; 
+        }
+
+        // If no tables exist, capacity is 0 -> Block reservation
+        if (totalCapacity == 0) {
+            System.out.println("Capacity Check Failed: No tables defined in database.");
+            return false; 
+        }
+
+        // 2. Count Reserved Seats (Logic: 2-Hour Dining Window)
+        // We sum diners from any order that started up to 2 hours before the requested time.
+        // E.g. If requesting 13:00, we count active diners from 11:00, 11:30, 12:00, 12:30, and 13:00.
+        int reservedSeats = 0;
+        
+        // MySQL Syntax: Check orders where time is between (RequestTime - 2 hours) and (RequestTime + 1 min)
+        // We look for 'APPROVED' (Future booking) or 'ACTIVE' (Currently eating)
+        String reserveQuery = "SELECT SUM(num_of_diners) as booked FROM orders " +
+                              "WHERE order_date = ? " +
+                              "AND order_time > SUBTIME(?, '02:00:00') " + 
+                              "AND order_time <= ? " +
+                              "AND status IN ('APPROVED', 'ACTIVE')";
+        
+        try (PreparedStatement ps = conn.prepareStatement(reserveQuery)) {
+            ps.setDate(1, date);
+            ps.setTime(2, time); // Used for SUBTIME calculation
+            ps.setTime(3, time); // Used for upper bound
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    reservedSeats = rs.getInt("booked");
+                }
+            }
+        } catch (SQLException e) { 
+            e.printStackTrace(); 
+            return false; 
+        }
+
+        System.out.println("Capacity Check: Total=" + totalCapacity + ", Reserved=" + reservedSeats + ", Requesting=" + requestedSeats);
+
+        // 3. Check availability
+        return (reservedSeats + requestedSeats) <= totalCapacity;
+    }
+    
     public boolean createReservation(Order order) {
     	UserController userController = new UserController();
     	
@@ -115,10 +176,17 @@ public class ReservationController {
         	int userID = order.getUserId();
             Date sqlDate = Date.valueOf(order.getOrderDate().toString()); // String "YYYY-MM-DD" -> sql.Date
             Time sqlTime = order.getOrderTime(); // String "HH:mm" -> sql.Time
+            
+            
+         // 1. Check Capacity (The Missing Requirement)
+            if (!checkRestaurantCapacity(sqlDate, sqlTime, order.getNumberOfDiners())) {
+                System.out.println("Reservation failed: Restaurant is fully booked at this time.");
+                return false; // Tells Client "Fully Booked"
+            }
 
             // 3. CHECK DUPLICATE: Does this user already have a booking at this exact time?
-            if (checkIfReservationExists(sqlDate, sqlTime)) {
-                System.out.println("Reservation failed: User already has a booking at this time.");
+            if (checkIfReservationExists(userID, sqlDate, sqlTime)) {
+            	System.out.println("Reservation failed: User already has a booking at this time.");
                 return false; 
             }
 
@@ -149,21 +217,18 @@ public class ReservationController {
      * Helper Method: Checks DB for existing reservation for a specific user.
      * @return true if reservation exists, false if clear.
      */
-    private boolean checkIfReservationExists(Date date, Time time) {
-        String query = "SELECT order_number FROM orders WHERE order_date = ? AND order_time = ? AND status != 'CANCELLED'";
-        
+    private boolean checkIfReservationExists(int userId, Date date, Time time) {
+        // Added 'user_id = ?' to ensure we only block if THIS specific user already booked this time
+        String query = "SELECT order_number FROM orders WHERE user_id = ? AND order_date = ? AND order_time = ? AND status != 'CANCELLED'";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setDate(1, date);
-            ps.setTime(2, time);
-            
+            ps.setInt(1, userId);
+            ps.setDate(2, date);
+            ps.setTime(3, time);
             ResultSet rs = ps.executeQuery();
-            
-            // If rs.next() is true, it means a row was found -> Reservation exists
             return rs.next(); 
-            
         } catch (SQLException e) {
             e.printStackTrace();
-            return false; // Assume false or handle error appropriately
+            return false;
         }
     }
     
