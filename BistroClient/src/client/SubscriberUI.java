@@ -143,7 +143,13 @@ public class SubscriberUI {
 
         Button btnHistory = createOptionButton("Order History", "📜");
         btnHistory.setOnAction(e -> {
-            controller.getHistory(id);
+            // FIX: We send the internal 'user_id' (e.g., 1) because the orders table 
+            // is linked by user_id, not by the subscriber_number (e.g., 1001).
+            if (mainUI.currentUser != null) {
+                controller.getHistory(mainUI.currentUser.getUserId());
+            } else {
+                mainUI.showAlert("Error", "User session data is missing.");
+            }
         });
 
         Button btnCheckout = createOptionButton("Check Out", "💳");

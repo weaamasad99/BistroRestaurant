@@ -54,6 +54,42 @@ public class ReservationController {
         }
         return orders;
     }
+    
+    
+    
+    /**
+     * Fetches all orders belonging to a specific user.
+     */
+    public ArrayList<Order> getOrdersByUserId(int userId) {
+        ArrayList<Order> history = new ArrayList<>();
+        if (conn == null) return history;
+
+        String query = "SELECT * FROM orders WHERE user_id = ?";
+        
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, userId);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Order order = new Order(
+                        rs.getInt("order_number"),
+                        rs.getInt("user_id"),
+                        rs.getDate("order_date"),
+                        rs.getTime("order_time"),
+                        rs.getInt("num_of_diners"),
+                        rs.getString("status"),
+                        rs.getString("confirmation_code"),
+                        rs.getTime("actual_arrival_time")
+                    );
+                    history.add(order);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching user history: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return history;
+    }
 
     public boolean updateOrder(Order order) {
         if (conn == null) return false;
@@ -345,4 +381,7 @@ public class ReservationController {
             return false;
         }
     }
+    
+    
+    
 }

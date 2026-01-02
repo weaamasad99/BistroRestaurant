@@ -1,5 +1,8 @@
 package client;
 
+import java.util.ArrayList;
+
+import common.Order;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -15,12 +18,15 @@ public class SubscriberHistoryUI {
     private ClientUI mainUI;
     private Runnable onBack;      // Action to go back
     private String subscriberID;  // The ID of the subscriber
+    
+    private ObservableList<Order> historyList;
 
-    public SubscriberHistoryUI(VBox mainLayout, ClientUI mainUI, Runnable onBack, String subscriberID) {
+    public SubscriberHistoryUI(VBox mainLayout, ClientUI mainUI, Runnable onBack, String subscriberID, ArrayList<Order> historyData) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
         this.onBack = onBack;
         this.subscriberID = subscriberID;
+        this.historyList = FXCollections.observableArrayList(historyData);
     }
 
     public void start() {
@@ -40,32 +46,33 @@ public class SubscriberHistoryUI {
         subHeader.setStyle("-fx-text-fill: gray; -fx-font-size: 14px;");
 
         // --- Table View ---
-        TableView<HistoryItem> table = new TableView<>();
+        // Change type from <HistoryItem> to <Order>
+        TableView<Order> table = new TableView<>();
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         table.setPrefHeight(300);
 
-        // 1. Order Number Column
-        TableColumn<HistoryItem, String> colId = new TableColumn<>("Order #");
-        colId.setCellValueFactory(new PropertyValueFactory<>("orderId"));
+        // 1. Order Number
+        TableColumn<Order, Integer> colId = new TableColumn<>("Order #");
+        colId.setCellValueFactory(new PropertyValueFactory<>("orderNumber"));
 
-        // 2. Date Column
-        TableColumn<HistoryItem, String> colDate = new TableColumn<>("Date");
-        colDate.setCellValueFactory(new PropertyValueFactory<>("date"));
+        // 2. Date
+        TableColumn<Order, String> colDate = new TableColumn<>("Date");
+        colDate.setCellValueFactory(new PropertyValueFactory<>("orderDate"));
 
-        // 3. Time Column
-        TableColumn<HistoryItem, String> colTime = new TableColumn<>("Time");
-        colTime.setCellValueFactory(new PropertyValueFactory<>("time"));
+        // 3. Time
+        TableColumn<Order, String> colTime = new TableColumn<>("Time");
+        colTime.setCellValueFactory(new PropertyValueFactory<>("orderTime"));
 
-        // 4. Guests Column
-        TableColumn<HistoryItem, String> colGuests = new TableColumn<>("Guests");
-        colGuests.setCellValueFactory(new PropertyValueFactory<>("guests"));
+        // 4. Guests
+        TableColumn<Order, Integer> colGuests = new TableColumn<>("Guests");
+        colGuests.setCellValueFactory(new PropertyValueFactory<>("numberOfDiners"));
 
-        // 5. Status Column
-        TableColumn<HistoryItem, String> colStatus = new TableColumn<>("Status");
+        // 5. Status
+        TableColumn<Order, String> colStatus = new TableColumn<>("Status");
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
         
-        // Custom styling for Status to make it look nice
-        colStatus.setCellFactory(column -> new TableCell<HistoryItem, String>() {
+        // Status Styling
+        colStatus.setCellFactory(column -> new TableCell<Order, String>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
@@ -74,9 +81,9 @@ public class SubscriberHistoryUI {
                     setStyle("");
                 } else {
                     setText(item);
-                    if (item.equalsIgnoreCase("Finished")) {
+                    if ("FINISHED".equalsIgnoreCase(item) || "APPROVED".equalsIgnoreCase(item)) {
                         setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
-                    } else if (item.equalsIgnoreCase("Cancelled")) {
+                    } else if ("CANCELLED".equalsIgnoreCase(item)) {
                         setStyle("-fx-text-fill: red;");
                     } else {
                         setStyle("-fx-text-fill: orange;");
@@ -87,9 +94,8 @@ public class SubscriberHistoryUI {
 
         table.getColumns().addAll(colId, colDate, colTime, colGuests, colStatus);
 
-        // --- Load Data ---
-        // In the future: fetchHistoryFromServer(subscriberID);
-        table.setItems(getMockData());
+        // --- Load Real Data ---
+        table.setItems(historyList);
 
         // --- Buttons ---
         Button btnBack = new Button("Back to Menu");
@@ -98,7 +104,7 @@ public class SubscriberHistoryUI {
 
         VBox content = new VBox(15, header, subHeader, table, btnBack);
         content.setAlignment(Pos.CENTER);
-        content.setMaxWidth(600); // Wider for table
+        content.setMaxWidth(600);
         content.setPadding(new Insets(30));
         content.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);");
 
@@ -106,14 +112,14 @@ public class SubscriberHistoryUI {
     }
 
     // --- Mock Data Generator ---
-    private ObservableList<HistoryItem> getMockData() {
-        ObservableList<HistoryItem> list = FXCollections.observableArrayList();
-        list.add(new HistoryItem("1001", "2024-12-01", "19:00", "4", "Finished"));
-        list.add(new HistoryItem("1025", "2024-12-15", "20:30", "2", "Finished"));
-        list.add(new HistoryItem("1042", "2025-01-05", "18:00", "6", "Cancelled"));
-        list.add(new HistoryItem("1055", "2025-01-20", "21:00", "3", "Approved"));
-        return list;
-    }
+//    private ObservableList<HistoryItem> getMockData() {
+//        ObservableList<HistoryItem> list = FXCollections.observableArrayList();
+//        list.add(new HistoryItem("1001", "2024-12-01", "19:00", "4", "Finished"));
+//        list.add(new HistoryItem("1025", "2024-12-15", "20:30", "2", "Finished"));
+//        list.add(new HistoryItem("1042", "2025-01-05", "18:00", "6", "Cancelled"));
+//        list.add(new HistoryItem("1055", "2025-01-20", "21:00", "3", "Approved"));
+//        return list;
+//    }
 
     // --- Simple Inner Class for Data ---
     public static class HistoryItem {

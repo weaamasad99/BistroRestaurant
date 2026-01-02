@@ -218,7 +218,7 @@ public class ClientController {
                     for(Order o : history) {
                         sb.append(o.getOrderDate()).append(" - ").append(o.getOrderTime()).append("\n");
                     }
-                    ui.showAlert("Order History", sb.toString());
+                    ui.openOrderHistory(history);
                     break;
 
                 // --- STAFF / DATA MANAGEMENT ---

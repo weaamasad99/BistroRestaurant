@@ -371,6 +371,18 @@ public class BistroServer extends AbstractServer {
                         success ? "Profile updated successfully!" : "Failed to update profile.");
                 sendKryoToClient(response, client);
                 break;
+                
+                
+            case GET_USER_HISTORY:
+                System.out.println("Log: Fetching history for user...");
+                int historyUserId = (int) message.getObject();
+                
+                // Use the method we just created
+                ArrayList<Order> history = reservationController.getOrdersByUserId(historyUserId);
+                
+                response = new Message(TaskType.HISTORY_IMPORTED, history);
+                sendKryoToClient(response, client);
+                break;
                
             // DEFAULT
             default:

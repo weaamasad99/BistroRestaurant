@@ -388,6 +388,30 @@ public class ClientUI extends Application {
         cardStage.initStyle(javafx.stage.StageStyle.TRANSPARENT); // Removes OS window borders
         cardStage.show();
     }
+    
+    
+    public void openOrderHistory(ArrayList<Order> history) {
+        Platform.runLater(() -> {
+            
+            // 1. Define where "Back" goes
+            Runnable onBack;
+            
+            // If we have a logged-in subscriber, go back to their dashboard
+            if (currentUser != null && currentUser.getSubscriberNumber() != null) {
+                onBack = () -> openSubscriberDashboard(); // <--- FIXED THIS LINE
+            } else {
+                // Otherwise go to main menu
+                onBack = () -> showRoleSelectionScreen();
+            }
+
+            String subId = (currentUser != null && currentUser.getSubscriberNumber() != null) 
+                           ? String.valueOf(currentUser.getSubscriberNumber()) : "N/A";
+
+            // 2. Pass the real history list to the UI
+            SubscriberHistoryUI historyScreen = new SubscriberHistoryUI(mainLayout, this, onBack, subId, history);
+            historyScreen.start();
+        });
+    }
 
     // =========================================================
     // UTILS
