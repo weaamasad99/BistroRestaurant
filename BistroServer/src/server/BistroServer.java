@@ -187,7 +187,7 @@ public class BistroServer extends AbstractServer {
                 WaitingList wlData = (WaitingList) message.getObject();
 
                 success = waitingListController.addToWaitingList(wlData);
-                resultMsg = success ? "Successfully joined waiting list!\n Confirmation code: " + userController.generateConfirmationCode() : "Failed to join waiting list";
+                resultMsg = success ? "Successfully joined waiting list!\n Confirmation code: " + wlData.getCode() : "Failed to join waiting list";
                 response = new Message(success ? TaskType.SUCCESS : TaskType.FAIL, resultMsg);
                 
                 sendKryoToClient(response, client);

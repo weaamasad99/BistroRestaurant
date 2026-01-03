@@ -39,7 +39,8 @@ public class WaitingListController {
                     rs.getDate("date_requested"),
                     rs.getTime("time_requested"),
                     rs.getInt("num_of_diners"),
-                    rs.getString("status")
+                    rs.getString("status"),
+                    rs.getString("confirmation_code")
                 );
                 list.add(item);
             }
@@ -53,15 +54,20 @@ public class WaitingListController {
     public boolean addToWaitingList(WaitingList wlData) {
         if (conn == null) return false;
 
-        String query = "INSERT INTO waiting_list (user_id, date_requested, time_requested, num_of_diners, status) " +
-                "VALUES (?, ?, ?, ?, ?)";
+        String query = "INSERT INTO waiting_list (user_id, date_requested, time_requested, num_of_diners, status, confirmation_code) " +
+                "VALUES (?, ?, ?, ?, ?, ?)";
+        
+        UserController userController = new UserController();
+        String code = userController.generateConfirmationCode();
+        wlData.setCode(code);
         
         try (PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setInt(1, wlData.getUserId()); // The phone number acts as username for casuals
+            ps.setInt(1, wlData.getUserId());
             ps.setDate(2, wlData.getDateRequested());
             ps.setTime(3, wlData.getTimeRequested());
             ps.setInt(4, wlData.getNumOfDiners());
             ps.setString(5, wlData.getStatus());
+            ps.setString(6, wlData.getCode());
             
             int rowsAffected = ps.executeUpdate();
             return rowsAffected > 0;
@@ -72,6 +78,4 @@ public class WaitingListController {
             return false;
         }
     }
-    
-    // Future methods: addToWaitingList, removeFromWaitingList can be added here.
 }

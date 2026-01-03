@@ -11,16 +11,18 @@ public class WaitingList implements Serializable {
     private Time timeRequested;
     private int numOfDiners;
     private String status; // 'WAITING','NOTIFIED','FULFILLED','CANCELLED'
+    private String code;
 
     public WaitingList() {}
 
-    public WaitingList(int waitingId, int userId, Date dateRequested, Time timeRequested, int numOfDiners, String status) {
+    public WaitingList(int waitingId, int userId, Date dateRequested, Time timeRequested, int numOfDiners, String status, String code) {
         this.waitingId = waitingId;
         this.userId = userId;
         this.dateRequested = dateRequested;
         this.timeRequested = timeRequested;
         this.numOfDiners = numOfDiners;
         this.status = status;
+        this.code = code;
     }
 
     // Getters and Setters
@@ -41,4 +43,7 @@ public class WaitingList implements Serializable {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
 }

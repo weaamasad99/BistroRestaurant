@@ -11,6 +11,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Time;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 
 /**
@@ -255,6 +257,7 @@ public class ReservationController {
         int diners = 0;
         int orderId = 0;
         int userId = 0;
+        boolean ifWaitingList = true;
 
         // --- PHASE 1: Check the Reservation Code ---
         String orderQuery = "SELECT order_number, user_id, num_of_diners FROM orders WHERE confirmation_code = ? AND status = 'PENDING'";
@@ -266,13 +269,32 @@ public class ReservationController {
                     orderId = rs.getInt("order_number");
                     userId = rs.getInt("user_id");
                     diners = rs.getInt("num_of_diners");
-                } else {
-                    return -2; // Error Code -2: Invalid Reservation
+                    ifWaitingList = false;
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
             return -1; // DB Error
+        }
+        
+        if (ifWaitingList) {
+	        orderQuery = "SELECT waiting_id, user_id, num_of_diners FROM waiting_list WHERE confirmation_code = ? AND status = 'WAITING'";
+	        
+	        try (PreparedStatement ps = conn.prepareStatement(orderQuery)) {
+	            ps.setString(1, code);
+	            try (ResultSet rs = ps.executeQuery()) {
+	                if (rs.next()) {
+	                    orderId = rs.getInt("waiting_id");
+	                    userId = rs.getInt("user_id");
+	                    diners = rs.getInt("num_of_diners");
+	                } else {
+	                    return -2; // Error Code -2: Invalid Reservation
+	                }
+	            }
+	        } catch (SQLException e) {
+	            e.printStackTrace();
+	            return -1; // DB Error
+	        }
         }
 
         // --- PHASE 2: Find a Suitable Table ---
@@ -306,14 +328,38 @@ public class ReservationController {
                     ps.setInt(2, assignedTableId);
                     ps.executeUpdate();
                 }
-
-                // 2. Mark reservation as ACTIVE
-                String updateOrder = "UPDATE orders SET status = 'ACTIVE', actual_arrival_time = ? WHERE order_number = ?";
-                try (PreparedStatement ps = conn.prepareStatement(updateOrder)) {
-                	ps.setTime(1, new Time(System.currentTimeMillis()));
-                    ps.setInt(2, orderId);
-                    ps.executeUpdate();
+                
+                String update;
+                
+                if (ifWaitingList) {
+                	update = "UPDATE waiting_list SET status = 'FULFILLED' WHERE waiting_id = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(update)) {
+                        ps.setInt(1, orderId);
+                        ps.executeUpdate();
+                    }
+                    
+                    String insertSQL = "INSERT INTO orders (user_id, order_date, order_time, num_of_diners, status, confirmation_code) VALUES (?, ?, ?, ?, ?, ?)";
+                    
+                    try(PreparedStatement ps = conn.prepareStatement(insertSQL)) {                    
+	                    ps.setInt(1, userId);
+	                    ps.setDate(2, Date.valueOf(LocalDate.now()));
+	                    ps.setTime(3, Time.valueOf(LocalTime.now()));
+	                    ps.setInt(4, diners);
+	                    ps.setString(5, "ACTIVE");
+	                    ps.setString(6, code);
+	                    ps.executeUpdate();
+                    }
+                    
                 }
+                else {
+                	update = "UPDATE orders SET status = 'ACTIVE', actual_arrival_time = ? WHERE order_number = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(update)) {
+                    	ps.setTime(1, new Time(System.currentTimeMillis()));
+                        ps.setInt(2, orderId);
+                        ps.executeUpdate();
+                    }
+                }
+                
                                                
                 return assignedTableId; // SUCCESS: Return the table number
                 
