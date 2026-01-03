@@ -38,9 +38,22 @@ public class CasualUI {
         Label lblInstruction = new Label("Please enter your phone number to continue:");
         
         TextField txtPhone = new TextField();
-        txtPhone.setPromptText("050-0000000");
+        txtPhone.setPromptText("0500000000");
         txtPhone.setMaxWidth(300);
         txtPhone.setStyle("-fx-font-size: 14px;");
+        
+        txtPhone.textProperty().addListener((observable, oldValue, newValue) -> {
+            // 1. Force "Numbers Only" (optional but recommended for phones)
+            if (!newValue.matches("\\d*")) {
+                txtPhone.setText(newValue.replaceAll("[^\\d]", ""));
+            }
+            
+            // 2. Limit length to 10 characters
+            if (txtPhone.getText().length() > 10) {
+                String limitedText = txtPhone.getText().substring(0, 10);
+                txtPhone.setText(limitedText);
+            }
+        });
 
         Button btnContinue = new Button("Continue");
         btnContinue.setPrefWidth(150);
