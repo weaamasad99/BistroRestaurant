@@ -86,7 +86,7 @@ public class BistroServer extends AbstractServer {
      */
     private void processMessage(Message message, ConnectionToClient client) {
         Message response = null;
-        String resultMsg,code;
+        String resultMsg, code, result;
         boolean success;
         int tableId;
         
@@ -148,11 +148,8 @@ public class BistroServer extends AbstractServer {
                 System.out.println("Log: Creating Reservation...");
                 Order order = (Order) message.getObject();
                 
-                // 1. Capture the String result (instead of boolean success)
-                String result = reservationController.createReservation(order);
+                result = reservationController.createReservation(order);
                 
-                // 2. Send this String directly back to the client
-                // The client will check if it starts with "OK:", "SUGGEST:", or is an error.
                 response = new Message(TaskType.REQUEST_RESERVATION, result);
                 sendKryoToClient(response, client);
                 break;
@@ -172,6 +169,19 @@ public class BistroServer extends AbstractServer {
                 sendKryoToClient(response, client);
                 break;
                 
+            case CANCEL_ORDER:
+            	System.out.println("Log: Creating Reservation...");
+            	Object[] obj = (Object[]) message.getObject();
+            	code = (String) obj[0];
+            	int userId = (int) obj[1];
+                
+                success = reservationController.cancelOrder(code, userId);
+                resultMsg = success ? "Order Canceled" : "Failed to Cancel Order";
+
+                response = new Message(success ? TaskType.SUCCESS : TaskType.FAIL, resultMsg);
+                sendKryoToClient(response, client);
+                break;
+            	            
             case ENTER_WAITING_LIST:
                 System.out.println("Log: Adding to Waiting List...");
                 WaitingList wlData = (WaitingList) message.getObject();

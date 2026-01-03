@@ -38,6 +38,7 @@ private static final ThreadLocal<Kryo> kryoThreadLocal = ThreadLocal.withInitial
         
         kryo.register(BistroSchedule.class);
         kryo.register(MonthlyReportData.class);
+        kryo.register(Object[].class);  
 
         return kryo;
     });

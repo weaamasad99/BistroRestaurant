@@ -98,6 +98,13 @@ public class CasualUI {
             ReservationUI resUI = new ReservationUI(mainLayout, mainUI, stayHere, phoneNumber);
             resUI.start();
         });
+        
+        Button btnCancelReservation = createOptionButton("Cancel Reservation", "X");
+        btnCancelReservation.setOnAction(e -> {
+            // Note: ReservationUI might need updating to accept 'int id' if it uses it
+            CancelReservationUI cancelResUI = new CancelReservationUI(mainLayout, mainUI, stayHere);
+            cancelResUI.start();
+        });
 
         // 2. Enter Waiting List
         Button btnWaitingList = createOptionButton("Enter Waiting List", "⏳");
@@ -123,7 +130,7 @@ public class CasualUI {
             checkoutUI.start();
         });
 
-        VBox actionsBox = new VBox(15, btnReservation, btnWaitingList, btnIdentify, new Separator(), btnCheckout);
+        VBox actionsBox = new VBox(15, btnReservation, btnCancelReservation, btnWaitingList, btnIdentify, new Separator(), btnCheckout);
         actionsBox.setAlignment(Pos.CENTER);
         actionsBox.setPadding(new Insets(20, 0, 0, 0));
 

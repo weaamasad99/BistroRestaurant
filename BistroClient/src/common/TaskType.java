@@ -23,6 +23,7 @@ public enum TaskType {
     ORDERS_IMPORTED,
     UPDATE_SUCCESS,
     UPDATE_FAILED,
+    CANCEL_ORDER,
     ERROR,
 
     LOGIN_REQUEST,      // Client sends User object (username/userid)

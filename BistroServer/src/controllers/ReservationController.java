@@ -203,7 +203,7 @@ public class ReservationController {
             ps.setDate(2, sqlDate);
             ps.setTime(3, sqlTime);
             ps.setInt(4, order.getNumberOfDiners());
-            ps.setString(5, "APPROVED");
+            ps.setString(5, "PENDING");
             ps.setString(6, code);
             ps.executeUpdate();
             
@@ -213,6 +213,20 @@ public class ReservationController {
         } catch (SQLException e) {
             e.printStackTrace();
             return "Error: Database error.";
+        }
+    }
+    
+    public boolean cancelOrder(String code,int userId) {
+    	String sql = "UPDATE orders SET status = 'CANCELLED' WHERE confirmation_code = ? AND user_id = ? AND status != 'CANCELLED'";
+    	
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, code);
+            ps.setInt(2, userId);
+            int rows = ps.executeUpdate();
+            return rows > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
         }
     }
 
@@ -559,6 +573,11 @@ public class ReservationController {
         long extraMillis = minutesToAdd * 60 * 1000;
         return new Time(millis + extraMillis);
     }
+
+	public String cancelReservation(String code) {
+		// TODO Auto-generated method stub
+		return null;
+	}
     
     
 }

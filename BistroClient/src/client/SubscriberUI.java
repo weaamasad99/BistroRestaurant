@@ -126,6 +126,13 @@ public class SubscriberUI {
             ReservationUI resUI = new ReservationUI(mainLayout, mainUI, stayHere, username);
             resUI.start();
         });
+        
+        Button btnCancelReservation = createOptionButton("Cancel Reservation", "X");
+        btnCancelReservation.setOnAction(e -> {
+            // Note: ReservationUI might need updating to accept 'int id' if it uses it
+            CancelReservationUI cancelResUI = new CancelReservationUI(mainLayout, mainUI, stayHere);
+            cancelResUI.start();
+        });
 
         Button btnWaitingList = createOptionButton("Enter Waiting List", "⏳");
         btnWaitingList.setOnAction(e -> {
@@ -159,7 +166,7 @@ public class SubscriberUI {
             checkoutScreen.start();
         });
 
-        VBox actionsBox = new VBox(10, btnProfile, btnReservation, btnWaitingList, btnIdentify, btnHistory, new Separator(), btnCheckout);
+        VBox actionsBox = new VBox(10, btnProfile, btnReservation,btnCancelReservation, btnWaitingList, btnIdentify, btnHistory, new Separator(), btnCheckout);
         actionsBox.setAlignment(Pos.CENTER);
         actionsBox.setPadding(new Insets(15, 0, 0, 0));
 
