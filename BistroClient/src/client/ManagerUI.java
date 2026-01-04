@@ -62,7 +62,7 @@ public class ManagerUI extends RepresentativeUI {
             if (user.equals("admin") && pass.equals("admin")) {
                 showDashboardScreen(user);
             } else {
-                mainUI.showAlert("Access Denied", "Invalid Manager Credentials.\nTry: admin / admin");
+                mainUI.showAlert("Access Denied", "Invalid Manager Credentials.\n");
             }
         });
 
