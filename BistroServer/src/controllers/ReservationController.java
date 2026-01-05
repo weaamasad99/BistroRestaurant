@@ -332,13 +332,13 @@ public class ReservationController {
                 String update;
                 
                 if (ifWaitingList) {
-                	update = "UPDATE waiting_list SET status = 'FULFILLED' WHERE waiting_id = ?";
+                	update = "UPDATE waiting_list SET user_id = NULL, status = 'FULFILLED' WHERE waiting_id = ?";
                     try (PreparedStatement ps = conn.prepareStatement(update)) {
                         ps.setInt(1, orderId);
                         ps.executeUpdate();
                     }
                     
-                    String insertSQL = "INSERT INTO orders (user_id, order_date, order_time, num_of_diners, status, confirmation_code) VALUES (?, ?, ?, ?, ?, ?)";
+                    String insertSQL = "INSERT INTO orders (user_id, order_date, order_time, num_of_diners, status, confirmation_code, actual_arrival_time) VALUES (?, ?, ?, ?, ?, ?, ?)";
                     
                     try(PreparedStatement ps = conn.prepareStatement(insertSQL)) {                    
 	                    ps.setInt(1, userId);
@@ -347,6 +347,7 @@ public class ReservationController {
 	                    ps.setInt(4, diners);
 	                    ps.setString(5, "ACTIVE");
 	                    ps.setString(6, code);
+	                    ps.setTime(7, new Time(System.currentTimeMillis()));
 	                    ps.executeUpdate();
                     }
                     

@@ -37,15 +37,17 @@ public class PaymentController {
     }
     
     public boolean payBill(String code) {
-    	if (conn == null) return false;
+        if (conn == null) return false;
 
         int userId = -1;
+        boolean isCasual = false;
 
-        // 1. Find the User ID associated with this code
-        // We only look for 'ACTIVE' status (meaning they are currently eating)
-        String findUser = "SELECT user_id FROM orders WHERE confirmation_code = ? AND status = 'ACTIVE'";
+        // ==========================================================
+        // STEP 1: Find the User ID associated with this Order Code
+        // ==========================================================
+        String findUserSql = "SELECT user_id FROM orders WHERE confirmation_code = ? AND status = 'ACTIVE'";
 
-        try (PreparedStatement ps = conn.prepareStatement(findUser)) {
+        try (PreparedStatement ps = conn.prepareStatement(findUserSql)) {
             ps.setString(1, code);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -60,29 +62,72 @@ public class PaymentController {
             return false;
         }
 
-        // 2. Free the Table (using the retrieved user_id)
+        // ==========================================================
+        // STEP 2: Find the Role of this User
+        // ==========================================================
         if (userId != -1) {
-            String freeTable = "UPDATE restaurant_tables SET status = 'AVAILABLE', user_id = NULL WHERE user_id = ?";
-            try (PreparedStatement ps = conn.prepareStatement(freeTable)) {
+            String findRoleSql = "SELECT user_type FROM users WHERE user_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(findRoleSql)) {
                 ps.setInt(1, userId);
-                ps.executeUpdate();
-                // We proceed even if no table was updated (in case of data sync issues), 
-                // because we still want to close the order.
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        String role = rs.getString("user_type");
+                        if ("CASUAL".equalsIgnoreCase(role)) {
+                            isCasual = true;
+                        }
+                    }
+                }
             } catch (SQLException e) {
                 e.printStackTrace();
                 return false;
             }
         }
 
-        // 3. Close the Order
-        String closeOrder = "UPDATE orders SET status = 'FINISHED' WHERE confirmation_code = ?";
-        try (PreparedStatement ps = conn.prepareStatement(closeOrder)) {
-            ps.setString(1, code);
-            int rows = ps.executeUpdate();
-            return rows > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+        // ==========================================================
+        // STEP 3: Free the Table
+        // ==========================================================
+        if (userId != -1) {
+            String freeTable = "UPDATE restaurant_tables SET status = 'AVAILABLE', user_id = NULL WHERE user_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(freeTable)) {
+                ps.setInt(1, userId);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return false;
+            }
+
+            // ==========================================================
+            // STEP 4: Close Order & Unlink User (Set user_id = NULL)
+            // ==========================================================
+            String closeOrder = "UPDATE orders SET status = 'FINISHED', user_id = NULL WHERE confirmation_code = ?";
+            try (PreparedStatement ps = conn.prepareStatement(closeOrder)) {
+                ps.setString(1, code);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return false;
+            }
+
+            // ==========================================================
+            // STEP 5: Delete Casual User (If applicable)
+            // ==========================================================
+            if (isCasual) {
+                String deleteUser = "DELETE FROM users WHERE user_id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(deleteUser)) {
+                    ps.setInt(1, userId);
+                    int rows = ps.executeUpdate();
+                    if (rows > 0) {
+                        System.out.println("Casual user #" + userId + " deleted from database.");
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    // Proceed even if deletion fails (payment succeeded)
+                }
+            }
+
+            return true;
         }
+
+        return false;
     }
 }

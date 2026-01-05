@@ -121,9 +121,9 @@ public class BistroServer extends AbstractServer {
                 
                 resultMsg = success ? "Casual registered successfully" : "Failed to register casual";
                 response = new Message(success ? TaskType.SUCCESS : TaskType.FAIL, resultMsg);
-                sendKryoToClient(response, client);
+                if (!success)
+                	sendKryoToClient(response, client);
                 break;
-
 
             case REGISTER_USER:
                 System.out.println("Log: Processing Subscriber Registration...");

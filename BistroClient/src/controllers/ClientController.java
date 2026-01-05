@@ -132,8 +132,12 @@ public class ClientController {
 		            user = (User) msg.getObject();
 		            
 		            if (user != null) {
-		                ui.currentUser = user; 
-		                ui.showAlert("Login Success", "Welcome, " + user.getUsername());
+		                ui.currentUser = user;
+		                
+		                if (user.getUserType().equals("CASUAL"))
+			                ui.showAlert("Login Success", "Welcome ");
+		                else
+		                	ui.showAlert("Login Success", "Welcome, " + user.getUsername());
 
 		                String type = user.getUserType();
 
