@@ -23,6 +23,7 @@ import java.util.Map;
 // Implements the Listener interface to receive updates from BistroServer
 public class ServerUI extends Application implements ServerEventListener {
 
+	
     private BistroServer server;
     private ObservableList<ClientConnectionData> connectedClients;
     private TableView<ClientConnectionData> table;

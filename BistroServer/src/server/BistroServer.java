@@ -159,6 +159,7 @@ public class BistroServer extends AbstractServer {
         if (uiListener != null) uiListener.onClientConnected(client);
     }
 
+    
     @Override
     synchronized protected void clientDisconnected(ConnectionToClient client) {
         if (uiListener != null) uiListener.onClientDisconnected(client);
