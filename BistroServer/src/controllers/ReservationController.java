@@ -114,9 +114,17 @@ public class ReservationController {
     /**
      * Checks if the restaurant has enough open seats for a specific time slot,
      * accounting for the 2-hour dining duration.
+     * FIXED LOGIC: Checks for future overlaps to prevent overbooking.
      */
-    private boolean checkRestaurantCapacity(Date date, Time time, int requestedSeats) {
+    private boolean checkRestaurantCapacity(Date date, Time reqTime, int requestedSeats) {
         if (conn == null) return false;
+
+        // --- Helper Class for this calculation ---
+        class BookingInfo {
+            Time time;
+            int diners;
+            public BookingInfo(Time t, int d) { this.time = t; this.diners = d; }
+        }
 
         // 1. Get Total Restaurant Capacity
         int totalCapacity = 0;
@@ -131,33 +139,30 @@ public class ReservationController {
             return false; 
         }
 
-        // If no tables exist, capacity is 0 -> Block reservation
-        if (totalCapacity == 0) {
-            System.out.println("Capacity Check Failed: No tables defined in database.");
-            return false; 
-        }
+        if (totalCapacity == 0) return false;
 
-        // 2. Count Reserved Seats (Logic: 2-Hour Dining Window)
-        // We sum diners from any order that started up to 2 hours before the requested time.
-        // E.g. If requesting 13:00, we count active diners from 11:00, 11:30, 12:00, 12:30, and 13:00.
-        int reservedSeats = 0;
+        // 2. Fetch ALL overlapping reservations
+        // We look for any order that overlaps with our requested 2-hour window.
+        ArrayList<BookingInfo> overlaps = new ArrayList<>();
         
-        // MySQL Syntax: Check orders where time is between (RequestTime - 2 hours) and (RequestTime + 1 min)
-        // We look for 'APPROVED' (Future booking) or 'ACTIVE' (Currently eating)
-        String reserveQuery = "SELECT SUM(num_of_diners) as booked FROM orders " +
+        String overlapQuery = "SELECT order_time, num_of_diners FROM orders " +
                               "WHERE order_date = ? " +
-                              "AND order_time > SUBTIME(?, '02:00:00') " + 
-                              "AND order_time <= ? " +
-                              "AND status IN ('APPROVED', 'ACTIVE')";
-        
-        try (PreparedStatement ps = conn.prepareStatement(reserveQuery)) {
+                              "AND status IN ('APPROVED', 'ACTIVE') " + 
+                              // Logic: Order Start < Our End (req+2h) AND Order End (start+2h) > Our Start
+                              "AND order_time < ADDTIME(?, '02:00:00') " +
+                              "AND order_time > SUBTIME(?, '02:00:00')";
+
+        try (PreparedStatement ps = conn.prepareStatement(overlapQuery)) {
             ps.setDate(1, date);
-            ps.setTime(2, time); // Used for SUBTIME calculation
-            ps.setTime(3, time); // Used for upper bound
+            ps.setTime(2, reqTime); 
+            ps.setTime(3, reqTime); 
             
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    reservedSeats = rs.getInt("booked");
+                while (rs.next()) {
+                    overlaps.add(new BookingInfo(
+                        rs.getTime("order_time"), 
+                        rs.getInt("num_of_diners")
+                    ));
                 }
             }
         } catch (SQLException e) { 
@@ -165,10 +170,46 @@ public class ReservationController {
             return false; 
         }
 
-        System.out.println("Capacity Check: Total=" + totalCapacity + ", Reserved=" + reservedSeats + ", Requesting=" + requestedSeats);
+        // 3. Calculate Peak Load
+        // We must ensure that at no point during the meal does the total diners exceed capacity.
+        
+        // Convert to minutes for easier comparison
+        long reqStartMin = (reqTime.getTime() / 60000) % (24 * 60); 
+        long reqEndMin = reqStartMin + 120; // Dining duration is 120 mins
 
-        // 3. Check availability
-        return (reservedSeats + requestedSeats) <= totalCapacity;
+        // Identify critical check points: Our start time + the start time of any overlapping order
+        ArrayList<Long> checkPoints = new ArrayList<>();
+        checkPoints.add(reqStartMin);
+
+        for (BookingInfo b : overlaps) {
+            long oStart = (b.time.getTime() / 60000) % (24 * 60);
+            // Only care about start times that happen during our meal
+            if (oStart > reqStartMin && oStart < reqEndMin) {
+                checkPoints.add(oStart);
+            }
+        }
+
+        // Check the total load at each critical time point
+        for (Long point : checkPoints) {
+            int currentLoad = 0;
+            for (BookingInfo b : overlaps) {
+                long oStart = (b.time.getTime() / 60000) % (24 * 60);
+                long oEnd = oStart + 120;
+                
+                // If this other order is active at this specific minute, count them
+                if (point >= oStart && point < oEnd) {
+                    currentLoad += b.diners;
+                }
+            }
+
+            // If adding us pushes the load over capacity at this specific minute -> Fail
+            if (currentLoad + requestedSeats > totalCapacity) {
+                System.out.println("Capacity Check Failed. Peak Load: " + (currentLoad + requestedSeats) + "/" + totalCapacity);
+                return false; 
+            }
+        }
+
+        return true; 
     }
     
     public String createReservation(Order order) {
@@ -205,7 +246,7 @@ public class ReservationController {
             ps.setDate(2, sqlDate);
             ps.setTime(3, sqlTime);
             ps.setInt(4, order.getNumberOfDiners());
-            ps.setString(5, "PENDING");
+            ps.setString(5, "APPROVED");
             ps.setString(6, code);
             ps.executeUpdate();
             
