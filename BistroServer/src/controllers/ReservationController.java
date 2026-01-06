@@ -564,6 +564,8 @@ public class ReservationController {
         }
     }
 
+    
+ 
     public boolean addTable(Table table) {
         if (conn == null) return false;
         String query = "INSERT INTO restaurant_tables (table_id, seats, status) VALUES (?, ?, ?)";
