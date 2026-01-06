@@ -69,7 +69,7 @@ public class ReservationUI {
         datePicker.setDayCellFactory(picker -> new DateCell() {
             public void updateItem(LocalDate date, boolean empty) {
                 super.updateItem(date, empty);
-                setDisable(empty || date.isBefore(LocalDate.now()));
+                setDisable(empty || date.isBefore(LocalDate.now()) || date.isAfter(LocalDate.now().plusMonths(1)));
             }
         });
 
@@ -106,7 +106,7 @@ public class ReservationUI {
             if (newVal != null) {
                 // 1. Ask ClientUI for the hours (No Server Call Needed!)
                 String hours = mainUI.getOfflineHours(newVal);
-                populateTimeList(hours);
+                populateTimeList(hours, newVal);
             }
         });
 
@@ -142,7 +142,7 @@ public class ReservationUI {
         mainLayout.getChildren().add(content);
     }
 
-    private void populateTimeList(String range) {
+    private void populateTimeList(String range, LocalDate date) {
         timeComboBox.getItems().clear();
 
         if ("CLOSED".equals(range)) {
@@ -166,8 +166,15 @@ public class ReservationUI {
             List<String> slots = new ArrayList<>();
             // Last seating 1 hour before close
             LocalTime lastSeating = end.minusMinutes(60); 
+            LocalTime now = LocalTime.now();
+            boolean isToday = LocalDate.now().equals(date);
 
             while (!start.isAfter(lastSeating)) {
+            	if (isToday && start.isBefore(now)) {
+                    start = start.plusMinutes(30);
+                    continue; 
+                }
+            	
                 slots.add(start.toString());
                 start = start.plusMinutes(30);
             }
