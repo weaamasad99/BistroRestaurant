@@ -127,7 +127,8 @@ public class BistroServer extends AbstractServer {
                 
                 resultMsg = success ? "Welcome " + phoneNumber : "Error registering casual user";
                 response = new Message(success ? TaskType.SUCCESS : TaskType.FAIL, resultMsg);
-                sendKryoToClient(response, client);
+                if (!success)
+                	sendKryoToClient(response, client);
                 break;
 
             case REGISTER_USER:
