@@ -40,7 +40,7 @@ public class ClientUI extends Application {
     private Button btnConnect; 
     
     private MonthlyReportUI monthlyReportUI;
-    
+    public boolean isRemote;
  
     public ArrayList<BistroSchedule> masterSchedule = new ArrayList<>();
 
@@ -131,7 +131,7 @@ public class ClientUI extends Application {
                         // NEW: Pre-fetch schedule immediately!
                         controller.accept(new common.Message(common.TaskType.GET_SCHEDULE, null));
                         
-                        showRoleSelectionScreen();
+                        showLocationModeScreen();
                     } else {
                         lblStatus.setText("Connection Failed");
                         lblStatus.setTextFill(Color.RED);
@@ -148,11 +148,58 @@ public class ClientUI extends Application {
 
         mainLayout.getChildren().add(content);
     }
+    
+    // =========================================================
+    // SCREEN 2: Location Selection
+    // =========================================================
 
+    private void showLocationModeScreen() {
+        mainLayout.getChildren().clear();
+
+        Label header = new Label("Select Connection Mode");
+        header.setFont(new Font("Arial", 24));
+        header.setStyle("-fx-font-weight: bold; -fx-text-fill: #333;");
+
+        Label instruction = new Label("Where are you currently located?");
+        instruction.setStyle("-fx-text-fill: gray; -fx-font-size: 14px;");
+
+        // Option 1: In Restaurant
+        Button btnOnSite = new Button("In Restaurant");
+        btnOnSite.setPrefWidth(250);
+        btnOnSite.setPrefHeight(50);
+        btnOnSite.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16px; -fx-cursor: hand;");
+        
+        btnOnSite.setOnAction(e -> {
+            this.isRemote = false; // PARAMETER SET: ON-SITE
+            System.out.println("Mode: In Restaurant (Full Access)");
+            showRoleSelectionScreen(); // Proceed
+        });
+
+        // Option 2: From Afar
+        Button btnRemote = new Button("From Afar (Remote)");
+        btnRemote.setPrefWidth(250);
+        btnRemote.setPrefHeight(50);
+        btnRemote.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16px; -fx-cursor: hand;");
+        
+        btnRemote.setOnAction(e -> {
+            this.isRemote = true; // PARAMETER SET: REMOTE
+            System.out.println("Mode: Remote (Restricted Access)");
+            showRoleSelectionScreen(); // Proceed
+        });
+
+        VBox content = new VBox(20, header, instruction, btnOnSite, btnRemote);
+        content.setAlignment(Pos.CENTER);
+        content.setMaxWidth(400);
+        content.setPadding(new Insets(30));
+        content.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);");
+
+        mainLayout.getChildren().add(content);
+    }
+    
     // =========================================================
-    // SCREEN 2: Role Selection
+    // SCREEN 3: Role Selection
     // =========================================================
-    public void showRoleSelectionScreen() {
+    public void showRoleSelectionScreen(){
     	
         this.repUI = null;          // Forget the previous Representative/Manager
         this.currentUser = null;    // Forget the previous User
@@ -204,8 +251,14 @@ public class ClientUI extends Application {
              this.repUI = managerScreen; 
              managerScreen.start();
         });
+        
+        Button btnBack = new Button("Back to Menu");
+        btnBack.setStyle("-fx-background-color: transparent; -fx-text-fill: #555; -fx-underline: true; -fx-cursor: hand;");
+        
+        // Navigation: Back to Location Options
+        btnBack.setOnAction(e -> showLocationModeScreen());
 
-        VBox menuBox = new VBox(20, header, btnCasual, btnSubscriber, btnRep, btnManager);
+        VBox menuBox = new VBox(20, header, btnCasual, btnSubscriber, btnRep, btnManager, btnBack);
         menuBox.setAlignment(Pos.CENTER);
         menuBox.setMaxWidth(400);
         menuBox.setPadding(new Insets(30));

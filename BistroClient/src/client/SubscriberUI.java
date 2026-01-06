@@ -166,7 +166,13 @@ public class SubscriberUI {
             checkoutScreen.start();
         });
 
-        VBox actionsBox = new VBox(10, btnProfile, btnReservation,btnCancelReservation, btnWaitingList, btnIdentify, btnHistory, new Separator(), btnCheckout);
+        VBox actionsBox;
+        
+        if (!mainUI.isRemote)
+        	actionsBox = new VBox(10, btnProfile, btnReservation,btnCancelReservation, btnWaitingList, btnIdentify, btnHistory, new Separator(), btnCheckout);
+        else
+        	actionsBox = new VBox(10, btnProfile, btnReservation, btnCancelReservation, btnHistory);
+        
         actionsBox.setAlignment(Pos.CENTER);
         actionsBox.setPadding(new Insets(15, 0, 0, 0));
 

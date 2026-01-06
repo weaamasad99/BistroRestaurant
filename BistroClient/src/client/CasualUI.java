@@ -142,8 +142,14 @@ public class CasualUI {
             CheckoutUI checkoutUI = new CheckoutUI(mainLayout, mainUI, stayHere);
             checkoutUI.start();
         });
+        
+        VBox actionsBox;
+        
+        if (!mainUI.isRemote)
+        	actionsBox = new VBox(15, btnReservation, btnCancelReservation, btnWaitingList, btnIdentify, new Separator(), btnCheckout);
+        else
+        	actionsBox = new VBox(15, btnReservation, btnCancelReservation);
 
-        VBox actionsBox = new VBox(15, btnReservation, btnCancelReservation, btnWaitingList, btnIdentify, new Separator(), btnCheckout);
         actionsBox.setAlignment(Pos.CENTER);
         actionsBox.setPadding(new Insets(20, 0, 0, 0));
 
