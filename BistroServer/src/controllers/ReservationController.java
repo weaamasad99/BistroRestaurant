@@ -329,7 +329,7 @@ public class ReservationController {
                 status = rs.getString("status");
                 
                 if (status.equals("CANCELLED")) {
-                    return -4; // Error Code -4: Your reservation is canceled
+                    return -4; // Error Code -4: Customer reservation is canceled
                 }
             }
         } catch (SQLException e) {
