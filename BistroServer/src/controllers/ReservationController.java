@@ -258,9 +258,11 @@ public class ReservationController {
         int orderId = 0;
         int userId = 0;
         boolean ifWaitingList = true;
+        Date date;
+        String status = null;
 
         // --- PHASE 1: Check the Reservation Code ---
-        String orderQuery = "SELECT order_number, user_id, num_of_diners FROM orders WHERE confirmation_code = ? AND status = 'PENDING'";
+        String orderQuery = "SELECT order_number, user_id, num_of_diners FROM orders WHERE confirmation_code = ?";
         
         try (PreparedStatement ps = conn.prepareStatement(orderQuery)) {
             ps.setString(1, code);
@@ -296,8 +298,46 @@ public class ReservationController {
 	            return -1; // DB Error
 	        }
         }
+        
+        // --- PHASE 2: Check if customer arrived at the right date ---
+        
+        orderQuery = "SELECT order_date FROM orders WHERE order_number = ?";
+        
+        try (PreparedStatement ps = conn.prepareStatement(orderQuery)) {
+            ps.setInt(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();                  
+                date = rs.getDate("order_date");
+                
+                if (!Date.valueOf(LocalDate.now()).equals(date)) {
+                    return -3; // Error Code -3: Not the day of the reservation
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1; // DB Error
+        }
+        
+        // --- PHASE 2: Check if customer reservation is canceled ---
+        
+        orderQuery = "SELECT status FROM orders WHERE order_number = ?";
+        
+        try (PreparedStatement ps = conn.prepareStatement(orderQuery)) {
+            ps.setInt(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next())                  
+                status = rs.getString("status");
+                
+                if (status.equals("CANCELLED")) {
+                    return -4; // Error Code -4: Your reservation is canceled
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1; // DB Error
+        }
 
-        // --- PHASE 2: Find a Suitable Table ---
+        // --- PHASE 3: Find a Suitable Table ---
         // We look for an AVAILABLE table that has enough seats (seats >= diners)
         // We order by seats ASC to find the "best fit" (smallest suitable table)
         int assignedTableId = -1;
@@ -310,7 +350,7 @@ public class ReservationController {
                     assignedTableId = rs.getInt("table_id");
                 } else {
                     System.out.println("Check-in failed: No suitable table available.");
-                    return -3; // Error Code -3: No Table Available
+                    return -5; // Error Code -5: No Table Available
                 }
             }
         } catch (SQLException e) {
@@ -318,7 +358,7 @@ public class ReservationController {
             return -1;
         }
 
-        // --- PHASE 3: Update Statuses (Commit the Check-in) ---
+        // --- PHASE 4: Update Statuses (Commit the Check-in) ---
         if (assignedTableId != -1) {
             try {
                 // 1. Mark table as OCCUPIED

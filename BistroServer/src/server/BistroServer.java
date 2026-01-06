@@ -206,6 +206,12 @@ public class BistroServer extends AbstractServer {
                     response = new Message(TaskType.FAIL, "Invalid confirmation code.");
                 } 
                 else if (tableId == -3) {
+                    response = new Message(TaskType.FAIL, "Your order is not for today.");
+                } 
+                else if (tableId == -4) {
+                    response = new Message(TaskType.FAIL, "Your reservation was canceled.");
+                } 
+                else if (tableId == -5) {
                     response = new Message(TaskType.FAIL, "No tables available for your group size, please wait.");
                 } 
                 else {
