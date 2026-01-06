@@ -170,7 +170,7 @@ public class ReservationUI {
             boolean isToday = LocalDate.now().equals(date);
 
             while (!start.isAfter(lastSeating)) {
-            	if (isToday && start.isBefore(now)) {
+            	if (isToday && start.isBefore(now.plusHours(1))) {
                     start = start.plusMinutes(30);
                     continue; 
                 }
