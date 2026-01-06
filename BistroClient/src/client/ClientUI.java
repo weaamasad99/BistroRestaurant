@@ -252,7 +252,7 @@ public class ClientUI extends Application {
              managerScreen.start();
         });
         
-        Button btnBack = new Button("Back to Menu");
+        Button btnBack = new Button("Back to Location select");
         btnBack.setStyle("-fx-background-color: transparent; -fx-text-fill: #555; -fx-underline: true; -fx-cursor: hand;");
         
         // Navigation: Back to Location Options
