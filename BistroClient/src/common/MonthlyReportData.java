@@ -4,35 +4,42 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * DTO (Data Transfer Object) to hold the calculated report statistics.
- * This is sent from Server -> Client.
- */
 public class MonthlyReportData implements Serializable {
     private int month;
     private int year;
     
-    // -- Performance Report Data --
+    // -- 1. Performance Data --
     private int totalOnTime;
     private int totalLate;
     private int totalNoShow;
     
-    // -- Orders & Waiting List Data (Weekly Breakdown) --
-    // Key: Week Number (1-4), Value: Count
-    private Map<String, Integer> weeklyOrderCounts; 
-    private Map<String, Integer> weeklyWaitingListCounts;
+    // -- 2. Detailed Activity Data --
+    // Total number of actual diners served
+    private int totalGuests; 
+    
+    // Analysis by Day of Week (e.g., "Monday" -> 15 orders)
+    // This helps the manager identify the busiest days.
+    private Map<String, Integer> ordersByDayOfWeek;
+    private Map<String, Integer> waitingListByDayOfWeek;
 
-    // Empty constructor is required by some serializers (like Kryo)
-    public MonthlyReportData() {}
+    public MonthlyReportData() {
+        this.ordersByDayOfWeek = new HashMap<>();
+        this.waitingListByDayOfWeek = new HashMap<>();
+    }
     
     public MonthlyReportData(int month, int year) {
         this.month = month;
         this.year = year;
-        this.weeklyOrderCounts = new HashMap<>();
-        this.weeklyWaitingListCounts = new HashMap<>();
+        this.ordersByDayOfWeek = new HashMap<>();
+        this.waitingListByDayOfWeek = new HashMap<>();
     }
 
     // Getters and Setters
+    public int getMonth() { return month; }
+    public void setMonth(int month) { this.month = month; }
+    public int getYear() { return year; }
+    public void setYear(int year) { this.year = year; }
+
     public int getTotalOnTime() { return totalOnTime; }
     public void setTotalOnTime(int totalOnTime) { this.totalOnTime = totalOnTime; }
 
@@ -41,10 +48,18 @@ public class MonthlyReportData implements Serializable {
     
     public int getTotalNoShow() { return totalNoShow; }
     public void setTotalNoShow(int n) { this.totalNoShow = n; }
+    
+    public int getTotalGuests() { return totalGuests; }
+    public void setTotalGuests(int totalGuests) { this.totalGuests = totalGuests; }
 
-    public Map<String, Integer> getWeeklyOrderCounts() { return weeklyOrderCounts; }
-    public void setWeeklyOrderCounts(Map<String, Integer> map) { this.weeklyOrderCounts = map; }
+    public Map<String, Integer> getOrdersByDayOfWeek() { return ordersByDayOfWeek; }
+    public void setOrdersByDayOfWeek(Map<String, Integer> map) { this.ordersByDayOfWeek = map; }
 
-    public Map<String, Integer> getWeeklyWaitingListCounts() { return weeklyWaitingListCounts; }
-    public void setWeeklyWaitingListCounts(Map<String, Integer> map) { this.weeklyWaitingListCounts = map; }
+    public Map<String, Integer> getWaitingListByDayOfWeek() { return waitingListByDayOfWeek; }
+    public void setWaitingListByDayOfWeek(Map<String, Integer> map) { this.waitingListByDayOfWeek = map; }
+    
+    public boolean isEmpty() {
+        return totalOnTime == 0 && totalLate == 0 && totalNoShow == 0 &&
+               (ordersByDayOfWeek == null || ordersByDayOfWeek.isEmpty());
+    }
 }

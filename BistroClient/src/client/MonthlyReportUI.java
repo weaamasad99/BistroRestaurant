@@ -1,21 +1,18 @@
 package client;
 
+import controllers.ManagerController;
 import common.MonthlyReportData;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
-import controllers.ManagerController;
 import javafx.geometry.Pos;
-import javafx.scene.chart.BarChart;
-import javafx.scene.chart.CategoryAxis;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.XYChart;
+import javafx.scene.chart.*;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 
-import java.time.Year;
+import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public class MonthlyReportUI {
@@ -23,27 +20,22 @@ public class MonthlyReportUI {
     private VBox mainLayout;
     private ClientUI mainUI;
     private Runnable onBack;
+    private ManagerController managerController;
 
     // --- UI Components ---
     private ComboBox<String> cmbMonth;
     private ComboBox<Integer> cmbYear;
-    private BarChart<String, Number> reportChart;
-    private CategoryAxis xAxis;
-    private NumberAxis yAxis;
-    
-    // Store data to toggle views without re-fetching
+    private VBox chartContainer; 
     private MonthlyReportData currentReportData; 
-    private ManagerController managerController;
 
-    public MonthlyReportUI(VBox mainLayout, ClientUI mainUI,ManagerController managerController, Runnable onBack) {
+    public MonthlyReportUI(VBox mainLayout, ClientUI mainUI, ManagerController managerController, Runnable onBack) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
-        this.onBack = onBack;
         this.managerController = managerController;
+        this.onBack = onBack;
     }
 
     public void start() {
-        // Register this UI with ClientUI so it can receive data
         mainUI.setMonthlyReportUI(this); 
         showReportScreen();
     }
@@ -51,140 +43,187 @@ public class MonthlyReportUI {
     private void showReportScreen() {
         mainLayout.getChildren().clear();
 
-        Label header = new Label("Manager Reports & Analytics");
+        Label header = new Label("Manager Analytics Dashboard");
         header.setFont(new Font("Arial", 24));
         header.setStyle("-fx-font-weight: bold; -fx-text-fill: #9C27B0;");
 
         // --- Date Selection ---
-        Label lblDate = new Label("Select Period:");
+        Label lblDate = new Label("Select Past Period:");
         
         cmbMonth = new ComboBox<>();
-        cmbMonth.getItems().addAll("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December");
-        cmbMonth.getSelectionModel().select(4); // Default: May (for data example)
+        cmbMonth.getItems().addAll("January", "February", "March", "April", "May", "June", 
+                                   "July", "August", "September", "October", "November", "December");
+        // Default to previous month
+        int prevMonthIdx = LocalDate.now().minusMonths(1).getMonthValue() - 1;
+        cmbMonth.getSelectionModel().select(prevMonthIdx); 
         
         cmbYear = new ComboBox<>();
-        int currentYear = Year.now().getValue();
+        int currentYear = LocalDate.now().getYear();
         for (int i = currentYear; i >= currentYear - 2; i--) cmbYear.getItems().add(i);
-        cmbYear.getSelectionModel().select(0);
+        cmbYear.getSelectionModel().select(0); 
 
         Button btnFetch = new Button("Load Data");
-        btnFetch.setStyle("-fx-background-color: #9C27B0; -fx-text-fill: white;");
+        btnFetch.setStyle("-fx-background-color: #9C27B0; -fx-text-fill: white; -fx-font-weight: bold;");
         btnFetch.setOnAction(e -> fetchReportData());
 
         HBox controlsBox = new HBox(10, lblDate, cmbMonth, cmbYear, btnFetch);
         controlsBox.setAlignment(Pos.CENTER);
 
-        // --- Chart Area ---
-        xAxis = new CategoryAxis();
-        yAxis = new NumberAxis();
-        reportChart = new BarChart<>(xAxis, yAxis);
-        reportChart.setTitle("Please Load Data");
-        reportChart.setAnimated(false); // Disable animation to prevent artifacts on refresh
-        VBox.setVgrow(reportChart, Priority.ALWAYS);
-
-        // --- Report Type Buttons ---
-        Button btnTimeReport = createReportButton("Time & Performance", "⏱");
-        Button btnSubReport = createReportButton("Orders & Waiting List", "📊");
+        // --- Report Buttons ---
+        Button btnTimeReport = createReportButton("Performance (On-Time/Late)", "⏱");
+        Button btnActivityReport = createReportButton("Weekly Load & Diners", "📊");
 
         btnTimeReport.setOnAction(e -> {
-            if (currentReportData != null) renderTimeReport();
-            else mainUI.showAlert("Info", "Please click 'Load Data' first.");
+            if (validateDataLoaded()) renderTimeReport();
         });
 
-        btnSubReport.setOnAction(e -> {
-            if (currentReportData != null) renderOrdersReport();
-            else mainUI.showAlert("Info", "Please click 'Load Data' first.");
+        btnActivityReport.setOnAction(e -> {
+            if (validateDataLoaded()) renderActivityReport();
         });
 
-        HBox actionBox = new HBox(15, btnTimeReport, btnSubReport);
+        HBox actionBox = new HBox(15, btnTimeReport, btnActivityReport);
         actionBox.setAlignment(Pos.CENTER);
 
-        // Back Button
+        // --- Chart Container ---
+        chartContainer = new VBox();
+        chartContainer.setAlignment(Pos.CENTER);
+        chartContainer.setPadding(new Insets(15));
+        chartContainer.setMinHeight(400);
+        chartContainer.setStyle("-fx-border-color: #ddd; -fx-border-radius: 5; -fx-background-color: #f9f9f9;");
+        chartContainer.getChildren().add(new Label("Select a past month and click 'Load Data' to view analytics."));
+
         Button btnBack = new Button("Back to Dashboard");
         btnBack.setOnAction(e -> onBack.run());
 
-        VBox container = new VBox(15, header, controlsBox, reportChart, actionBox, btnBack);
+        VBox container = new VBox(20, header, controlsBox, actionBox, chartContainer, btnBack);
         container.setAlignment(Pos.CENTER);
         container.setPadding(new Insets(20));
-        container.setMaxWidth(800);
-        container.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
+        container.setMaxWidth(900);
+        container.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);");
 
         mainLayout.getChildren().add(container);
     }
 
     private void fetchReportData() {
-        int monthIndex = cmbMonth.getSelectionModel().getSelectedIndex() + 1;
-        int year = cmbYear.getValue();
+        int selectedMonth = cmbMonth.getSelectionModel().getSelectedIndex() + 1;
+        int selectedYear = cmbYear.getValue();
+        LocalDate now = LocalDate.now();
         
-        // Use the ClientUI's controller (casted to ManagerController if needed, 
-        // or just use generic controller accepting the message)
+        // --- 1. STRICT VALIDATION: Only Past Months Allowed ---
+        if (selectedYear > now.getYear() || 
+           (selectedYear == now.getYear() && selectedMonth >= now.getMonthValue())) {
+            
+            mainUI.showAlert("Restricted Access", 
+                "You can only view reports for past months.\nData for the current month is incomplete.");
+            return;
+        }
+
         if (this.managerController != null) {
-            this.managerController.requestMonthlyReport(monthIndex, year);
-        } else {
-            mainUI.showAlert("Error", "Controller not initialized properly.");
+            chartContainer.getChildren().clear();
+            chartContainer.getChildren().add(new Label("Loading..."));
+            this.managerController.requestMonthlyReport(selectedMonth, selectedYear);
         }
     }
 
-    /**
-     * Called by ClientUI when server sends REPORT_GENERATED.
-     */
     public void updateReportData(MonthlyReportData data) {
         this.currentReportData = data;
         Platform.runLater(() -> {
-            renderTimeReport(); // Default view
-            mainUI.showAlert("Report Loaded", "Data loaded for " + cmbMonth.getValue());
+            // --- 2. NO DATA HANDLING ---
+            if (data == null || data.isEmpty()) {
+                showNoDataMessage();
+            } else {
+                renderActivityReport(); // Show the main report by default
+                // mainUI.showAlert("Success", "Report loaded successfully."); // Optional: Don't annoy user if not needed
+            }
         });
     }
-
-    private void renderTimeReport() {
-        reportChart.getData().clear();
-        reportChart.setTitle("Performance: On-Time vs Late vs No-Show");
-        xAxis.setLabel("Status");
-        yAxis.setLabel("Count");
-
-        XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Customers");
-        
-        series.getData().add(new XYChart.Data<>("On Time", currentReportData.getTotalOnTime()));
-        series.getData().add(new XYChart.Data<>("Late (>20m)", currentReportData.getTotalLate()));
-        series.getData().add(new XYChart.Data<>("No Show", currentReportData.getTotalNoShow()));
-
-        reportChart.getData().add(series);
+    
+    private void showNoDataMessage() {
+        chartContainer.getChildren().clear();
+        Label lbl = new Label("No data found for the selected period.");
+        lbl.setFont(new Font("Arial", 18));
+        lbl.setTextFill(javafx.scene.paint.Color.RED);
+        chartContainer.getChildren().add(lbl);
     }
 
-    private void renderOrdersReport() {
-        reportChart.getData().clear();
-        reportChart.setTitle("Activity: Orders & Waiting List by Week");
-        xAxis.setLabel("Week");
-        yAxis.setLabel("Total");
+    private boolean validateDataLoaded() {
+        if (currentReportData == null || currentReportData.isEmpty()) {
+            mainUI.showAlert("No Data", "Please load valid data first.");
+            return false;
+        }
+        return true;
+    }
 
+    // --- REPORT 1: PERFORMANCE ---
+    private void renderTimeReport() {
+        chartContainer.getChildren().clear();
+
+        PieChart pieChart = new PieChart();
+        pieChart.setTitle("Arrival Performance");
+
+        PieChart.Data slice1 = new PieChart.Data("On Time", currentReportData.getTotalOnTime());
+        PieChart.Data slice2 = new PieChart.Data("Late (>20m)", currentReportData.getTotalLate());
+        PieChart.Data slice3 = new PieChart.Data("No Show", currentReportData.getTotalNoShow());
+
+        pieChart.getData().addAll(slice1, slice2, slice3);
+        
+        chartContainer.getChildren().add(pieChart);
+    }
+
+    // --- REPORT 2: LOAD ANALYSIS (Orders vs Waiting List by Day) ---
+    private void renderActivityReport() {
+        chartContainer.getChildren().clear();
+        
+        Label lblTitle = new Label("Weekly Load Analysis: Orders vs Waiting List");
+        lblTitle.setFont(new Font("Arial", 18));
+        lblTitle.setStyle("-fx-font-weight: bold;");
+
+        // 1. Bar Chart
+        CategoryAxis xAxis = new CategoryAxis();
+        NumberAxis yAxis = new NumberAxis();
+        xAxis.setLabel("Day of Week");
+        yAxis.setLabel("Count");
+
+        BarChart<String, Number> barChart = new BarChart<>(xAxis, yAxis);
+        barChart.setAnimated(false);
+        barChart.setTitle("Peak Days Identification");
+
+        // Series 1: Actual Orders
         XYChart.Series<String, Number> seriesOrders = new XYChart.Series<>();
-        seriesOrders.setName("Orders");
-        Map<String, Integer> ordersMap = currentReportData.getWeeklyOrderCounts();
-        
-        // Ensure we show weeks 1-4 even if empty
-        for(int i=1; i<=5; i++) {
-            String key = "Week " + i;
-            if(ordersMap.containsKey(key))
-                seriesOrders.getData().add(new XYChart.Data<>(key, ordersMap.get(key)));
-        }
+        seriesOrders.setName("Completed Orders");
+        fillDaySeries(seriesOrders, currentReportData.getOrdersByDayOfWeek());
 
+        // Series 2: Waiting List Demand
         XYChart.Series<String, Number> seriesWait = new XYChart.Series<>();
-        seriesWait.setName("Waiting List");
-        Map<String, Integer> waitMap = currentReportData.getWeeklyWaitingListCounts();
-        
-        for(int i=1; i<=5; i++) {
-             String key = "Week " + i;
-             if(waitMap.containsKey(key))
-                 seriesWait.getData().add(new XYChart.Data<>(key, waitMap.get(key)));
-        }
+        seriesWait.setName("Waiting List Entries");
+        fillDaySeries(seriesWait, currentReportData.getWaitingListByDayOfWeek());
 
-        reportChart.getData().addAll(seriesOrders, seriesWait);
+        barChart.getData().addAll(seriesOrders, seriesWait);
+
+        // 2. Summary Stats
+        int totalGuests = currentReportData.getTotalGuests();
+        int totalOrders = currentReportData.getOrdersByDayOfWeek().values().stream().mapToInt(Integer::intValue).sum();
+        
+        Label lblStats = new Label(
+            String.format("Summary: Served %d Total Guests across %d Orders this month.", totalGuests, totalOrders)
+        );
+        lblStats.setStyle("-fx-background-color: #e3f2fd; -fx-padding: 10; -fx-background-radius: 5;");
+
+        chartContainer.getChildren().addAll(lblTitle, barChart, lblStats);
+    }
+
+    // Helper to fill data in correct Sunday-Saturday order
+    private void fillDaySeries(XYChart.Series<String, Number> series, Map<String, Integer> map) {
+        List<String> days = Arrays.asList("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
+        for (String day : days) {
+            series.getData().add(new XYChart.Data<>(day, map.getOrDefault(day, 0)));
+        }
     }
 
     private Button createReportButton(String text, String icon) {
         Button btn = new Button(icon + "  " + text);
         btn.setPrefWidth(220);
+        btn.setPrefHeight(40);
         return btn;
     }
 }

@@ -14,9 +14,6 @@ public class ReportController {
         this.conn = DatabaseConnection.getInstance().getConnection();
     }
 
-    /**
-     * Generates the full report data for a specific month/year.
-     */
     public MonthlyReportData generateMonthlyReport(int month, int year) {
         MonthlyReportData data = new MonthlyReportData(month, year);
         
@@ -25,7 +22,7 @@ public class ReportController {
             return data;
         }
 
-        // 1. PERFORMANCE REPORT (SQL Logic)
+        // --- 1. PERFORMANCE REPORT ---
         String perfQuery = "SELECT status, order_time, actual_arrival_time FROM orders " +
                            "WHERE MONTH(order_date) = ? AND YEAR(order_date) = ?";
 
@@ -43,13 +40,11 @@ public class ReportController {
                     if ("CANCELLED".equalsIgnoreCase(status)) {
                         noShow++;
                     } else if (ordered != null && arrival != null) {
-                        // Check logic: Late if arrival > order + 20 mins
                         long diff = arrival.getTime() - ordered.getTime();
                         long minutes = diff / (60 * 1000);
                         if (minutes > 20) late++;
                         else onTime++;
                     } else {
-                        // If Finished/Active but no arrival data, assume on time
                         if (!"CANCELLED".equalsIgnoreCase(status)) onTime++;
                     }
                 }
@@ -60,20 +55,40 @@ public class ReportController {
         data.setTotalLate(late);
         data.setTotalNoShow(noShow);
 
-        // 2. ORDERS PER WEEK
-        String ordersQuery = "SELECT (DAY(order_date) - 1) / 7 + 1 AS week, COUNT(*) FROM orders " +
-                             "WHERE MONTH(order_date) = ? AND YEAR(order_date) = ? GROUP BY week";
-        data.setWeeklyOrderCounts(fetchMap(ordersQuery, month, year));
+        // --- 2. DETAILED ACTIVITY REPORT ---
 
-        // 3. WAITING LIST PER WEEK
-        String waitQuery = "SELECT (DAY(date_requested) - 1) / 7 + 1 AS week, COUNT(*) FROM waiting_list " +
-                           "WHERE MONTH(date_requested) = ? AND YEAR(date_requested) = ? GROUP BY week";
-        data.setWeeklyWaitingListCounts(fetchMap(waitQuery, month, year));
+        // A. Total Guests Served
+        String guestQuery = "SELECT SUM(num_of_diners) FROM orders WHERE MONTH(order_date) = ? AND YEAR(order_date) = ?";
+        try (PreparedStatement ps = conn.prepareStatement(guestQuery)) {
+            ps.setInt(1, month);
+            ps.setInt(2, year);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) data.setTotalGuests(rs.getInt(1));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+
+        // B. Orders by Day of Week (e.g. 'Monday', 'Tuesday')
+        // Uses DAYNAME() function in MySQL
+        String dailyOrderQuery = 
+            "SELECT DAYNAME(order_date) as day_name, COUNT(*) " +
+            "FROM orders " +
+            "WHERE MONTH(order_date) = ? AND YEAR(order_date) = ? " +
+            "GROUP BY day_name " +
+            "ORDER BY FIELD(day_name, 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday')";
+        data.setOrdersByDayOfWeek(fetchMap(dailyOrderQuery, month, year));
+
+        // C. Waiting List by Day of Week
+        String dailyWaitQuery = 
+            "SELECT DAYNAME(date_requested) as day_name, COUNT(*) " +
+            "FROM waiting_list " +
+            "WHERE MONTH(date_requested) = ? AND YEAR(date_requested) = ? " +
+            "GROUP BY day_name " +
+            "ORDER BY FIELD(day_name, 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday')";
+        data.setWaitingListByDayOfWeek(fetchMap(dailyWaitQuery, month, year));
 
         return data;
     }
 
-    // Helper for map queries
     private Map<String, Integer> fetchMap(String query, int month, int year) {
         Map<String, Integer> map = new HashMap<>();
         try (PreparedStatement ps = conn.prepareStatement(query)) {
@@ -81,7 +96,7 @@ public class ReportController {
             ps.setInt(2, year);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    map.put("Week " + rs.getInt(1), rs.getInt(2));
+                    map.put(rs.getString(1), rs.getInt(2));
                 }
             }
         } catch (SQLException e) { e.printStackTrace(); }
