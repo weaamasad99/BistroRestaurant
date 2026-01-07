@@ -138,43 +138,47 @@ public class ReservationController {
     
     
     /**
-     * Checks if the restaurant has enough open seats for a specific time slot,
-     * accounting for the 2-hour dining duration.
-     * FIXED LOGIC: Checks for future overlaps to prevent overbooking.
+     * Checks if there is a specific physical table available for the requested party size
+     * during the entire meal duration.
+     * LOGIC: "Best Fit" Bin Packing on a Timeline.
      */
-    private boolean checkRestaurantCapacity(Date date, Time reqTime, int requestedSeats) {
+    private boolean checkRestaurantCapacity(Date date, Time reqTime, int requestedDiners) {
         if (conn == null) return false;
 
-        // --- Helper Class for this calculation ---
+        // --- Helper Class: Physical Table ---
+        class TableInfo {
+            int id;
+            int seats;
+            public TableInfo(int id, int seats) { this.id = id; this.seats = seats; }
+        }
+
+        // --- Helper Class: Active Reservation ---
         class BookingInfo {
             Time time;
             int diners;
             public BookingInfo(Time t, int d) { this.time = t; this.diners = d; }
         }
 
-        // 1. Get Total Restaurant Capacity
-        int totalCapacity = 0;
-        String capQuery = "SELECT SUM(seats) as total_seats FROM restaurant_tables";
-        try (PreparedStatement ps = conn.prepareStatement(capQuery);
+        // 1. Fetch ALL Physical Tables (Sorted by Size ASC for "Best Fit")
+        ArrayList<TableInfo> allTables = new ArrayList<>();
+        String tableQuery = "SELECT table_id, seats FROM restaurant_tables ORDER BY seats ASC";
+        try (PreparedStatement ps = conn.prepareStatement(tableQuery);
              ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                totalCapacity = rs.getInt("total_seats");
+            while (rs.next()) {
+                allTables.add(new TableInfo(rs.getInt("table_id"), rs.getInt("seats")));
             }
         } catch (SQLException e) { 
             e.printStackTrace(); 
             return false; 
         }
 
-        if (totalCapacity == 0) return false;
+        if (allTables.isEmpty()) return false;
 
         // 2. Fetch ALL overlapping reservations
-        // We look for any order that overlaps with our requested 2-hour window.
         ArrayList<BookingInfo> overlaps = new ArrayList<>();
-        
         String overlapQuery = "SELECT order_time, num_of_diners FROM orders " +
                               "WHERE order_date = ? " +
-                              "AND status IN ('APPROVED', 'ACTIVE') " + 
-                              // Logic: Order Start < Our End (req+2h) AND Order End (start+2h) > Our Start
+                              "AND status IN ('APPROVED', 'ACTIVE', 'PENDING') " + 
                               "AND order_time < ADDTIME(?, '02:00:00') " +
                               "AND order_time > SUBTIME(?, '02:00:00')";
 
@@ -182,13 +186,9 @@ public class ReservationController {
             ps.setDate(1, date);
             ps.setTime(2, reqTime); 
             ps.setTime(3, reqTime); 
-            
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    overlaps.add(new BookingInfo(
-                        rs.getTime("order_time"), 
-                        rs.getInt("num_of_diners")
-                    ));
+                    overlaps.add(new BookingInfo(rs.getTime("order_time"), rs.getInt("num_of_diners")));
                 }
             }
         } catch (SQLException e) { 
@@ -196,46 +196,75 @@ public class ReservationController {
             return false; 
         }
 
-        // 3. Calculate Peak Load
-        // We must ensure that at no point during the meal does the total diners exceed capacity.
-        
-        // Convert to minutes for easier comparison
+        // 3. Define Critical Time Points to check
+        // We must ensure that at every moment of our meal, a valid table configuration exists.
         long reqStartMin = (reqTime.getTime() / 60000) % (24 * 60); 
-        long reqEndMin = reqStartMin + 120; // Dining duration is 120 mins
+        long reqEndMin = reqStartMin + 120; // 2 Hours duration
 
-        // Identify critical check points: Our start time + the start time of any overlapping order
         ArrayList<Long> checkPoints = new ArrayList<>();
-        checkPoints.add(reqStartMin);
+        checkPoints.add(reqStartMin); // Check start of our meal
 
+        // Add start times of other bookings that occur *during* our meal
         for (BookingInfo b : overlaps) {
             long oStart = (b.time.getTime() / 60000) % (24 * 60);
-            // Only care about start times that happen during our meal
             if (oStart > reqStartMin && oStart < reqEndMin) {
                 checkPoints.add(oStart);
             }
         }
 
-        // Check the total load at each critical time point
+        // 4. Run "Best Fit" Simulation at every check point
         for (Long point : checkPoints) {
-            int currentLoad = 0;
+            
+            // A. Identify all active groups at this specific minute
+            ArrayList<Integer> activeGroups = new ArrayList<>();
+            // Always include the new request
+            activeGroups.add(requestedDiners);
+
             for (BookingInfo b : overlaps) {
                 long oStart = (b.time.getTime() / 60000) % (24 * 60);
                 long oEnd = oStart + 120;
-                
-                // If this other order is active at this specific minute, count them
                 if (point >= oStart && point < oEnd) {
-                    currentLoad += b.diners;
+                    activeGroups.add(b.diners);
                 }
             }
 
-            // If adding us pushes the load over capacity at this specific minute -> Fail
-            if (currentLoad + requestedSeats > totalCapacity) {
-                System.out.println("Capacity Check Failed. Peak Load: " + (currentLoad + requestedSeats) + "/" + totalCapacity);
-                return false; 
+            // B. Try to fit these groups into the tables
+            // Strategy: For each group, consume the *smallest available table* that fits them.
+            
+            // Clone the table list so we can simulate removing them
+            ArrayList<TableInfo> availableTables = new ArrayList<>(allTables);
+            
+            boolean allGroupsSeated = true;
+
+            // Sort groups larger first? 
+            // Actually, simply matching each group to its Best Fit is robust.
+            // Let's iterate through groups and try to find a home for each.
+            for (int groupSize : activeGroups) {
+                TableInfo bestMatch = null;
+                
+                // Find smallest table that fits this group
+                for (TableInfo t : availableTables) {
+                    if (t.seats >= groupSize) {
+                        bestMatch = t;
+                        break; // Since 'allTables' is sorted ASC, the first match is the best match
+                    }
+                }
+
+                if (bestMatch != null) {
+                    availableTables.remove(bestMatch); // Table is taken
+                } else {
+                    allGroupsSeated = false; // No table fits this group!
+                    break;
+                }
+            }
+
+            if (!allGroupsSeated) {
+                System.out.println("Capacity Check Failed at min " + point + ". Not enough tables for sizes: " + activeGroups);
+                return false; // Fail immediately if any time point is invalid
             }
         }
 
-        return true; 
+        return true; // Passed all checks
     }
     
     public String createReservation(Order order) {
