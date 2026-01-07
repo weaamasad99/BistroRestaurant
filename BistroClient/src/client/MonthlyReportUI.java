@@ -17,6 +17,7 @@ import java.util.Map;
 
 public class MonthlyReportUI {
 
+	
     private VBox mainLayout;
     private ClientUI mainUI;
     private Runnable onBack;
