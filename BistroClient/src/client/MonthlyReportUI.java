@@ -2,12 +2,16 @@ package client;
 
 import controllers.ManagerController;
 import common.MonthlyReportData;
+import common.Order;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.chart.*;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
 import java.time.LocalDate;
@@ -16,9 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MonthlyReportUI {
-	
 
-	
     private VBox mainLayout;
     private ClientUI mainUI;
     private Runnable onBack;
@@ -55,9 +57,8 @@ public class MonthlyReportUI {
         cmbMonth = new ComboBox<>();
         cmbMonth.getItems().addAll("January", "February", "March", "April", "May", "June", 
                                    "July", "August", "September", "October", "November", "December");
-        // Default to previous month
         int prevMonthIdx = LocalDate.now().minusMonths(1).getMonthValue() - 1;
-        cmbMonth.getSelectionModel().select(prevMonthIdx); 
+        cmbMonth.getSelectionModel().select(Math.max(0, prevMonthIdx)); 
         
         cmbYear = new ComboBox<>();
         int currentYear = LocalDate.now().getYear();
@@ -72,8 +73,8 @@ public class MonthlyReportUI {
         controlsBox.setAlignment(Pos.CENTER);
 
         // --- Report Buttons ---
-        Button btnTimeReport = createReportButton("Performance (On-Time/Late)", "⏱");
-        Button btnActivityReport = createReportButton("Weekly Load & Diners", "📊");
+        Button btnTimeReport = createReportButton("1. Time & Performance", "⏱");
+        Button btnActivityReport = createReportButton("2. Activity & Subscribers", "📊");
 
         btnTimeReport.setOnAction(e -> {
             if (validateDataLoaded()) renderTimeReport();
@@ -86,11 +87,11 @@ public class MonthlyReportUI {
         HBox actionBox = new HBox(15, btnTimeReport, btnActivityReport);
         actionBox.setAlignment(Pos.CENTER);
 
-        // --- Chart Container ---
+        // --- Content Container ---
         chartContainer = new VBox();
-        chartContainer.setAlignment(Pos.CENTER);
+        chartContainer.setAlignment(Pos.TOP_CENTER);
         chartContainer.setPadding(new Insets(15));
-        chartContainer.setMinHeight(400);
+        chartContainer.setMinHeight(450);
         chartContainer.setStyle("-fx-border-color: #ddd; -fx-border-radius: 5; -fx-background-color: #f9f9f9;");
         chartContainer.getChildren().add(new Label("Select a past month and click 'Load Data' to view analytics."));
 
@@ -100,10 +101,14 @@ public class MonthlyReportUI {
         VBox container = new VBox(20, header, controlsBox, actionBox, chartContainer, btnBack);
         container.setAlignment(Pos.CENTER);
         container.setPadding(new Insets(20));
-        container.setMaxWidth(900);
+        container.setMaxWidth(1000);
         container.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);");
+        
+        ScrollPane scroll = new ScrollPane(container);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background-color: transparent;");
 
-        mainLayout.getChildren().add(container);
+        mainLayout.getChildren().add(scroll);
     }
 
     private void fetchReportData() {
@@ -111,10 +116,9 @@ public class MonthlyReportUI {
         int selectedYear = cmbYear.getValue();
         LocalDate now = LocalDate.now();
         
-        // --- 1. STRICT VALIDATION: Only Past Months Allowed ---
+        // Strict Validation
         if (selectedYear > now.getYear() || 
            (selectedYear == now.getYear() && selectedMonth >= now.getMonthValue())) {
-            
             mainUI.showAlert("Restricted Access", 
                 "You can only view reports for past months.\nData for the current month is incomplete.");
             return;
@@ -130,12 +134,10 @@ public class MonthlyReportUI {
     public void updateReportData(MonthlyReportData data) {
         this.currentReportData = data;
         Platform.runLater(() -> {
-            // --- 2. NO DATA HANDLING ---
             if (data == null || data.isEmpty()) {
                 showNoDataMessage();
             } else {
-                renderActivityReport(); // Show the main report by default
-                // mainUI.showAlert("Success", "Report loaded successfully."); // Optional: Don't annoy user if not needed
+                renderTimeReport(); // Show first report by default
             }
         });
     }
@@ -144,7 +146,7 @@ public class MonthlyReportUI {
         chartContainer.getChildren().clear();
         Label lbl = new Label("No data found for the selected period.");
         lbl.setFont(new Font("Arial", 18));
-        lbl.setTextFill(javafx.scene.paint.Color.RED);
+        lbl.setTextFill(Color.RED);
         chartContainer.getChildren().add(lbl);
     }
 
@@ -156,65 +158,134 @@ public class MonthlyReportUI {
         return true;
     }
 
-    // --- REPORT 1: PERFORMANCE ---
+    // =====================================================================
+    // REPORT 1: TIME & PERFORMANCE (Pie + Table of Delays)
+    // =====================================================================
     private void renderTimeReport() {
         chartContainer.getChildren().clear();
-
-        PieChart pieChart = new PieChart();
-        pieChart.setTitle("Arrival Performance");
-
-        PieChart.Data slice1 = new PieChart.Data("On Time", currentReportData.getTotalOnTime());
-        PieChart.Data slice2 = new PieChart.Data("Late (>20m)", currentReportData.getTotalLate());
-        PieChart.Data slice3 = new PieChart.Data("No Show", currentReportData.getTotalNoShow());
-
-        pieChart.getData().addAll(slice1, slice2, slice3);
         
-        chartContainer.getChildren().add(pieChart);
+        Label lblTitle = new Label("Arrivals, Departures & Delays Analysis");
+        lblTitle.setFont(new Font("Arial", 18));
+        lblTitle.setStyle("-fx-font-weight: bold;");
+
+        // 1. Summary Box
+        String avgTime = currentReportData.getAverageDiningTime() != null ? currentReportData.getAverageDiningTime() : "N/A";
+        Label lblStats = new Label(
+            String.format("Month Summary:\nOn Time: %d | Late (>15m): %d | No Shows: %d\nAverage Dining Duration: %s", 
+            currentReportData.getTotalOnTime(), currentReportData.getTotalLate(), currentReportData.getTotalNoShow(), avgTime)
+        );
+        lblStats.setStyle("-fx-background-color: #FFF3E0; -fx-padding: 10; -fx-border-color: #FF9800; -fx-border-radius: 5;");
+
+        // 2. Pie Chart
+        PieChart pieChart = new PieChart();
+        pieChart.getData().add(new PieChart.Data("On Time", currentReportData.getTotalOnTime()));
+        pieChart.getData().add(new PieChart.Data("Late (>15m)", currentReportData.getTotalLate()));
+        pieChart.getData().add(new PieChart.Data("No Show", currentReportData.getTotalNoShow()));
+        pieChart.setPrefHeight(300);
+
+        // 3. Detailed Table (Late/No Show)
+        Label lblTable = new Label("Exception Details (Late / No-Show):");
+        lblTable.setFont(new Font("Arial", 14));
+        lblTable.setStyle("-fx-underline: true;");
+
+        TableView<Order> table = new TableView<>();
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.setPrefHeight(200);
+
+        TableColumn<Order, String> colDate = new TableColumn<>("Date");
+        colDate.setCellValueFactory(new PropertyValueFactory<>("orderDate"));
+        
+        TableColumn<Order, String> colScheduled = new TableColumn<>("Scheduled");
+        colScheduled.setCellValueFactory(new PropertyValueFactory<>("orderTime"));
+        
+        TableColumn<Order, String> colArrived = new TableColumn<>("Arrived");
+        colArrived.setCellValueFactory(new PropertyValueFactory<>("actualArrivalTime"));
+        
+        TableColumn<Order, String> colLeft = new TableColumn<>("Left");
+        colLeft.setCellValueFactory(new PropertyValueFactory<>("leavingTime"));
+        
+        TableColumn<Order, String> colStatus = new TableColumn<>("Status");
+        colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
+
+        table.getColumns().addAll(colDate, colScheduled, colArrived, colLeft, colStatus);
+        
+        if (currentReportData.getExceptionOrders() != null) {
+            table.setItems(FXCollections.observableArrayList(currentReportData.getExceptionOrders()));
+        }
+
+        chartContainer.getChildren().addAll(lblTitle, lblStats, pieChart, new Separator(), lblTable, table);
     }
 
-    // --- REPORT 2: LOAD ANALYSIS (Orders vs Waiting List by Day) ---
+    // =====================================================================
+    // REPORT 2: ACTIVITY (Bar Chart + Full Order List)
+    // =====================================================================
     private void renderActivityReport() {
         chartContainer.getChildren().clear();
         
-        Label lblTitle = new Label("Weekly Load Analysis: Orders vs Waiting List");
+        Label lblTitle = new Label("Order & Waiting List Distribution");
         lblTitle.setFont(new Font("Arial", 18));
         lblTitle.setStyle("-fx-font-weight: bold;");
 
         // 1. Bar Chart
         CategoryAxis xAxis = new CategoryAxis();
-        NumberAxis yAxis = new NumberAxis();
         xAxis.setLabel("Day of Week");
+        
+        NumberAxis yAxis = new NumberAxis();
         yAxis.setLabel("Count");
+        yAxis.setTickUnit(1); // Force Integer Ticks
+        yAxis.setMinorTickVisible(false);
 
         BarChart<String, Number> barChart = new BarChart<>(xAxis, yAxis);
         barChart.setAnimated(false);
-        barChart.setTitle("Peak Days Identification");
+        barChart.setTitle("Peak Days");
 
-        // Series 1: Actual Orders
         XYChart.Series<String, Number> seriesOrders = new XYChart.Series<>();
-        seriesOrders.setName("Completed Orders");
+        seriesOrders.setName("Orders");
         fillDaySeries(seriesOrders, currentReportData.getOrdersByDayOfWeek());
 
-        // Series 2: Waiting List Demand
         XYChart.Series<String, Number> seriesWait = new XYChart.Series<>();
-        seriesWait.setName("Waiting List Entries");
+        seriesWait.setName("Waiting List");
         fillDaySeries(seriesWait, currentReportData.getWaitingListByDayOfWeek());
 
         barChart.getData().addAll(seriesOrders, seriesWait);
+        barChart.setPrefHeight(300);
 
         // 2. Summary Stats
-        int totalGuests = currentReportData.getTotalGuests();
-        int totalOrders = currentReportData.getOrdersByDayOfWeek().values().stream().mapToInt(Integer::intValue).sum();
-        
         Label lblStats = new Label(
-            String.format("Summary: Served %d Total Guests across %d Orders this month.", totalGuests, totalOrders)
+            "Total Guests Served: " + currentReportData.getTotalGuests()
         );
-        lblStats.setStyle("-fx-background-color: #e3f2fd; -fx-padding: 10; -fx-background-radius: 5;");
+        lblStats.setStyle("-fx-background-color: #E3F2FD; -fx-padding: 10; -fx-border-color: #2196F3; -fx-border-radius: 5;");
 
-        chartContainer.getChildren().addAll(lblTitle, barChart, lblStats);
+        // 3. Detailed Order Table
+        Label lblTable = new Label("Detailed Order Log:");
+        lblTable.setFont(new Font("Arial", 14));
+        lblTable.setStyle("-fx-underline: true;");
+
+        TableView<Order> table = new TableView<>();
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.setPrefHeight(250);
+
+        TableColumn<Order, String> colDate = new TableColumn<>("Date");
+        colDate.setCellValueFactory(new PropertyValueFactory<>("orderDate"));
+        
+        TableColumn<Order, String> colTime = new TableColumn<>("Time");
+        colTime.setCellValueFactory(new PropertyValueFactory<>("orderTime"));
+        
+        TableColumn<Order, Integer> colGuests = new TableColumn<>("Guests");
+        colGuests.setCellValueFactory(new PropertyValueFactory<>("numberOfDiners"));
+        
+        TableColumn<Order, Integer> colOrderNum = new TableColumn<>("Order ID");
+        colOrderNum.setCellValueFactory(new PropertyValueFactory<>("orderNumber"));
+
+        table.getColumns().addAll(colDate, colTime, colGuests, colOrderNum);
+        
+        if (currentReportData.getAllMonthOrders() != null) {
+            table.setItems(FXCollections.observableArrayList(currentReportData.getAllMonthOrders()));
+        }
+
+        chartContainer.getChildren().addAll(lblTitle, lblStats, barChart, new Separator(), lblTable, table);
     }
 
-    // Helper to fill data in correct Sunday-Saturday order
     private void fillDaySeries(XYChart.Series<String, Number> series, Map<String, Integer> map) {
         List<String> days = Arrays.asList("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
         for (String day : days) {
