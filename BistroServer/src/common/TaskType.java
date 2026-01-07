@@ -19,6 +19,7 @@ public enum TaskType {
 	
     // --- Orders---
     GET_ORDERS,
+    GET_ACTIVE_ORDERS,
     UPDATE_ORDER,
     ORDERS_IMPORTED,
     UPDATE_SUCCESS,

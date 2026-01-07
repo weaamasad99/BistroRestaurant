@@ -185,6 +185,13 @@ public class BistroServer extends AbstractServer {
                 response = new Message(TaskType.GET_ORDERS, orders);
                 sendKryoToClient(response, client);
                 break;
+                
+            case GET_ACTIVE_ORDERS:
+                // log("Fetching all orders..."); 
+                ArrayList<Order> activeOrders = reservationController.getActiveOrders();
+                response = new Message(TaskType.GET_ORDERS, activeOrders);
+                sendKryoToClient(response, client);
+                break;
 
             case UPDATE_ORDER:
                 log("Updating Order...");

@@ -57,6 +57,32 @@ public class ReservationController {
         return orders;
     }
     
+    public ArrayList<Order> getActiveOrders() {
+        ArrayList<Order> orders = new ArrayList<>();
+        if (conn == null) return orders;
+
+        String query = "SELECT * FROM orders WHERE status = 'ACTIVE'";
+        try (PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                Order order = new Order(
+                    rs.getInt("order_number"),
+                    rs.getInt("user_id"),
+                    rs.getDate("order_date"),
+                    rs.getTime("order_time"),
+                    rs.getInt("num_of_diners"),
+                    rs.getString("status"),
+                    rs.getString("confirmation_code"),
+                    rs.getTime("actual_arrival_time")
+                );
+                orders.add(order);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return orders;
+    }
     
     
     /**

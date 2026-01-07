@@ -160,12 +160,12 @@ public class RepresentativeUI {
         // --- 4. View Section ---
         Label lblView = sectionTitle("View", "#4CAF50");
         viewCurrentDinersButton = createWideButton("View Current Diners (Active)", "🍽");
-        viewOrdersButton = createWideButton("View Active Orders", "🍜"); 
+        viewOrdersButton = createWideButton("View All Orders", "🍜"); 
         viewWaitingListButton = createWideButton("View Full Waiting List", "⏳");
         viewSubscriberButton = createWideButton("View All Subscribers", "👥");
 
         viewCurrentDinersButton.setOnAction(e -> displayCurrentDiners());
-        viewOrdersButton.setOnAction(e -> displayCurrentDiners());
+        viewOrdersButton.setOnAction(e -> displayAllOrders());
         viewWaitingListButton.setOnAction(e -> displayWaitingList());
         viewSubscriberButton.setOnAction(e -> displaySubscribers());
 
@@ -491,7 +491,7 @@ public void setOpeningHours() {
     }
 
     // =================================================================================
-    // 5. CURRENT DINERS / ACTIVE ORDERS (Integrated with DB)
+    // 5. CURRENT DINERS (Integrated with DB)
     // =================================================================================
     public void displayCurrentDiners() {
         mainLayout.getChildren().clear();
@@ -530,6 +530,49 @@ public void setOpeningHours() {
         
         // Request Data via Controller
         controller.getActiveOrders();
+    }
+    
+    // =================================================================================
+    // 6. ALL ORDERS (Integrated with DB)
+    // =================================================================================
+    
+    public void displayAllOrders() {
+        mainLayout.getChildren().clear();
+
+        Label header = new Label("All Orders");
+        header.setFont(new Font("Arial", 22));
+        header.setStyle("-fx-font-weight: bold;");
+
+        activeOrdersView = new TableView<>();
+        
+        TableColumn<Order, Integer> orderIdCol = new TableColumn<>("Order #");
+        orderIdCol.setCellValueFactory(new PropertyValueFactory<>("orderNumber"));
+        
+        TableColumn<Order, Integer> userCol = new TableColumn<>("User ID");
+        userCol.setCellValueFactory(new PropertyValueFactory<>("userId"));
+        
+        TableColumn<Order, String> timeCol = new TableColumn<>("Time");
+        timeCol.setCellValueFactory(new PropertyValueFactory<>("orderTime"));
+        
+        TableColumn<Order, String> statusCol = new TableColumn<>("Status");
+        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+
+        activeOrdersView.getColumns().addAll(orderIdCol, userCol, timeCol, statusCol);
+        activeOrdersView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        Button btnBack = new Button("Back");
+        btnBack.setOnAction(e -> showDashboardScreen(currentUsername));
+
+        VBox content = new VBox(15, header, activeOrdersView, btnBack);
+        content.setAlignment(Pos.CENTER);
+        content.setMaxWidth(500);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);");
+        
+        mainLayout.getChildren().add(content);
+        
+        // Request Data via Controller
+        controller.getAllOrders();
     }
     
     public void updateOrdersData(ArrayList<Order> orders) {

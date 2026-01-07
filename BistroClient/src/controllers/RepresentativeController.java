@@ -41,6 +41,10 @@ public class RepresentativeController {
     }
 
     public void getActiveOrders() {
+        networkController.accept(new Message(TaskType.GET_ACTIVE_ORDERS, null));
+    }
+    
+    public void getAllOrders() {
         networkController.accept(new Message(TaskType.GET_ORDERS, null));
     }
 
