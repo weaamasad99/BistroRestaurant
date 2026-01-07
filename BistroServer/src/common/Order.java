@@ -19,6 +19,7 @@ public class Order implements Serializable {
     private String status;          // PENDING, APPROVED, ACTIVE, FINISHED, CANCELLED
     private String confirmationCode;   // Code sent to the customer
     private Time actualArrivalTime; // When the customer actually arrived
+    private Time leavingTime; // When the customer leaves 
 
     /**
      * Constructor for creating a new Reservation Request (Client -> Server).
@@ -42,7 +43,7 @@ public class Order implements Serializable {
      * Full Constructor (Server -> Client).
      * Used when loading history or details from DB.
      */
-    public Order(int orderNumber, int userId, Date orderDate, Time orderTime, int numberOfDiners, String status, String confirmationCode, Time actualArrivalTime) {
+    public Order(int orderNumber, int userId, Date orderDate, Time orderTime, int numberOfDiners, String status, String confirmationCode, Time actualArrivalTime, Time leavingTime) {
         this.orderNumber = orderNumber;
         this.userId = userId;
         this.orderDate = orderDate;
@@ -51,6 +52,7 @@ public class Order implements Serializable {
         this.status = status;
         this.confirmationCode = confirmationCode;
         this.actualArrivalTime = actualArrivalTime;
+        this.leavingTime = leavingTime;
     }
 
     // --- Getters and Setters ---
@@ -75,6 +77,9 @@ public class Order implements Serializable {
 
     public Time getActualArrivalTime() { return actualArrivalTime; }
     public void setActualArrivalTime(Time actualArrivalTime) { this.actualArrivalTime = actualArrivalTime; }
+    
+    public Time getLeavingTime() { return leavingTime; }
+    public void setLeavingTime(Time leavingTime) { this.leavingTime = leavingTime; }
 
     @Override
     public String toString() {

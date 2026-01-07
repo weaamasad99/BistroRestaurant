@@ -5,6 +5,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Time;
+import java.time.LocalTime;
 
 public class PaymentController {
 
@@ -99,9 +101,10 @@ public class PaymentController {
             // ==========================================================
             // STEP 4: Close Order & Unlink User (Set user_id = NULL)
             // ==========================================================
-            String closeOrder = "UPDATE orders SET status = 'FINISHED', user_id = NULL WHERE confirmation_code = ?";
+            String closeOrder = "UPDATE orders SET status = 'FINISHED', user_id = NULL, leaving_time = ? WHERE confirmation_code = ?";
             try (PreparedStatement ps = conn.prepareStatement(closeOrder)) {
-                ps.setString(1, code);
+            	ps.setTime(1, Time.valueOf(LocalTime.now()));
+                ps.setString(2, code);
                 ps.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();

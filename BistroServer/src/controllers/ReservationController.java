@@ -47,7 +47,8 @@ public class ReservationController {
                     rs.getInt("num_of_diners"),
                     rs.getString("status"),
                     rs.getString("confirmation_code"),
-                    rs.getTime("actual_arrival_time")
+                    rs.getTime("actual_arrival_time"),
+                    rs.getTime("leaving_time")
                 );
                 orders.add(order);
             }
@@ -74,7 +75,8 @@ public class ReservationController {
                     rs.getInt("num_of_diners"),
                     rs.getString("status"),
                     rs.getString("confirmation_code"),
-                    rs.getTime("actual_arrival_time")
+                    rs.getTime("actual_arrival_time"),
+                    rs.getTime("leaving_time")
                 );
                 orders.add(order);
             }
@@ -107,7 +109,8 @@ public class ReservationController {
                         rs.getInt("num_of_diners"),
                         rs.getString("status"),
                         rs.getString("confirmation_code"),
-                        rs.getTime("actual_arrival_time")
+                        rs.getTime("actual_arrival_time"),
+                        rs.getTime("leaving_time")
                     );
                     history.add(order);
                 }
