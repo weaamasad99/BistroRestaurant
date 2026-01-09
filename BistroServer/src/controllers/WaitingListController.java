@@ -80,6 +80,7 @@ public class WaitingListController {
     }
     
     
+    
     public void notifyNextInLine(int vacatedTableSeats) {
         // 1. Find the person who fits AND has the largest group (High utilization logic)
         // If two groups have the same size, the one who waited longer (smaller ID) goes first.
