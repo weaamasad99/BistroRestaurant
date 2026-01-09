@@ -402,6 +402,7 @@ public class BistroServer extends AbstractServer {
     }
 
     
+    
     @Override
     protected void serverStarted() {
     	log("Server listening on port " + getPort());
