@@ -78,4 +78,43 @@ public class WaitingListController {
             return false;
         }
     }
+    
+    
+    public void notifyNextInLine(int vacatedTableSeats) {
+        // 1. Find the person who fits AND has the largest group (High utilization logic)
+        // If two groups have the same size, the one who waited longer (smaller ID) goes first.
+        String findNext = "SELECT * FROM waiting_list " +
+                          "WHERE status = 'WAITING' " +
+                          "AND num_of_diners <= ? " + 
+                          "ORDER BY num_of_diners DESC, waiting_id ASC LIMIT 1";
+                          
+        try (PreparedStatement ps = conn.prepareStatement(findNext)) {
+            ps.setInt(1, vacatedTableSeats);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                int waitingId = rs.getInt("waiting_id");
+                int userId = rs.getInt("user_id");
+                String code = rs.getString("confirmation_code");
+
+                // 2. Update status to 'NOTIFIED'
+                String updateStatus = "UPDATE waiting_list SET status = 'NOTIFIED' WHERE waiting_id = ?";
+                try (PreparedStatement psUpdate = conn.prepareStatement(updateStatus)) {
+                    psUpdate.setInt(1, waitingId);
+                    psUpdate.executeUpdate();
+                }
+                
+                // 3. Simulation: Send Notification 
+                // We print to console to simulate the SMS/Email requirement
+                System.out.println("SIMULATION: Notification sent to User #" + userId + 
+                                   ". Table (Size " + vacatedTableSeats + ") is ready for your party of " + 
+                                   rs.getInt("num_of_diners") + "!");
+                System.out.println("DEBUG: Use Confirmation Code: " + code);
+            } else {
+                System.out.println("DEBUG: Table vacated, but no one in waiting list fits seats: " + vacatedTableSeats);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }

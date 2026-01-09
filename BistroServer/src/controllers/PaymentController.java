@@ -98,6 +98,16 @@ public class PaymentController {
                 return false;
             }
 
+            
+            // We need to know the size of the table we just freed to find a match
+            int seatsFreed = 0;
+            String getTableSize = "SELECT seats FROM restaurant_tables WHERE user_id = ?"; // Check before we nullify user_id
+            // ... (Logic to fetch seats) ...
+
+            // Trigger the automation
+            WaitingListController wlController = new WaitingListController();
+            wlController.notifyNextInLine(seatsFreed);
+            
             // ==========================================================
             // STEP 4: Close Order & Unlink User (Set user_id = NULL)
             // ==========================================================

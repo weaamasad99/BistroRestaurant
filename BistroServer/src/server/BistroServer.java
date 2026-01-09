@@ -24,10 +24,19 @@ import JDBC.DatabaseConnection;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
 public class BistroServer extends AbstractServer {
 
     // Interface to communicate with ServerUI
     private ServerEventListener uiListener;
+    
+    private ScheduledExecutorService scheduler;
 
     // Controllers
     private UserController userController;
@@ -394,13 +403,51 @@ public class BistroServer extends AbstractServer {
 
     @Override
     protected void serverStarted() {
-        log("Server listening on port " + getPort());
+    	log("Server listening on port " + getPort());
         DatabaseConnection.getInstance(); 
+
+        // Initialize and start the background cleanup task
+        scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.scheduleAtFixedRate(() -> {
+            log("Running background maintenance: Checking for no-shows...");
+            
+            // Get a fresh connection for the background thread
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            if (conn == null) return;
+
+            // 1. Cancel 'NOTIFIED' waiting list entries after 15 minutes
+            String cancelWaiting = "UPDATE waiting_list SET status = 'CANCELLED' " +
+                                   "WHERE status = 'NOTIFIED' " +
+                                   "AND time_requested < SUBTIME(NOW(), '00:15:00')";
+                                   
+            // 2. Cancel 'APPROVED' reservations where customer is 15 mins late
+            String cancelLateOrders = "UPDATE orders SET status = 'CANCELLED' " +
+                                      "WHERE status = 'APPROVED' " +
+                                      "AND order_date = CURDATE() " +
+                                      "AND order_time < SUBTIME(CURTIME(), '00:15:00')";
+
+            try (PreparedStatement ps1 = conn.prepareStatement(cancelWaiting);
+                 PreparedStatement ps2 = conn.prepareStatement(cancelLateOrders)) {
+                
+                int waitCancelled = ps1.executeUpdate();
+                int ordersCancelled = ps2.executeUpdate();
+                
+                if (waitCancelled > 0 || ordersCancelled > 0) {
+                    log("Cleanup: Cancelled " + waitCancelled + " waiting and " + ordersCancelled + " late orders.");
+                }
+            } catch (SQLException e) {
+                log("Scheduler Error: " + e.getMessage());
+            }
+        }, 0, 1, TimeUnit.MINUTES); // Runs every 1 minute
     }
 
     @Override
     protected void serverStopped() {
-        log("Server stopped.");
+    	log("Server stopped.");
+        if (scheduler != null) {
+            scheduler.shutdownNow();
+            log("Background scheduler stopped.");
+        }
     }
 
     @Override
