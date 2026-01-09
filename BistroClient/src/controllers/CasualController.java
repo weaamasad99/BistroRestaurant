@@ -22,6 +22,10 @@ public class CasualController {
         networkController.accept(new Message(TaskType.CREATE_CASUAL, phone));
     }
     
+    public void recoverLostCode(String contact) {
+        // Send the TaskType.RESEND_CODE message to the server
+        networkController.accept(new Message(TaskType.RESEND_CODE, contact));
+    }
     public void setCurrentUserByPhone(String phone) {
         networkController.accept(new Message(TaskType.SET_USER, phone));
     }

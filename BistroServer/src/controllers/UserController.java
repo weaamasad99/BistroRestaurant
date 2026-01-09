@@ -126,7 +126,33 @@ public class UserController {
         }
         return null;
     }
-    
+    /**
+     * Helper: Get the email address for a user based on phone OR email input.
+     * Used for notifications when the user identifies by phone.
+     */
+    public String getEmailByContact(String contactInfo) {
+        if (conn == null) return null;
+        
+        String query = "SELECT email FROM users WHERE phone_number = ? OR email = ?";
+        
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, contactInfo);
+            ps.setString(2, contactInfo);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String email = rs.getString("email");
+                    // Ensure we don't return "no-email" (dummy value for casuals)
+                    if (email != null && email.contains("@")) {
+                        return email;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error fetching email: " + e.getMessage());
+        }
+        return null; // No valid email found
+    }
     
     /**
      * Checks if a subscriber exists by their Subscriber Number.

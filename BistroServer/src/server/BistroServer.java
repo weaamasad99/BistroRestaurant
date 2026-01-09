@@ -201,20 +201,30 @@ public class BistroServer extends AbstractServer {
                 break;
 
             case RESEND_CODE:
-                String contactInput = (String) message.getObject();
-                log("Processing Lost Code Recovery for: " + contactInput);
+            	String contactInput = (String) message.getObject();
+                System.out.println("Server Log: Client requested lost code for: " + contactInput);
                 
-                // 1. Find the code in DB
+                // 1. Find the Reservation Code
                 String recoveredCode = reservationController.findCodeByContact(contactInput);
                 
                 if (recoveredCode != null) {
-                    // 2. Send via Notification Controller (SMS/Email)
-                    // Note: Ensure you initialized notificationController in the constructor!
-                    // If not, use: new NotificationController().sendLostCode(...)
-                    new controllers.NotificationController().sendLostCode(contactInput, recoveredCode);
+                    System.out.println("Server Log: Code found (" + recoveredCode + "). Resolving email...");
+
+                    // 2. Resolve the REAL email address (Fix for phone number inputs)
+                    String realEmail = userController.getEmailByContact(contactInput);
                     
-                    response = new Message(TaskType.SUCCESS, "Code sent to your contact details.");
+                    // If we found an email in DB, use it. Otherwise, assume input is the target.
+                    String targetContact = (realEmail != null) ? realEmail : contactInput;
+                    
+                    System.out.println("Server Log: Sending notification to: " + targetContact);
+
+                    // 3. Send Notification
+                    // This will now pass a valid email (with @) to the controller
+                    new controllers.NotificationController().sendLostCode(targetContact, recoveredCode);
+                    
+                    response = new Message(TaskType.SUCCESS, "Code sent to your registered contact details.");
                 } else {
+                    System.out.println("Server Log: No active booking found for " + contactInput);
                     response = new Message(TaskType.FAIL, "No active booking found for this detail.");
                 }
                 sendKryoToClient(response, client);

@@ -57,6 +57,7 @@ public class IdentificationUI {
         btnLostCode.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
         btnLostCode.setOnAction(e -> {
              // Logic: Usually this would trigger an SMS to the phone number
+        	 casualController.recoverLostCode(userIdentifier);
              mainUI.showAlert("Retrieving Code", "We are sending the reservation details to: " + userIdentifier);
         });
         
