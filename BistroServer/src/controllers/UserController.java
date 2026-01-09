@@ -19,6 +19,36 @@ public class UserController {
         this.conn = DatabaseConnection.getInstance().getConnection();
     }
 
+    
+    public User getUserById(int userId) {
+        if (conn == null) return null;
+        String query = "SELECT * FROM users WHERE user_id = ?";
+        try (java.sql.PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, userId);
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    // Assuming you have a helper or constructor to map ResultSet to User
+                    // For now, mapping manually based on your previous code structure:
+                    int subNum = rs.getInt("subscriber_number");
+                    Integer subNumObj = rs.wasNull() ? null : subNum;
+                    return new User(
+                        rs.getInt("user_id"),
+                        rs.getString("phone_number"),
+                        rs.getString("email"),
+                        rs.getString("first_name"),
+                        rs.getString("last_name"),
+                        rs.getString("user_type"),
+                        subNumObj,
+                        rs.getString("username"),
+                        rs.getString("password")
+                    );
+                }
+            }
+        } catch (java.sql.SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
     /**
      * Authenticates a user.
      * * Logic:

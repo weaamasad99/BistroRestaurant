@@ -77,6 +77,7 @@ public enum TaskType {
     USER_FOUND,        
     USER_NOT_FOUND,
 
+    RESEND_CODE,
     UPDATE_SUBSCRIBER
    
 }

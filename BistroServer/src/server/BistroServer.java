@@ -148,6 +148,7 @@ public class BistroServer extends AbstractServer {
                 User registeredSub = userController.registerNewSubscriber(subToRegister);
 
                 if (registeredSub != null) {
+                    new controllers.NotificationController().sendRegistrationWelcome(registeredSub);
                     response = new Message(TaskType.REGISTRATION_SUCCESS, registeredSub);
                 } else {
                     response = new Message(TaskType.FAIL, "Registration failed. User may already exist.");
@@ -187,9 +188,37 @@ public class BistroServer extends AbstractServer {
                 Order order = (Order) message.getObject();
                 result = reservationController.createReservation(order);
                 response = new Message(TaskType.REQUEST_RESERVATION, result);
+	            if (result.startsWith("OK")) {
+	                new controllers.NotificationController().sendReservationConfirmation(
+	                        order.getUserId(), 
+	                        order.getOrderDate().toString(), 
+	                        order.getOrderTime().toString(), 
+	                        order.getConfirmationCode(), 
+	                        order.getNumberOfDiners()
+	                    );
+                }
                 sendKryoToClient(response, client);
                 break;
 
+            case RESEND_CODE:
+                String contactInput = (String) message.getObject();
+                log("Processing Lost Code Recovery for: " + contactInput);
+                
+                // 1. Find the code in DB
+                String recoveredCode = reservationController.findCodeByContact(contactInput);
+                
+                if (recoveredCode != null) {
+                    // 2. Send via Notification Controller (SMS/Email)
+                    // Note: Ensure you initialized notificationController in the constructor!
+                    // If not, use: new NotificationController().sendLostCode(...)
+                    new controllers.NotificationController().sendLostCode(contactInput, recoveredCode);
+                    
+                    response = new Message(TaskType.SUCCESS, "Code sent to your contact details.");
+                } else {
+                    response = new Message(TaskType.FAIL, "No active booking found for this detail.");
+                }
+                sendKryoToClient(response, client);
+                break;
             case GET_ORDERS:
                 // log("Fetching all orders..."); 
                 ArrayList<Order> orders = reservationController.getAllOrders();

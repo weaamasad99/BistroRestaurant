@@ -57,7 +57,39 @@ public class ReservationController {
         }
         return orders;
     }
-    
+    public String findCodeByContact(String contactInfo) {
+        if (conn == null) return null;
+
+        // Logic:
+        // 1. Join 'orders' with 'users'.
+        // 2. Match phone OR email.
+        // 3. Status must be relevant (APPROVED or ACTIVE, not FINISHED/CANCELLED).
+        // 4. Get the most recent one (ORDER BY date/time DESC).
+        
+        String query = "SELECT o.confirmation_code " +
+                       "FROM orders o " +
+                       "JOIN users u ON o.user_id = u.user_id " +
+                       "WHERE (u.phone_number = ? OR u.email = ?) " +
+                       "AND o.status IN ('APPROVED', 'ACTIVE') " +
+                       "ORDER BY o.order_date DESC, o.order_time DESC " +
+                       "LIMIT 1";
+
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, contactInfo); // Check Phone
+            ps.setString(2, contactInfo); // Check Email
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("confirmation_code");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error finding code by contact: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return null; // No active booking found
+    }
     public ArrayList<Order> getActiveOrders() {
         ArrayList<Order> orders = new ArrayList<>();
         if (conn == null) return orders;
