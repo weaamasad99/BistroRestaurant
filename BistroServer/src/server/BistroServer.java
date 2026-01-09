@@ -14,6 +14,7 @@ import common.WaitingList;
 
 // Import Controllers
 import controllers.UserController;
+import controllers.NotificationController;
 import controllers.PaymentController;
 import controllers.ReportController;
 import controllers.ReservationController;
@@ -29,6 +30,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class BistroServer extends AbstractServer {
@@ -427,6 +429,29 @@ public class BistroServer extends AbstractServer {
                                       "WHERE status = 'APPROVED' " +
                                       "AND order_date = CURDATE() " +
                                       "AND order_time < SUBTIME(CURTIME(), '00:15:00')";
+            
+            
+         // 3. Send reminders exactly 2 hours before the reservation
+            String reminderQuery = "SELECT u.email, u.phone_number, o.order_time " +
+                                   "FROM orders o " +
+                                   "JOIN users u ON o.user_id = u.user_id " +
+                                   "WHERE o.status = 'APPROVED' " +
+                                   "AND o.order_date = CURDATE() " +
+                                   "AND o.order_time = ADDTIME(CURTIME(), '02:00:00')";
+
+            try (PreparedStatement ps3 = conn.prepareStatement(reminderQuery)) {
+                ResultSet rs = ps3.executeQuery();
+                NotificationController nc = new NotificationController();
+                
+                while (rs.next()) {
+                    String contact = rs.getString("email");
+                    String time = rs.getString("order_time");
+                    nc.sendTwoHourReminder(contact, time);
+                    log("Automated 2-hour reminder sent for reservation at " + time);
+                }
+            } catch (SQLException e) {
+                log("Reminder Error: " + e.getMessage());
+            }
 
             try (PreparedStatement ps1 = conn.prepareStatement(cancelWaiting);
                  PreparedStatement ps2 = conn.prepareStatement(cancelLateOrders)) {

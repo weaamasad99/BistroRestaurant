@@ -21,5 +21,11 @@ public class NotificationController {
     
     public void sendReminder(int userId) {
          System.out.println(">>> [SMS SENT] To User " + userId + ": Reminder - Your reservation is tomorrow.");
+         
+    }
+    
+    public void sendTwoHourReminder(String contactInfo, String time) {
+        System.out.println(">>> [SIMULATION - SMS/EMAIL SENT] To: " + contactInfo);
+        System.out.println(">>> Message: Reminder! Your reservation at Bistro is in 2 hours (" + time + "). We look forward to seeing you!");
     }
 }
