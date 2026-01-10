@@ -216,6 +216,7 @@ public class BistroServer extends AbstractServer {
 
                     log("Found " + ordersList.size() + " active/pending orders. Sending details to: " + emailTarget);
 
+                    
                     // 3. Send List Notification
                     // Ensure you pass 'this.uiListener' if your NotificationController supports logging to UI
                     new controllers.NotificationController(this.uiListener).sendLostCodes(emailTarget, ordersList);
