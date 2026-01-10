@@ -200,6 +200,7 @@ public class BistroServer extends AbstractServer {
                 sendKryoToClient(response, client);
                 break;
 
+                
             case RESEND_CODE:
                 String inputIdentifier = (String) message.getObject();
                 log("Processing Lost Code Request for: " + inputIdentifier);
