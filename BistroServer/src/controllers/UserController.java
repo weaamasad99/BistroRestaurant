@@ -19,7 +19,39 @@ public class UserController {
         this.conn = DatabaseConnection.getInstance().getConnection();
     }
 
-    
+    /**
+     * Retrieves Email by Phone OR Subscriber ID (Identifier).
+     */
+    public String getEmailByIdentifier(String identifier) {
+        if (conn == null) return null;
+        
+        int subId = -1;
+        try {
+            subId = Integer.parseInt(identifier);
+        } catch (NumberFormatException e) {
+            subId = -1;
+        }
+
+        String query = "SELECT email FROM users WHERE phone_number = ? OR email = ? OR subscriber_number = ?";
+        
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, identifier);
+            ps.setString(2, identifier);
+            ps.setInt(3, subId);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String email = rs.getString("email");
+                    if (email != null && email.contains("@") && !email.equals("no-email")) {
+                        return email;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
     public User getUserById(int userId) {
         if (conn == null) return null;
         String query = "SELECT * FROM users WHERE user_id = ?";

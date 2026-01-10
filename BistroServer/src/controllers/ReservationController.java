@@ -118,6 +118,54 @@ public class ReservationController {
         return orders;
     }
     
+    /**
+     * Finds ALL relevant orders (Active, Approved, Pending) for a user.
+     * Supports input as either Subscriber ID or Phone Number.
+     */
+    public ArrayList<Order> getActiveOrdersForContact(String identifier) {
+        ArrayList<Order> orders = new ArrayList<>();
+        if (conn == null) return orders;
+
+        // Try to parse identifier as Subscriber ID (int). If fails, use -1.
+        int subscriberId = -1;
+        try {
+            subscriberId = Integer.parseInt(identifier);
+        } catch (NumberFormatException e) {
+            subscriberId = -1; 
+        }
+
+        // SQL JOIN: Find orders where the user matches the Subscriber ID OR Phone Number
+        String query = "SELECT o.* FROM orders o " +
+                       "JOIN users u ON o.user_id = u.user_id " +
+                       "WHERE (u.subscriber_number = ? OR u.phone_number = phone_number) " +
+                       "AND o.status IN ('APPROVED', 'ACTIVE', 'PENDING') " +
+                       "ORDER BY o.order_date ASC, o.order_time ASC";
+
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, subscriberId);      // Check Subscriber ID column
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Order order = new Order(
+                        rs.getInt("order_number"),
+                        rs.getInt("user_id"),
+                        rs.getDate("order_date"),
+                        rs.getTime("order_time"),
+                        rs.getInt("num_of_diners"),
+                        rs.getString("status"),
+                        rs.getString("confirmation_code"),
+                        rs.getTime("actual_arrival_time"),
+                        rs.getTime("leaving_time")
+                    );
+                    orders.add(order);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching active orders: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return orders;
+    }
     
     /**
      * Fetches all orders belonging to a specific user.
