@@ -161,11 +161,9 @@ public class ReservationController {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error fetching active orders: " + e.getMessage());
-            e.printStackTrace();
-        }
+            System.err.println("Error fetching active orders: " + e.getMessage());}
         return orders;
-    }
+        }
     
     /**
      * Fetches all orders belonging to a specific user.
