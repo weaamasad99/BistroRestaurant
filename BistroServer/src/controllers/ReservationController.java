@@ -118,6 +118,45 @@ public class ReservationController {
         return orders;
     }
     
+    /**
+     * Finds ALL active or approved orders for a specific contact (Phone or Email).
+     * Used for the "Lost Code" feature to send a summary of all bookings.
+     */
+    public ArrayList<Order> getActiveOrdersForContact(String contactInfo) {
+        ArrayList<Order> orders = new ArrayList<>();
+        if (conn == null) return orders;
+
+        String query = "SELECT o.* FROM orders o " +
+                       "JOIN users u ON o.user_id = u.user_id " +
+                       "WHERE (u.phone_number = ? OR u.email = ?) " +
+                       "AND o.status IN ('APPROVED', 'ACTIVE') " +
+                       "ORDER BY o.order_date ASC, o.order_time ASC";
+
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, contactInfo);
+            ps.setString(2, contactInfo);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Order order = new Order(
+                        rs.getInt("order_number"),
+                        rs.getInt("user_id"),
+                        rs.getDate("order_date"),
+                        rs.getTime("order_time"),
+                        rs.getInt("num_of_diners"),
+                        rs.getString("status"),
+                        rs.getString("confirmation_code"),
+                        rs.getTime("actual_arrival_time"),
+                        rs.getTime("leaving_time")
+                    );
+                    orders.add(order);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return orders;
+    }
     
     /**
      * Fetches all orders belonging to a specific user.

@@ -189,7 +189,7 @@ public class BistroServer extends AbstractServer {
                 result = reservationController.createReservation(order);
                 response = new Message(TaskType.REQUEST_RESERVATION, result);
 	            if (result.startsWith("OK")) {
-	                new controllers.NotificationController().sendReservationConfirmation(
+	                new controllers.NotificationController(this.uiListener).sendReservationConfirmation(
 	                        order.getUserId(), 
 	                        order.getOrderDate().toString(), 
 	                        order.getOrderTime().toString(), 
@@ -201,31 +201,27 @@ public class BistroServer extends AbstractServer {
                 break;
 
             case RESEND_CODE:
-            	String contactInput = (String) message.getObject();
-                System.out.println("Server Log: Client requested lost code for: " + contactInput);
+                String contactInput = (String) message.getObject();
+                log("Client requested lost code recovery for: " + contactInput);
                 
-                // 1. Find the Reservation Code
-                String recoveredCode = reservationController.findCodeByContact(contactInput);
+                // 1. Find ALL active/approved orders for this contact
+                ArrayList<Order> ActiveOrders = reservationController.getActiveOrdersForContact(contactInput);
                 
-                if (recoveredCode != null) {
-                    System.out.println("Server Log: Code found (" + recoveredCode + "). Resolving email...");
+                if (!ActiveOrders.isEmpty()) {
+                    log("Found " + ActiveOrders.size() + " active orders. Resolving email...");
 
-                    // 2. Resolve the REAL email address (Fix for phone number inputs)
+                    // 2. Resolve the REAL email address
                     String realEmail = userController.getEmailByContact(contactInput);
-                    
-                    // If we found an email in DB, use it. Otherwise, assume input is the target.
                     String targetContact = (realEmail != null) ? realEmail : contactInput;
                     
-                    System.out.println("Server Log: Sending notification to: " + targetContact);
-
-                    // 3. Send Notification
-                    // This will now pass a valid email (with @) to the controller
-                    new controllers.NotificationController().sendLostCode(targetContact, recoveredCode);
+                    // 3. Send Notification (Pass 'this.uiListener' for UI logging)
+                    new controllers.NotificationController(this.uiListener)
+                        .sendLostCodes(targetContact, ActiveOrders);
                     
-                    response = new Message(TaskType.SUCCESS, "Code sent to your registered contact details.");
+                    response = new Message(TaskType.SUCCESS, "Reservation details sent to your registered contact.");
                 } else {
-                    System.out.println("Server Log: No active booking found for " + contactInput);
-                    response = new Message(TaskType.FAIL, "No active booking found for this detail.");
+                    log("No active bookings found for: " + contactInput);
+                    response = new Message(TaskType.FAIL, "No active bookings found for this contact.");
                 }
                 sendKryoToClient(response, client);
                 break;
