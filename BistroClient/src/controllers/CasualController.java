@@ -36,7 +36,8 @@ public class CasualController {
     
     public void cancelReservation(String code, int userId) {
     	Object[] obj = new Object[] {code, userId};
-        networkController.accept(new Message(TaskType.CANCEL_ORDER, obj));		
+        networkController.accept(new Message(TaskType.CANCEL_ORDER, obj));	
+        
 	}
 
     public void enterWaitingList(WaitingList entry) {
