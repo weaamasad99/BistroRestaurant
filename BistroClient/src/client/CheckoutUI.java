@@ -147,7 +147,10 @@ public class CheckoutUI {
                 "Transaction Approved!\n" +
                 "Amount Paid: $" + String.format("%.2f", finalTotal) + "\n\n" +
                 "The table is now free.");*/
-            onBack.run();
+            if (mainUI.currentUser.getUserType().equals("CASUAL"))
+            	mainUI.showRoleSelectionScreen();
+            else
+            	onBack.run();
         });
 
         VBox content = new VBox(20, header, grid, sep, new VBox(5, lblTotalTitle, lblTotalValue), btnPay, btnCancel);
