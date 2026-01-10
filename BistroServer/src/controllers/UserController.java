@@ -100,11 +100,33 @@ public class UserController {
             System.out.println("Log: Admin logged in via hardcoded credentials.");
             return new User(1, "N/A", "admin@bistro.com", "System", "Admin", "MANAGER", null, "admin", "admin");
         }
-
-        // Restaurant Representative (Login: rep / 1234)
-        if (username.equals("rep") && credentials.equals("1234")) {
-            System.out.println("Log: Representative logged in via hardcoded credentials.");
-            return new User(2, "N/A", "rep@bistro.com", "Staff", "Member", "REPRESENTATIVE", null, "rep", "1234");
+        // Rep Login We have same password 
+        if (credentials.equals("1234")) { 
+            switch (username) {
+                case "rep":
+                    System.out.println("Log: Rep logged in.");
+                    return new User(2, "N/A", "rep@bistro.com", "Staff", "Member", "REPRESENTATIVE", null, "rep", "1234");
+                
+                case "rep1":
+                    System.out.println("Log: Rep1 logged in.");
+                    return new User(3, "N/A", "rep1@bistro.com", "Staff", "One", "REPRESENTATIVE", null, "rep1", "1234");
+                
+                case "rep2":
+                    System.out.println("Log: Rep2 logged in.");
+                    return new User(4, "N/A", "rep2@bistro.com", "Staff", "Two", "REPRESENTATIVE", null, "rep2", "1234");
+                
+                case "rep3":
+                    System.out.println("Log: Rep3 logged in.");
+                    return new User(5, "N/A", "rep3@bistro.com", "Staff", "Three", "REPRESENTATIVE", null, "rep3", "1234");
+                
+                case "rep4":
+                    System.out.println("Log: Rep4 logged in.");
+                    return new User(6, "N/A", "rep4@bistro.com", "Staff", "Four", "REPRESENTATIVE", null, "rep4", "1234");
+                    
+                default:
+                    // Password was 1234, but username wasn't one of the reps
+                    return null;
+            }
         }
 
         // --- 2. DATABASE AUTHENTICATION (Subscribers) ---
