@@ -112,15 +112,38 @@ public class PaymentController {
             ps.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
 
-        // ==========================================================
+     // ==========================================================
         // STEP 5: Cleanup Casual User
         // ==========================================================
         if ("CASUAL".equalsIgnoreCase(userType)) {
-            String deleteUser = "DELETE FROM users WHERE user_id = ?";
-            try (PreparedStatement ps = conn.prepareStatement(deleteUser)) {
-                ps.setInt(1, userId);
-                ps.executeUpdate();
-            } catch (SQLException e) { e.printStackTrace(); }
+            try {
+                // 1. Unlink ALL orders associated with this user (Active, Cancelled, Finished)
+                // We set user_id to NULL so the history remains, but the link to the user is cut.
+                String unlinkOrders = "UPDATE orders SET user_id = NULL WHERE user_id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(unlinkOrders)) {
+                    ps.setInt(1, userId);
+                    ps.executeUpdate();
+                }
+
+                // 2. Unlink any Waiting List entries (just in case)
+                String unlinkWaiting = "UPDATE waiting_list SET user_id = NULL WHERE user_id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(unlinkWaiting)) {
+                    ps.setInt(1, userId);
+                    ps.executeUpdate();
+                }
+
+                // 3. NOW it is safe to delete the user
+                String deleteUser = "DELETE FROM users WHERE user_id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(deleteUser)) {
+                    ps.setInt(1, userId);
+                    ps.executeUpdate();
+                }
+                
+                System.out.println("DEBUG: Casual user " + userId + " cleaned up successfully.");
+                
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
 
         return true;
