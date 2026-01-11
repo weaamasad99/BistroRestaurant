@@ -282,6 +282,12 @@ public class BistroServer extends AbstractServer {
                 int cUserId = (int) cancelData[1];
                 
                 success = reservationController.cancelOrder(cCode, cUserId);
+                
+                if (success) {
+                    // Passing 'this.uiListener' ensures the server log updates in the UI
+                    new controllers.NotificationController(this.uiListener)
+                        .sendCancellationNotification(cUserId, cCode);
+                }
                 response = new Message(success ? TaskType.SUCCESS : TaskType.FAIL, 
                                        success ? "Order Canceled" : "Failed to Cancel");
                 sendKryoToClient(response, client);

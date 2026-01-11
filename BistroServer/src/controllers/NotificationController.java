@@ -133,6 +133,29 @@ public class NotificationController {
             }).start();
         }
     }
+    
+
+ // --- 5. CANCELLATION NOTICE ---
+    public void sendCancellationNotification(int userId, String code) {
+        log("Sending Cancellation Notification to User " + userId);
+        
+        // 1. Mock SMS
+        System.out.println(">>> [SMS MOCK] To User " + userId + ": Reservation " + code + " cancelled.");
+
+        // 2. Real Email
+        User user = userController.getUserById(userId);
+        if (shouldSendEmail(user)) {
+            String subject = "Reservation Cancelled - Bistro";
+            String body = "<h3>Reservation Cancellation</h3>" +
+                          "<p>Your reservation with confirmation code <b>" + code + "</b> has been successfully cancelled.</p>" +
+                          "<p>We hope to see you again soon!</p>";
+            
+            // Run in background thread
+            new Thread(() -> EmailService.sendEmail(user.getEmail(), subject, body)).start();
+        }
+    }
+    
+    
     // Helper: Check if we should send email
     private boolean shouldSendEmail(User user) {
         if (user == null || user.getEmail() == null || !user.getEmail().contains("@")) return false;

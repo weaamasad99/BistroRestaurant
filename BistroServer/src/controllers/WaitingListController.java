@@ -110,6 +110,10 @@ public class WaitingListController {
                                    ". Table (Size " + vacatedTableSeats + ") is ready for your party of " + 
                                    rs.getInt("num_of_diners") + "!");
                 System.out.println("DEBUG: Use Confirmation Code: " + code);
+                
+                //Sending notification through email
+                controllers.NotificationController nc = new controllers.NotificationController();
+                nc.sendWaitingListAlert(userId); 
             } else {
                 System.out.println("DEBUG: Table vacated, but no one in waiting list fits seats: " + vacatedTableSeats);
             }
