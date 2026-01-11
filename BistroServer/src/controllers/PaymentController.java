@@ -20,22 +20,28 @@ public class PaymentController {
      * Simulation: Processes payment by marking an order as 'FINISHED'.
      * In a real system, this would integrate with a Payment Gateway API.
      */
-    public boolean getBill(String code) {
-        if (conn == null) return false;
+    public Object[] getBillData(String code) { // Renamed to getBillData
+        if (conn == null) return null;
 
-        String updateQuery = "SELECT order_number FROM orders WHERE confirmation_code = ? AND status = 'ACTIVE'";
+        String query = "SELECT u.user_type FROM orders o " +
+                       "JOIN users u ON o.user_id = u.user_id " +
+                       "WHERE o.confirmation_code = ? AND o.status = 'ACTIVE'";
 
-        try (PreparedStatement ps = conn.prepareStatement(updateQuery)) {
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, code);
-            
             ResultSet rs = ps.executeQuery();
             
-            // If rs.next() is true, it means a row was found -> Reservation exists
-            return rs.next(); 
+            if (rs.next()) {
+                String userType = rs.getString("user_type");
+                double basePrice = 250.0; // Standard fixed price
+                
+                // Return data package: [Code, Price, UserType]
+                return new Object[]{code, basePrice, userType};
+            }
         } catch (SQLException e) {
-            System.err.println("Error getting bill: " + e.getMessage());
+            e.printStackTrace();
         }
-        return false;
+        return null;
     }
     
     public boolean payBill(String code) {

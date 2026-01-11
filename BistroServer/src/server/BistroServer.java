@@ -353,9 +353,13 @@ public class BistroServer extends AbstractServer {
             case GET_BILL:
                 log("Retrieving Bill...");
                 code = (String) message.getObject();
-                success = paymentController.getBill(code);
+                
+                Object[] billData = paymentController.getBillData(code);
+                
+                success = (billData != null);
+                
                 response = new Message(success ? TaskType.GET_BILL : TaskType.FAIL, 
-                                       success ? code : "Invalid Code");
+                                       success ? billData : "Invalid Code or Order not Active");
                 sendKryoToClient(response, client);
                 break;
 

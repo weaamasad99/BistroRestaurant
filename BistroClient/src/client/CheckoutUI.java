@@ -76,7 +76,7 @@ public class CheckoutUI {
     /**
      * STEP 2: Review Bill & Pay
      */
-    private void showBillDetails(String code, double originalAmount, boolean isSubscriber) {
+    public void showBillDetails(String code, double originalAmount, boolean isSubscriber) {
         mainLayout.getChildren().clear();
 
         Label header = new Label("Payment Details");

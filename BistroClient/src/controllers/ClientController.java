@@ -209,10 +209,19 @@ public class ClientController {
                     ui.showAlert("Check-in Error", reason);
                     break;
                 case GET_BILL:
-                    String validCode = (String) msg.getObject();
+                    // Server now sends: Object[] { code, price, userType }
+                    Object[] billData = (Object[]) msg.getObject();
+                    String bCode = (String) billData[0];
+                    Double bPrice = (Double) billData[1];
+                    String bType = (String) billData[2];
                     
-                    // Call the method in ClientUI, which calls CheckoutUI
-                    ui.activateBillView(validCode);
+                    boolean isSub = "SUBSCRIBER".equalsIgnoreCase(bType);
+                    
+                    // We need to pass these real values to the UI
+                    // Assuming ClientUI has a method to access checkoutUI or we call it directly if available
+                    if (ui.checkoutUI != null) {
+                        Platform.runLater(() -> ui.checkoutUI.showBillDetails(bCode, bPrice, isSub));
+                    }
                     break;
 
                 // --- WAITING LIST UPDATES ---
