@@ -49,7 +49,7 @@ public class ReservationUI {
     private void showReservationForm() {
         mainLayout.getChildren().clear();
 
-        Label header = new Label("New Reservation");
+        Label header = new Label("New Order");
         header.setFont(new Font("Arial", 24));
         header.setStyle("-fx-font-weight: bold; -fx-text-fill: #333;");
 

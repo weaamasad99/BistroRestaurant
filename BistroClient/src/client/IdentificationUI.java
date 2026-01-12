@@ -58,7 +58,7 @@ public class IdentificationUI {
         btnLostCode.setOnAction(e -> {
              // Logic: Usually this would trigger an SMS to the phone number
         	 casualController.recoverLostCode(userIdentifier);
-             mainUI.showAlert("Retrieving Code", "We are sending the reservation details to: " + userIdentifier);
+             mainUI.showAlert("Retrieving Code", "We are sending the order details to: " + userIdentifier);
         });
         
         Button btnBack = new Button("Back to Menu");

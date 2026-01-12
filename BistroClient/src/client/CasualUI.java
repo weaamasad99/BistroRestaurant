@@ -105,14 +105,14 @@ public class CasualUI {
         Runnable stayHere = () -> showOptionsScreen(phoneNumber, onExit);
 
         // 1. Make Reservation
-        Button btnReservation = createOptionButton("Make Reservation", "📅");
+        Button btnReservation = createOptionButton("Make Order", "📅");
         btnReservation.setOnAction(e -> {
         	
             ReservationUI resUI = new ReservationUI(mainLayout, mainUI, stayHere, phoneNumber);
             resUI.start();
         });
         
-        Button btnCancelReservation = createOptionButton("Cancel Reservation", "X");
+        Button btnCancelReservation = createOptionButton("Cancel Order", "X");
         btnCancelReservation.setOnAction(e -> {
             // Note: ReservationUI might need updating to accept 'int id' if it uses it
             CancelReservationUI cancelResUI = new CancelReservationUI(mainLayout, mainUI, stayHere);

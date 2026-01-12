@@ -120,14 +120,14 @@ public class SubscriberUI {
             }
         });
 
-        Button btnReservation = createOptionButton("Make Reservation", "📅");
+        Button btnReservation = createOptionButton("Make Order", "📅");
         btnReservation.setOnAction(e -> {
             // Note: ReservationUI might need updating to accept 'int id' if it uses it
             ReservationUI resUI = new ReservationUI(mainLayout, mainUI, stayHere, username);
             resUI.start();
         });
         
-        Button btnCancelReservation = createOptionButton("Cancel Reservation", "X");
+        Button btnCancelReservation = createOptionButton("Cancel Order", "X");
         btnCancelReservation.setOnAction(e -> {
             // Note: ReservationUI might need updating to accept 'int id' if it uses it
             CancelReservationUI cancelResUI = new CancelReservationUI(mainLayout, mainUI, stayHere);
