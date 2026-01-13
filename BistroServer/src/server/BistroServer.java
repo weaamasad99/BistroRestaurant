@@ -524,7 +524,7 @@ public class BistroServer extends AbstractServer {
             }
 
             // =================================================================================
-            // 2. CANCEL LATE ORDERS (Update Status)
+            // 2. CANCEL LATE ORDERS 
             // =================================================================================
             if (!ordersToCancel.isEmpty()) {
                 // Build a dynamic query like: UPDATE ... WHERE order_number IN (101, 102, 105)
@@ -544,7 +544,7 @@ public class BistroServer extends AbstractServer {
             }
 
             // =================================================================================
-            // 3. CLEANUP WAITING LIST (Keep existing logic)
+            // 3. CLEANUP WAITING LIST
             // =================================================================================
             String cancelWaiting = "UPDATE waiting_list SET status = 'CANCELLED' " +
                                    "WHERE status = 'NOTIFIED' " +
@@ -558,7 +558,7 @@ public class BistroServer extends AbstractServer {
             } catch (SQLException e) { e.printStackTrace(); }
 
             // =================================================================================
-            // 4. SEND 2-HOUR REMINDERS (Keep existing logic)
+            // 4. SEND 2-HOUR REMINDERS
             // =================================================================================
             String reminderQuery = "SELECT u.email, u.phone_number, o.order_time " +
                                    "FROM orders o " +
