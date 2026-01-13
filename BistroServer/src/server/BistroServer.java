@@ -480,64 +480,82 @@ public class BistroServer extends AbstractServer {
     
     @Override
     protected void serverStarted() {
-    	log("Server listening on port " + getPort());
+        log("Server listening on port " + getPort());
         DatabaseConnection.getInstance(); 
 
         // Initialize and start the background cleanup task
         scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.scheduleAtFixedRate(() -> {
-            log("Running background maintenance: Checking for no-shows...");
+            log("Running background maintenance...");
             
             // Get a fresh connection for the background thread
             Connection conn = DatabaseConnection.getInstance().getConnection();
             if (conn == null) return;
 
-            // 1. Cancel 'NOTIFIED' waiting list entries after 15 minutes
+            // --- 1. CLEANUP: Cancel Waiting List (Today's late ones + Old ones) ---
             String cancelWaiting = "UPDATE waiting_list SET status = 'CANCELLED' " +
                                    "WHERE status = 'NOTIFIED' " +
-                                   "AND time_requested < SUBTIME(NOW(), '00:15:00')";
+                                   "AND (" +
+                                   "  date_requested < CURDATE() " + // Clean up old dates
+                                   "  OR " +
+                                   "  (date_requested = CURDATE() AND time_requested < SUBTIME(NOW(), '00:15:00'))" + // Clean up today's late ones
+                                   ")";
                                    
-            // 2. Cancel 'APPROVED' reservations where customer is 15 mins late
+            // --- 2. CLEANUP: Cancel Reservations (Today's late ones + Old ones) ---
             String cancelLateOrders = "UPDATE orders SET status = 'CANCELLED' " +
                                       "WHERE status = 'APPROVED' " +
-                                      "AND order_date = CURDATE() " +
-                                      "AND order_time < SUBTIME(CURTIME(), '00:15:00')";
+                                      "AND (" +
+                                      "  order_date < CURDATE() " + // Clean up missed days (Server was off)
+                                      "  OR " +
+                                      "  (order_date = CURDATE() AND order_time < SUBTIME(CURTIME(), '00:15:00'))" + // Clean up today's no-shows
+                                      ")";
             
             
-         // 3. Send reminders exactly 2 hours before the reservation
+            // --- 3. REMINDERS: Send 2 Hours Before (Using a safe time window) ---
+            // We use a range (1h 59m to 2h 01m) to ensure we don't miss the exact second between scheduler runs.
             String reminderQuery = "SELECT u.email, u.phone_number, o.order_time " +
                                    "FROM orders o " +
                                    "JOIN users u ON o.user_id = u.user_id " +
                                    "WHERE o.status = 'APPROVED' " +
                                    "AND o.order_date = CURDATE() " +
-                                   "AND o.order_time = ADDTIME(CURTIME(), '02:00:00')";
+                                   "AND o.order_time BETWEEN ADDTIME(CURTIME(), '01:59:00') AND ADDTIME(CURTIME(), '02:01:00')";
 
-            try (PreparedStatement ps3 = conn.prepareStatement(reminderQuery)) {
-                ResultSet rs = ps3.executeQuery();
-                NotificationController nc = new NotificationController();
-                
-                while (rs.next()) {
-                    String contact = rs.getString("email");
-                    String time = rs.getString("order_time");
-                    nc.sendTwoHourReminder(contact, time);
-                    log("Automated 2-hour reminder sent for reservation at " + time);
+            // Execution Block
+            try {
+                // Run Reminders
+                try (PreparedStatement psRemind = conn.prepareStatement(reminderQuery)) {
+                    ResultSet rs = psRemind.executeQuery();
+                    // Pass 'this.uiListener' so logs appear in ServerUI
+                    NotificationController nc = new NotificationController(this.uiListener);
+                    
+                    while (rs.next()) {
+                        String contact = rs.getString("email");
+                        String time = rs.getString("order_time");
+                        
+                        // Fallback if email is missing (use phone for simulation log)
+                        if (contact == null || !contact.contains("@")) {
+                             contact = rs.getString("phone_number");
+                        }
+                        
+                        nc.sendTwoHourReminder(contact, time);
+                    }
                 }
-            } catch (SQLException e) {
-                log("Reminder Error: " + e.getMessage());
-            }
 
-            try (PreparedStatement ps1 = conn.prepareStatement(cancelWaiting);
-                 PreparedStatement ps2 = conn.prepareStatement(cancelLateOrders)) {
-                
-                int waitCancelled = ps1.executeUpdate();
-                int ordersCancelled = ps2.executeUpdate();
-                
-                if (waitCancelled > 0 || ordersCancelled > 0) {
-                    log("Cleanup: Cancelled " + waitCancelled + " waiting and " + ordersCancelled + " late orders.");
+                // Run Cleanup
+                try (PreparedStatement ps1 = conn.prepareStatement(cancelWaiting);
+                     PreparedStatement ps2 = conn.prepareStatement(cancelLateOrders)) {
+                    
+                    int waitCancelled = ps1.executeUpdate();
+                    int ordersCancelled = ps2.executeUpdate();
+                    
+                    if (waitCancelled > 0 || ordersCancelled > 0) {
+                        log("Cleanup Report: Cancelled " + waitCancelled + " waiting items and " + ordersCancelled + " past/late orders.");
+                    }
                 }
             } catch (SQLException e) {
                 log("Scheduler Error: " + e.getMessage());
             }
+
         }, 0, 1, TimeUnit.MINUTES); // Runs every 1 minute
     }
 
