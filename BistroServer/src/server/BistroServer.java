@@ -483,36 +483,83 @@ public class BistroServer extends AbstractServer {
         log("Server listening on port " + getPort());
         DatabaseConnection.getInstance(); 
 
-        // Initialize and start the background cleanup task
         scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.scheduleAtFixedRate(() -> {
-            log("Running background maintenance...");
+            // log("Running background maintenance..."); // Optional: Comment out to reduce noise
             
-            // Get a fresh connection for the background thread
             Connection conn = DatabaseConnection.getInstance().getConnection();
             if (conn == null) return;
 
-            // --- 1. CLEANUP: Cancel Waiting List (Today's late ones + Old ones) ---
+            NotificationController nc = new NotificationController(this.uiListener);
+
+            // =================================================================================
+            // 1. IDENTIFY LATE ORDERS (Select them BEFORE updating)
+            // =================================================================================
+            String findLateOrders = "SELECT order_number, user_id, confirmation_code " +
+                                    "FROM orders " +
+                                    "WHERE status = 'APPROVED' " +
+                                    "AND (" +
+                                    "  order_date < CURDATE() " +
+                                    "  OR " +
+                                    "  (order_date = CURDATE() AND order_time < SUBTIME(CURTIME(), '00:15:00'))" +
+                                    ")";
+
+            ArrayList<Integer> ordersToCancel = new ArrayList<>();
+
+            try (PreparedStatement psFind = conn.prepareStatement(findLateOrders)) {
+                ResultSet rs = psFind.executeQuery();
+                while (rs.next()) {
+                    int oId = rs.getInt("order_number");
+                    int uId = rs.getInt("user_id");
+                    String code = rs.getString("confirmation_code");
+                    
+                    ordersToCancel.add(oId);
+
+                    // SEND NOTIFICATION (The missing piece)
+                    log("Auto-cancelling late order: " + code);
+                    nc.sendCancellationNotification(uId, code); 
+                }
+            } catch (SQLException e) {
+                log("Error finding late orders: " + e.getMessage());
+            }
+
+            // =================================================================================
+            // 2. CANCEL LATE ORDERS (Update Status)
+            // =================================================================================
+            if (!ordersToCancel.isEmpty()) {
+                // Build a dynamic query like: UPDATE ... WHERE order_number IN (101, 102, 105)
+                StringBuilder sb = new StringBuilder("UPDATE orders SET status = 'CANCELLED' WHERE order_number IN (");
+                for (int i = 0; i < ordersToCancel.size(); i++) {
+                    sb.append(ordersToCancel.get(i));
+                    if (i < ordersToCancel.size() - 1) sb.append(",");
+                }
+                sb.append(")");
+
+                try (PreparedStatement psUpdate = conn.prepareStatement(sb.toString())) {
+                    psUpdate.executeUpdate();
+                    log("Cleanup: Cancelled " + ordersToCancel.size() + " late orders.");
+                } catch (SQLException e) {
+                    log("Error updating late orders: " + e.getMessage());
+                }
+            }
+
+            // =================================================================================
+            // 3. CLEANUP WAITING LIST (Keep existing logic)
+            // =================================================================================
             String cancelWaiting = "UPDATE waiting_list SET status = 'CANCELLED' " +
                                    "WHERE status = 'NOTIFIED' " +
                                    "AND (" +
-                                   "  date_requested < CURDATE() " + // Clean up old dates
+                                   "  date_requested < CURDATE() " +
                                    "  OR " +
-                                   "  (date_requested = CURDATE() AND time_requested < SUBTIME(NOW(), '00:15:00'))" + // Clean up today's late ones
+                                   "  (date_requested = CURDATE() AND time_requested < SUBTIME(NOW(), '00:15:00'))" +
                                    ")";
-                                   
-            // --- 2. CLEANUP: Cancel Reservations (Today's late ones + Old ones) ---
-            String cancelLateOrders = "UPDATE orders SET status = 'CANCELLED' " +
-                                      "WHERE status = 'APPROVED' " +
-                                      "AND (" +
-                                      "  order_date < CURDATE() " + // Clean up missed days (Server was off)
-                                      "  OR " +
-                                      "  (order_date = CURDATE() AND order_time < SUBTIME(CURTIME(), '00:15:00'))" + // Clean up today's no-shows
-                                      ")";
-            
-            
-            // --- 3. REMINDERS: Send 2 Hours Before (Using a safe time window) ---
-            // We use a range (1h 59m to 2h 01m) to ensure we don't miss the exact second between scheduler runs.
+            try (PreparedStatement psWait = conn.prepareStatement(cancelWaiting)) {
+                psWait.executeUpdate();
+            } catch (SQLException e) { e.printStackTrace(); }
+
+            // =================================================================================
+            // 4. SEND 2-HOUR REMINDERS (Keep existing logic)
+            // =================================================================================
             String reminderQuery = "SELECT u.email, u.phone_number, o.order_time " +
                                    "FROM orders o " +
                                    "JOIN users u ON o.user_id = u.user_id " +
@@ -520,43 +567,19 @@ public class BistroServer extends AbstractServer {
                                    "AND o.order_date = CURDATE() " +
                                    "AND o.order_time BETWEEN ADDTIME(CURTIME(), '01:59:00') AND ADDTIME(CURTIME(), '02:01:00')";
 
-            // Execution Block
-            try {
-                // Run Reminders
-                try (PreparedStatement psRemind = conn.prepareStatement(reminderQuery)) {
-                    ResultSet rs = psRemind.executeQuery();
-                    // Pass 'this.uiListener' so logs appear in ServerUI
-                    NotificationController nc = new NotificationController(this.uiListener);
-                    
-                    while (rs.next()) {
-                        String contact = rs.getString("email");
-                        String time = rs.getString("order_time");
-                        
-                        // Fallback if email is missing (use phone for simulation log)
-                        if (contact == null || !contact.contains("@")) {
-                             contact = rs.getString("phone_number");
-                        }
-                        
-                        nc.sendTwoHourReminder(contact, time);
-                    }
-                }
-
-                // Run Cleanup
-                try (PreparedStatement ps1 = conn.prepareStatement(cancelWaiting);
-                     PreparedStatement ps2 = conn.prepareStatement(cancelLateOrders)) {
-                    
-                    int waitCancelled = ps1.executeUpdate();
-                    int ordersCancelled = ps2.executeUpdate();
-                    
-                    if (waitCancelled > 0 || ordersCancelled > 0) {
-                        log("Cleanup Report: Cancelled " + waitCancelled + " waiting items and " + ordersCancelled + " past/late orders.");
-                    }
+            try (PreparedStatement psRemind = conn.prepareStatement(reminderQuery)) {
+                ResultSet rs = psRemind.executeQuery();
+                while (rs.next()) {
+                    String contact = rs.getString("email");
+                    // Fallback for contact...
+                    if (contact == null || !contact.contains("@")) contact = rs.getString("phone_number");
+                    nc.sendTwoHourReminder(contact, rs.getString("order_time"));
                 }
             } catch (SQLException e) {
-                log("Scheduler Error: " + e.getMessage());
+                log("Reminder Error: " + e.getMessage());
             }
 
-        }, 0, 1, TimeUnit.MINUTES); // Runs every 1 minute
+        }, 0, 1, TimeUnit.MINUTES);
     }
 
     @Override
