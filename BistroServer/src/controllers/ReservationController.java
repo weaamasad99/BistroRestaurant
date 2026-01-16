@@ -432,7 +432,7 @@ public class ReservationController {
     }
     
     public int checkIn(String code) {
-    	if (conn == null) return -1;
+        if (conn == null) return -1;
 
         int diners = 0;
         int orderId = 0;
@@ -441,9 +441,12 @@ public class ReservationController {
         Date date;
         String status = null;
 
-        // --- PHASE 1: Check the Reservation Code ---
-        String orderQuery = "SELECT order_number, user_id, num_of_diners FROM orders WHERE confirmation_code = ?";
+        // =============================================================
+        // PHASE 1: IDENTIFY THE RESERVATION OR WAITING LIST ENTRY
+        // =============================================================
         
+        // 1A. Check Standard Orders first
+        String orderQuery = "SELECT order_number, user_id, num_of_diners FROM orders WHERE confirmation_code = ?";
         try (PreparedStatement ps = conn.prepareStatement(orderQuery)) {
             ps.setString(1, code);
             try (ResultSet rs = ps.executeQuery()) {
@@ -454,135 +457,127 @@ public class ReservationController {
                     ifWaitingList = false;
                 }
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return -1; // DB Error
-        }
+        } catch (SQLException e) { e.printStackTrace(); return -1; }
         
+        // 1B. If not found in Orders, check Waiting List
         if (ifWaitingList) {
-	        orderQuery = "SELECT waiting_id, user_id, num_of_diners FROM waiting_list WHERE confirmation_code = ? AND status = 'WAITING'";
-	        
-	        try (PreparedStatement ps = conn.prepareStatement(orderQuery)) {
-	            ps.setString(1, code);
-	            try (ResultSet rs = ps.executeQuery()) {
-	                if (rs.next()) {
-	                    orderId = rs.getInt("waiting_id");
-	                    userId = rs.getInt("user_id");
-	                    diners = rs.getInt("num_of_diners");
-	                } else {
-	                    return -2; // Error Code -2: Invalid Reservation
-	                }
-	            }
-	        } catch (SQLException e) {
-	            e.printStackTrace();
-	            return -1; // DB Error
-	        }
+            // FIX: Changed status check from 'WAITING' to 'NOTIFIED'
+            // The user status is 'NOTIFIED' because we sent them the alert.
+            orderQuery = "SELECT waiting_id, user_id, num_of_diners FROM waiting_list WHERE confirmation_code = ? AND status = 'NOTIFIED'";
+            
+            try (PreparedStatement ps = conn.prepareStatement(orderQuery)) {
+                ps.setString(1, code);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        orderId = rs.getInt("waiting_id");
+                        userId = rs.getInt("user_id");
+                        diners = rs.getInt("num_of_diners");
+                    } else {
+                        // Error: Code not found or Status is not 'NOTIFIED' (maybe expired?)
+                        return -2; 
+                    }
+                }
+            } catch (SQLException e) { e.printStackTrace(); return -1; }
         }
         
-        // --- PHASE 2: Check if customer arrived at the right date ---
-        
-        orderQuery = "SELECT order_date FROM orders WHERE order_number = ?";
-        
-        try (PreparedStatement ps = conn.prepareStatement(orderQuery)) {
-            ps.setInt(1, orderId);
-            try (ResultSet rs = ps.executeQuery()) {
-                rs.next();                  
-                date = rs.getDate("order_date");
-                
-                if (!Date.valueOf(LocalDate.now()).equals(date)) {
-                    return -3; // Error Code -3: Not the day of the reservation
+        // =============================================================
+        // PHASE 2: VALIDATION (Date & Status Checks)
+        // =============================================================
+        if (!ifWaitingList) {
+            // Check Date (Only for standard orders)
+            String dateQuery = "SELECT order_date, status FROM orders WHERE order_number = ?";
+            try (PreparedStatement ps = conn.prepareStatement(dateQuery)) {
+                ps.setInt(1, orderId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        date = rs.getDate("order_date");
+                        status = rs.getString("status");
+                        
+                        if (!Date.valueOf(LocalDate.now()).equals(date)) return -3; // Wrong Date
+                        if (!"APPROVED".equals(status)) return -4; // Wrong Status
+                    }
                 }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return -1; // DB Error
-        }
-        
-        // --- PHASE 2: Check if customer reservation is canceled or already active ---
-        
-        orderQuery = "SELECT status FROM orders WHERE order_number = ?";
-        
-        try (PreparedStatement ps = conn.prepareStatement(orderQuery)) {
-            ps.setInt(1, orderId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next())                  
-                status = rs.getString("status");
-                
-                if (!status.equals("APPROVED")) {
-                    return -4; // Error Code -4: Customer reservation is canceled or active or finished
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return -1; // DB Error
+            } catch (SQLException e) { e.printStackTrace(); return -1; }
         }
 
-        // --- PHASE 3: Find a Suitable Table ---
-        // We look for an AVAILABLE table that has enough seats (seats >= diners)
-        // We order by seats ASC to find the "best fit" (smallest suitable table)
+        // =============================================================
+        // PHASE 3: FIND TABLE (Priority: Check Reserved Tables First)
+        // =============================================================
         int assignedTableId = -1;
-        String tableQuery = "SELECT table_id FROM restaurant_tables WHERE status = 'AVAILABLE' AND seats >= ? ORDER BY seats ASC LIMIT 1";
 
-        try (PreparedStatement ps = conn.prepareStatement(tableQuery)) {
-            ps.setInt(1, diners);
+        // 3A. CHECK FOR RESERVED TABLE (The 15-minute hold)
+        String reservedQuery = "SELECT table_id FROM restaurant_tables WHERE user_id = ? AND status = 'RESERVED'";
+        try (PreparedStatement ps = conn.prepareStatement(reservedQuery)) {
+            ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     assignedTableId = rs.getInt("table_id");
-                } else {
-                    System.out.println("Check-in failed: No suitable table available.");
-                    return -5; // Error Code -5: No Table Available
+                    System.out.println("Log: Found reserved table #" + assignedTableId);
                 }
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return -1;
+        } catch (SQLException e) { e.printStackTrace(); }
+
+        // 3B. IF NO RESERVED TABLE, SEARCH FOR ANY AVAILABLE TABLE
+        if (assignedTableId == -1) {
+            String tableQuery = "SELECT table_id FROM restaurant_tables WHERE status = 'AVAILABLE' AND seats >= ? ORDER BY seats ASC LIMIT 1";
+            try (PreparedStatement ps = conn.prepareStatement(tableQuery)) {
+                ps.setInt(1, diners);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        assignedTableId = rs.getInt("table_id");
+                    } else {
+                        return -5; // No Table Available
+                    }
+                }
+            } catch (SQLException e) { e.printStackTrace(); return -1; }
         }
 
-        // --- PHASE 4: Update Statuses (Commit the Check-in) ---
+        // =============================================================
+        // PHASE 4: UPDATE DATABASE & COMMIT CHECK-IN
+        // =============================================================
         if (assignedTableId != -1) {
             try {
                 // 1. Mark table as OCCUPIED
                 String updateTable = "UPDATE restaurant_tables SET status = 'OCCUPIED', user_id = ? WHERE table_id = ?";
                 try (PreparedStatement ps = conn.prepareStatement(updateTable)) {
-                	ps.setInt(1, userId);          
+                    ps.setInt(1, userId);          
                     ps.setInt(2, assignedTableId);
                     ps.executeUpdate();
                 }
                 
-                String update;
-                
+                // 2. Update Order/Waiting List Status
                 if (ifWaitingList) {
-                	update = "UPDATE waiting_list SET user_id = NULL, status = 'FULFILLED' WHERE waiting_id = ?";
-                    try (PreparedStatement ps = conn.prepareStatement(update)) {
+                    // A. Mark Waiting List as Fulfilled (Unlink User)
+                    String updateWL = "UPDATE waiting_list SET user_id = NULL, status = 'FULFILLED' WHERE waiting_id = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(updateWL)) {
                         ps.setInt(1, orderId);
                         ps.executeUpdate();
                     }
                     
+                    // B. Create New Active Order (Your provided snippet)
                     String insertSQL = "INSERT INTO orders (user_id, order_date, order_time, num_of_diners, status, confirmation_code, actual_arrival_time) VALUES (?, ?, ?, ?, ?, ?, ?)";
-                    
-                    try(PreparedStatement ps = conn.prepareStatement(insertSQL)) {                    
-	                    ps.setInt(1, userId);
-	                    ps.setDate(2, Date.valueOf(LocalDate.now()));
-	                    ps.setTime(3, Time.valueOf(LocalTime.now()));
-	                    ps.setInt(4, diners);
-	                    ps.setString(5, "ACTIVE");
-	                    ps.setString(6, code);
-	                    ps.setTime(7, new Time(System.currentTimeMillis()));
-	                    ps.executeUpdate();
+                    try (PreparedStatement ps = conn.prepareStatement(insertSQL)) {                    
+                        ps.setInt(1, userId);
+                        ps.setDate(2, Date.valueOf(LocalDate.now()));
+                        ps.setTime(3, Time.valueOf(LocalTime.now()));
+                        ps.setInt(4, diners);
+                        ps.setString(5, "ACTIVE");
+                        ps.setString(6, code);
+                        ps.setTime(7, new Time(System.currentTimeMillis()));
+                        ps.executeUpdate();
                     }
                     
-                }
-                else {
-                	update = "UPDATE orders SET status = 'ACTIVE', actual_arrival_time = ? WHERE order_number = ?";
-                    try (PreparedStatement ps = conn.prepareStatement(update)) {
-                    	ps.setTime(1, new Time(System.currentTimeMillis()));
+                } else {
+                    // Standard Order Update
+                    String updateOrd = "UPDATE orders SET status = 'ACTIVE', actual_arrival_time = ? WHERE order_number = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(updateOrd)) {
+                        ps.setTime(1, new Time(System.currentTimeMillis()));
                         ps.setInt(2, orderId);
                         ps.executeUpdate();
                     }
                 }
-                
                                                
-                return assignedTableId; // SUCCESS: Return the table number
+                return assignedTableId; // SUCCESS
                 
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -592,7 +587,6 @@ public class ReservationController {
 
         return -1;
     }
-    
     
     
  

@@ -336,11 +336,13 @@ public class BistroServer extends AbstractServer {
                 break;
 
             case ENTER_WAITING_LIST:
-                log("Adding to Waiting List...");
-                WaitingList wlData = (WaitingList) message.getObject();
-                success = waitingListController.addToWaitingList(wlData);
-                resultMsg = success ? "Added to Waiting List!\nCode: " + wlData.getCode() : "Failed to add";
-                response = new Message(success ? TaskType.SUCCESS : TaskType.FAIL, resultMsg);
+                WaitingList wlItem = (WaitingList) message.getObject();
+                
+                
+                String result1 = waitingListController.addToWaitingList(wlItem);
+                
+                
+                response = new Message(TaskType.WAITING_LIST_ADDED, result1);
                 sendKryoToClient(response, client);
                 break;
                 
