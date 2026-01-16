@@ -495,7 +495,7 @@ public class ReservationController {
             return -1; // DB Error
         }
         
-        // --- PHASE 2: Check if customer reservation is canceled ---
+        // --- PHASE 2: Check if customer reservation is canceled or already active ---
         
         orderQuery = "SELECT status FROM orders WHERE order_number = ?";
         
@@ -505,8 +505,8 @@ public class ReservationController {
                 if (rs.next())                  
                 status = rs.getString("status");
                 
-                if (status.equals("CANCELLED")) {
-                    return -4; // Error Code -4: Customer reservation is canceled
+                if (!status.equals("APPROVED")) {
+                    return -4; // Error Code -4: Customer reservation is canceled or active or finished
                 }
             }
         } catch (SQLException e) {
