@@ -18,12 +18,15 @@ import java.util.ArrayList;
 /**
  * Manages Orders (Reservations) and Physical Table configurations.
  */
+
 public class ReservationController {
+	private NotificationController notificationController;
 
     private Connection conn;
 
     public ReservationController() {
         this.conn = DatabaseConnection.getInstance().getConnection();
+        this.notificationController = new NotificationController(); 
     }
 
     // ========================
@@ -763,7 +766,7 @@ public class ReservationController {
         if (conn == null) return false;
 
         try {
-            // "REPLACE INTO" is required to overwrite the existing Monday/Tuesday/etc rows
+            // 1. Update Database
             String query = "REPLACE INTO schedule (identifier, open_time, close_time, is_closed, schedule_type, event_name) VALUES (?, ?, ?, ?, ?, ?)";
             
             PreparedStatement ps = conn.prepareStatement(query);
@@ -776,11 +779,109 @@ public class ReservationController {
             
             int rows = ps.executeUpdate();
             System.out.println("Server Log: Saved schedule for " + item.getIdentifier() + ". Rows affected: " + rows);
+
+            // 2. Trigger Notification & Cancellation Logic  
+            notifyAndCancelAffectedCustomers(item); 
+
             return true;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
+    }
+    /**
+     * Finds customers affected by a schedule change, cancels their order, and notifies them.
+     */
+    private void notifyAndCancelAffectedCustomers(BistroSchedule item) {
+        ArrayList<Order> affectedOrders = new ArrayList<>();
+        String sql = "";
+
+        try {
+            // 1. Find potential orders based on the change type
+            if ("SPECIAL".equals(item.getType())) {
+                // Specific Date (e.g., "2026-01-01")
+                sql = "SELECT * FROM orders WHERE order_date = ? AND status IN ('APPROVED', 'ACTIVE', 'PENDING')";
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setString(1, item.getIdentifier()); 
+                    ResultSet rs = ps.executeQuery();
+                    while (rs.next()) affectedOrders.add(mapResultSetToOrder(rs));
+                }
+            } else if ("REGULAR".equals(item.getType())) {
+                // Day of Week (e.g., "Monday") - Find all future matching days
+                sql = "SELECT * FROM orders WHERE DAYNAME(order_date) = ? AND order_date >= CURDATE() AND status IN ('APPROVED', 'ACTIVE', 'PENDING')";
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setString(1, item.getIdentifier()); 
+                    ResultSet rs = ps.executeQuery();
+                    while (rs.next()) affectedOrders.add(mapResultSetToOrder(rs));
+                }
+            }
+
+            // 2. Filter orders that actually conflict with the new hours
+            // Parse "08:00" to Time objects
+            Time newOpen = Time.valueOf(item.getOpenTime() + (item.getOpenTime().length() == 5 ? ":00" : ""));
+            Time newClose = Time.valueOf(item.getCloseTime() + (item.getCloseTime().length() == 5 ? ":00" : ""));
+
+            for (Order order : affectedOrders) {
+                boolean needsCancellation = false;
+
+                // Case A: Restaurant is now Closed
+                if (item.isClosed()) {
+                    needsCancellation = true;
+                }
+                // Case B: Reservation is outside new hours
+                else {
+                    Time orderTime = order.getOrderTime();
+                    if (orderTime.before(newOpen) || orderTime.after(newClose)) {
+                        needsCancellation = true;
+                    }
+                }
+
+                // 3. Process Cancellation
+                if (needsCancellation) {
+                    // Update DB
+                    cancelOrderInternal(order.getOrderNumber());
+
+                    // Send Notification
+                    notificationController.sendScheduleUpdateNotification(
+                        order.getUserId(),
+                        order.getOrderDate().toString(),
+                        item.getOpenTime(),
+                        item.getCloseTime(),
+                        item.isClosed()
+                    );
+                    System.out.println(">>> System: Cancelled & Notified User " + order.getUserId() + " due to schedule change.");
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error processing schedule notifications: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // Helper to update status silently
+    private void cancelOrderInternal(int orderId) {
+        try (PreparedStatement ps = conn.prepareStatement("UPDATE orders SET status = 'CANCELLED' WHERE order_number = ?")) {
+            ps.setInt(1, orderId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Helper to map DB row to Order object
+    private Order mapResultSetToOrder(ResultSet rs) throws SQLException {
+        return new Order(
+            rs.getInt("order_number"),
+            rs.getInt("user_id"),
+            rs.getDate("order_date"),
+            rs.getTime("order_time"),
+            rs.getInt("num_of_diners"),
+            rs.getString("status"),
+            rs.getString("confirmation_code"),
+            rs.getTime("actual_arrival_time"),
+            rs.getTime("leaving_time")
+        );
     }
 
     // 3. Delete Item (For removing special dates)

@@ -162,6 +162,35 @@ public class NotificationController {
         	return false;
         return true;
     }
+    public void sendScheduleUpdateNotification(int userId, String date, String openTime, String closeTime, boolean isClosed) {
+        log("Sending Schedule Update Notification to User " + userId);
+
+        // 1. Mock SMS
+        String msg = isClosed ? "Restaurant closed on " + date : "Restaurant hours changed on " + date;
+        System.out.println(">>> [SMS MOCK] To User " + userId + ": " + msg);
+
+        // 2. Real Email
+        User user = userController.getUserById(userId);
+        if (shouldSendEmail(user)) {
+            String subject = "Important: Restaurant Schedule Change";
+            String body = "<h3>Important Update Regarding Your Reservation</h3>" +
+                          "<p>Dear " + user.getFirstName() + ",</p>" +
+                          "<p>We are writing to inform you of a change in our operating hours for <b>" + date + "</b>.</p>";
+            
+            if (isClosed) {
+                body += "<p style='color:red;'><b>Please note that the restaurant will be CLOSED on this date.</b></p>" +
+                        "<p>Unfortunately, we must cancel your reservation. We apologize for the inconvenience.</p>";
+            } else {
+                body += "<p>Our new hours are: <b>" + openTime + " - " + closeTime + "</b>.</p>" +
+                        "<p>Please check if your reservation time is still within our opening hours.</p>";
+            }
+            
+            body += "<br><p>Best regards,<br>Bistro Team</p>";
+            String finalBody = body;
+
+            // Run in background thread
+            new Thread(() -> EmailService.sendEmail(user.getEmail(), subject, finalBody)).start();        }
+    }
 
 
 }
