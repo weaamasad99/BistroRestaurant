@@ -115,15 +115,18 @@ public class ReservationUI {
             LocalDate localdate = datePicker.getValue();
             String timeStr = timeComboBox.getValue();
             String guestsStr = txtGuests.getText().trim();
-
-            if (localdate != null && timeStr != null && !guestsStr.isEmpty()) {
+            int guests = Integer.parseInt(guestsStr);
+            
+            if (localdate != null && timeStr != null && !guestsStr.isEmpty() && guests > 15) {
+       	 		mainUI.showAlert("Error", "Guests number must be 15 and under");
+       	 	} else if (localdate != null && timeStr != null && !guestsStr.isEmpty()) {
+            	            	 	
                 Date date = Date.valueOf(localdate);
                 // Ensure HH:mm:ss
                 String validTimeStr = timeStr.length() == 5 ? timeStr + ":00" : timeStr;
                 Time time = Time.valueOf(validTimeStr); 
                 
                 try {
-                    int guests = Integer.parseInt(guestsStr);
                     casualController.requestReservation(new Order(this.mainUI.currentUser.getUserId(), date, time, guests));
                 } catch (NumberFormatException ex) {
                     mainUI.showAlert("Error", "Guests must be a number");
