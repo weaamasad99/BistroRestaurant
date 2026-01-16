@@ -157,6 +157,7 @@ public class WaitingListController {
         }
     }
     
+    
     public void notifyNextInLine(int vacatedTableSeats) {
         // 1. Find the best candidate from the waiting list
         String findNext = "SELECT * FROM waiting_list " +

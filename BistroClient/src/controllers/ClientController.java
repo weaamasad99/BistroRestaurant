@@ -225,6 +225,7 @@ public class ClientController {
                     break;
                     
 
+                    
                  // --- WAITING LIST UPDATES ---
                 case WAITING_LIST_ADDED:
                     String responseStr = (String) msg.getObject();

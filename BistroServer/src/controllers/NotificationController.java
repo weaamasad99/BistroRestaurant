@@ -173,6 +173,7 @@ public class NotificationController {
     }
     
     
+    
     // Helper: Check if we should send email
     private boolean shouldSendEmail(User user) {
         if (user == null || user.getEmail() == null || !user.getEmail().contains("@"))

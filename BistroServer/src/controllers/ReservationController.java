@@ -895,6 +895,7 @@ public class ReservationController {
     }
     
     
+    
     // --- HELPER METHODS ---
     private Time parseTimeSafe(String timeStr) {
         if (timeStr == null || timeStr.trim().isEmpty()) return Time.valueOf("00:00:00");
