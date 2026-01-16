@@ -35,7 +35,7 @@ public class CasualUI {
         header.setFont(new Font("Arial", 22));
         header.setStyle("-fx-font-weight: bold; -fx-text-fill: #333;");
 
-        Label lblInstruction = new Label("Please enter your phone number to continue:");
+        Label lblInstruction = new Label("Please enter your credentials:");
         
         TextField txtPhone = new TextField();
         txtPhone.setPromptText("0500000000");
@@ -55,6 +55,11 @@ public class CasualUI {
             }
         });
 
+        TextField txtEmail = new TextField();
+        txtEmail.setPromptText("example@mail.com");
+        txtEmail.setMaxWidth(300);
+        txtEmail.setStyle("-fx-font-size: 14px;");
+        
         Button btnContinue = new Button("Continue");
         btnContinue.setPrefWidth(150);
         btnContinue.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
@@ -68,20 +73,25 @@ public class CasualUI {
         // Action: Validate
         btnContinue.setOnAction(e -> {
             String phone = txtPhone.getText().trim();
-            if (phone.isEmpty() || !phone.matches("\\d+")) { 
-                mainUI.showAlert("Invalid Input", "Please enter a valid phone number (digits only).");
-            }
-            else if (!phone.startsWith("05") || phone.length() != 10) {
+            String email = txtEmail.getText().trim();
+            
+            if (phone.isEmpty() || !phone.matches("\\d+") || !phone.startsWith("05") || phone.length() != 10) {
             	mainUI.showAlert("Invalid Input", "Please enter a valid phone number");
-            } 
-            else {
-            	casualController.createCasualUser(phone);
-            	casualController.setCurrentUserByPhone(phone);
-                showOptionsScreen(phone,() -> mainUI.showRoleSelectionScreen());
+            	return;
             }
+            
+            if (email.isEmpty() || !email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+                mainUI.showAlert("Invalid Email", "Please enter a valid email address.");
+                return;
+            }
+                    
+        	casualController.createCasualUser(phone, email);
+        	casualController.setCurrentUserByPhone(phone);
+            showOptionsScreen(phone,() -> mainUI.showRoleSelectionScreen());
+       
         });
 
-        VBox content = new VBox(20, header, lblInstruction, txtPhone, btnContinue, btnBack);
+        VBox content = new VBox(20, header, lblInstruction, txtPhone, txtEmail, btnContinue, btnBack);
         content.setAlignment(Pos.CENTER);
         content.setMaxWidth(400);
         content.setPadding(new Insets(30));

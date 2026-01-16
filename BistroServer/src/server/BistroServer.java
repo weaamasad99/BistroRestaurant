@@ -126,8 +126,11 @@ public class BistroServer extends AbstractServer {
 
             case CREATE_CASUAL:
                 log("Registering/Identifying Casual User...");
-                String phoneNumber = (String) message.getObject();
-                success = userController.createCasualRecord(phoneNumber);
+                Object[] obj = (Object[]) message.getObject();
+                String phoneNumber = (String) obj[0];
+                String email = (String) obj[1];
+
+                success = userController.createCasualRecord(phoneNumber,email);
                 
                 if (success) {
                     // NOTIFY UI: Add casual user to the list

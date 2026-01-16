@@ -18,8 +18,9 @@ public class CasualController {
      * Fix: Sends the phone number as a String, because the Server
      * casts message.getObject() to (String).
      */
-    public void createCasualUser(String phone) {
-        networkController.accept(new Message(TaskType.CREATE_CASUAL, phone));
+    public void createCasualUser(String phone, String email) {
+    	Object[] obj = {phone, email};
+        networkController.accept(new Message(TaskType.CREATE_CASUAL, obj));
     }
     
     public void recoverLostCode(String contact) {

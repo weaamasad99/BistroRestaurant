@@ -285,7 +285,7 @@ public class UserController {
      * @param phone The phone number of the customer.
      * @return true if successful (either registered OR already exists).
      */
-    public boolean createCasualRecord(String phone) {
+    public boolean createCasualRecord(String phone, String email) {
         if (conn == null) return false;
 
         // --- STEP 1: Check if this phone number already exists ---
@@ -309,11 +309,12 @@ public class UserController {
         // --- STEP 2: If not found, INSERT a new record ---
         // Note: We set 'username' to the phone number to ensure it satisfies any NOT NULL constraints on username.
         String insertQuery = "INSERT INTO users (phone_number, username, user_type, password, first_name, last_name, email) " +
-                             "VALUES (?, ?, 'CASUAL', 'casual', 'Guest', 'Diner', 'no-email')";
+                             "VALUES (?, ?, 'CASUAL', 'casual', 'Guest', 'Diner', ?)";
         
         try (PreparedStatement stmt = conn.prepareStatement(insertQuery)) {
             stmt.setString(1, phone); // phone_number
             stmt.setString(2, phone); // username (using phone as username for casuals)
+            stmt.setString(3, email);
             
             int affectedRows = stmt.executeUpdate();
             return affectedRows > 0;

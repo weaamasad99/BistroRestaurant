@@ -158,9 +158,9 @@ public class NotificationController {
     
     // Helper: Check if we should send email
     private boolean shouldSendEmail(User user) {
-        if (user == null || user.getEmail() == null || !user.getEmail().contains("@")) return false;
-        // Casual users usually don't have an email or are marked explicitly
-        return !"CASUAL".equalsIgnoreCase(user.getUserType());
+        if (user == null || user.getEmail() == null || !user.getEmail().contains("@"))
+        	return false;
+        return true;
     }
 
 
