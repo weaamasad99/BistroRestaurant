@@ -342,6 +342,7 @@ public class BistroServer extends AbstractServer {
                 String result1 = waitingListController.addToWaitingList(wlItem);
                 
                 
+                
                 response = new Message(TaskType.WAITING_LIST_ADDED, result1);
                 sendKryoToClient(response, client);
                 break;

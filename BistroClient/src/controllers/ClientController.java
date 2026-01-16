@@ -223,6 +223,7 @@ public class ClientController {
                         Platform.runLater(() -> ui.checkoutUI.showBillDetails(bCode, bPrice, isSub));
                     }
                     break;
+                    
 
                  // --- WAITING LIST UPDATES ---
                 case WAITING_LIST_ADDED:

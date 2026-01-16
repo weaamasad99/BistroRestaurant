@@ -79,6 +79,7 @@ public class NotificationController {
             new Thread(() -> EmailService.sendEmail(user.getEmail(), subject, body)).start();
         }
     }
+    
 
     // --- 3. REGISTRATION WELCOME ---
     public void sendRegistrationWelcome(User user) {

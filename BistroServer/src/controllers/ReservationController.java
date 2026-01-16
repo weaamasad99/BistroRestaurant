@@ -532,6 +532,7 @@ public class ReservationController {
             } catch (SQLException e) { e.printStackTrace(); return -1; }
         }
 
+        
         // =============================================================
         // PHASE 4: UPDATE DATABASE & COMMIT CHECK-IN
         // =============================================================

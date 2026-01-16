@@ -112,6 +112,7 @@ public class WaitingListController {
             e.printStackTrace();
             return "ERROR";
         }
+        
 
         // --- STEP 3: NO TABLE FOUND -> ADD TO WAITING LIST ---
         String insertWait = "INSERT INTO waiting_list (user_id, date_requested, time_requested, num_of_diners, status, confirmation_code) " +
