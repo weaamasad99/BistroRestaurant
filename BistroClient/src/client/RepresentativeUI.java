@@ -508,13 +508,16 @@ public void setOpeningHours() {
         TableColumn<Order, Integer> userCol = new TableColumn<>("User ID");
         userCol.setCellValueFactory(new PropertyValueFactory<>("userId"));
         
+
         TableColumn<Order, String> timeCol = new TableColumn<>("Time");
         timeCol.setCellValueFactory(new PropertyValueFactory<>("orderTime"));
         
-        TableColumn<Order, String> statusCol = new TableColumn<>("Status");
-        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
 
-        activeOrdersView.getColumns().addAll(orderIdCol, userCol, timeCol, statusCol);
+        TableColumn<Order, Integer> dinersCol = new TableColumn<>("Diners");
+        dinersCol.setCellValueFactory(new PropertyValueFactory<>("numberOfDiners"));
+
+        
+        activeOrdersView.getColumns().addAll(orderIdCol, userCol, timeCol,dinersCol );
         activeOrdersView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         Button btnBack = new Button("Back");
@@ -522,7 +525,7 @@ public void setOpeningHours() {
 
         VBox content = new VBox(15, header, activeOrdersView, btnBack);
         content.setAlignment(Pos.CENTER);
-        content.setMaxWidth(500);
+        content.setMaxWidth(650); 
         content.setPadding(new Insets(20));
         content.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);");
         
@@ -551,13 +554,21 @@ public void setOpeningHours() {
         TableColumn<Order, Integer> userCol = new TableColumn<>("User ID");
         userCol.setCellValueFactory(new PropertyValueFactory<>("userId"));
         
+        
+        TableColumn<Order, String> dateCol = new TableColumn<>("Date");
+        dateCol.setCellValueFactory(new PropertyValueFactory<>("orderDate"));
+        
         TableColumn<Order, String> timeCol = new TableColumn<>("Time");
         timeCol.setCellValueFactory(new PropertyValueFactory<>("orderTime"));
         
         TableColumn<Order, String> statusCol = new TableColumn<>("Status");
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+        
+        TableColumn<Order, Integer> dinersCol = new TableColumn<>("Diners");
+        dinersCol.setCellValueFactory(new PropertyValueFactory<>("numberOfDiners"));
 
-        activeOrdersView.getColumns().addAll(orderIdCol, userCol, timeCol, statusCol);
+        
+        activeOrdersView.getColumns().addAll(orderIdCol, userCol, dateCol, timeCol,dinersCol ,statusCol);
         activeOrdersView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         Button btnBack = new Button("Back");
@@ -565,7 +576,7 @@ public void setOpeningHours() {
 
         VBox content = new VBox(15, header, activeOrdersView, btnBack);
         content.setAlignment(Pos.CENTER);
-        content.setMaxWidth(500);
+        content.setMaxWidth(650); // 
         content.setPadding(new Insets(20));
         content.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);");
         
@@ -573,8 +584,7 @@ public void setOpeningHours() {
         
         // Request Data via Controller
         controller.getAllOrders();
-    }
-    
+      }
     public void updateOrdersData(ArrayList<Order> orders) {
         Platform.runLater(() -> {
             if (activeOrdersView != null) activeOrdersView.getItems().setAll(orders);
