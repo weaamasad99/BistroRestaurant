@@ -44,6 +44,10 @@ public class CasualController {
     public void enterWaitingList(WaitingList entry) {
         networkController.accept(new Message(TaskType.ENTER_WAITING_LIST, entry));
     }
+    
+    public void exitWaitingList(int userId) {
+        networkController.accept(new Message(TaskType.EXIT_WAITING_LIST, userId));
+    }
 
     public void checkIn(String code) {
         networkController.accept(new Message(TaskType.CHECK_IN_CUSTOMER, code));

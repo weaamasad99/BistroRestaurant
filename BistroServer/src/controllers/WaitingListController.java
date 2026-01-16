@@ -53,6 +53,21 @@ public class WaitingListController {
     
     public boolean addToWaitingList(WaitingList wlData) {
         if (conn == null) return false;
+        
+        String checkQuery = "SELECT waiting_id FROM waiting_list WHERE user_id = ? AND status = 'WAITING'";
+        
+        try (PreparedStatement psCheck = conn.prepareStatement(checkQuery)) {
+            psCheck.setInt(1, wlData.getUserId());
+            try (ResultSet rs = psCheck.executeQuery()) {
+                if (rs.next()) {
+                    System.out.println("Add failed: User is already in the waiting list.");
+                    return false; // User is already waiting
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
 
         String query = "INSERT INTO waiting_list (user_id, date_requested, time_requested, num_of_diners, status, confirmation_code) " +
                 "VALUES (?, ?, ?, ?, ?, ?)";
@@ -79,6 +94,23 @@ public class WaitingListController {
         }
     }
     
+    public boolean exitWaitingList(int userId) {
+    	String sql = "UPDATE waiting_list SET status = 'CANCELLED' WHERE user_id = ? AND status = 'WAITING'";
+        
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            
+            int rowsAffected = ps.executeUpdate();
+            
+            // returns TRUE if they were in the list (and are now out)
+            // returns FALSE if they weren't in the list at all
+            return rowsAffected > 0; 
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
     
     public void notifyNextInLine(int vacatedTableSeats) {
         // 1. Find the person who fits AND has the largest group (High utilization logic)

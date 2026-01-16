@@ -117,8 +117,14 @@ public class WaitingListUI {
             }
         });
 
-        // --- Logic: Leave (Popup Dialog) ---
-        btnLeave.setOnAction(e -> showCancellationDialog());
+        btnLeave.setOnAction(e -> {
+            if (mainUI.currentUser != null) {
+                // We send the User ID. The server checks if this user is in the list.
+                casualController.exitWaitingList(mainUI.currentUser.getUserId());
+            } else {
+                mainUI.showAlert("Error", "System cannot identify you. Please log in again.");
+            }
+        });
 
         VBox content = new VBox(20, header, subHeader, grid, btnJoin, new Separator(), btnLeave, btnBack);
         content.setAlignment(Pos.CENTER);
@@ -133,7 +139,7 @@ public class WaitingListUI {
      * Requirement: "The customer can exit the waiting list at any time"
      * We ask for the Confirmation Code to cancel.
      */
-    private void showCancellationDialog() {
+    private void showCancellationDialog() {	
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Cancel Waiting List");
         dialog.setHeaderText("Leave Waiting List");

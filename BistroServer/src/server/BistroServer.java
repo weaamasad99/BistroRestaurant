@@ -343,6 +343,15 @@ public class BistroServer extends AbstractServer {
                 response = new Message(success ? TaskType.SUCCESS : TaskType.FAIL, resultMsg);
                 sendKryoToClient(response, client);
                 break;
+                
+            case EXIT_WAITING_LIST:
+                log("Exiting Waiting List...");
+                int userId = (int) message.getObject();
+                success = waitingListController.exitWaitingList(userId);
+                resultMsg = success ? "You have successfully left the waiting list" : "You are not currently in the waiting list";                
+                response = new Message(success ? TaskType.SUCCESS : TaskType.FAIL, resultMsg);
+                sendKryoToClient(response, client);
+                break;
 
             case GET_WAITING_LIST:
                 ArrayList<WaitingList> waitList = waitingListController.getAllWaitingList();
