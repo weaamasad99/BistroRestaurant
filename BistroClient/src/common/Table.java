@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * Represents a restaurant table entity.
  * Contains ID, seating capacity, and current status.
- * * @author Group 6
+ * @author Group 6
  * @version 1.0
  */
 public class Table implements Serializable {
@@ -26,7 +26,7 @@ public class Table implements Serializable {
 
     /**
      * Constructs a Table with specified details.
-     * * @param tableId The unique table ID.
+     * @param tableId The unique table ID.
      * @param seats Capacity of the table.
      * @param status Current status.
      */

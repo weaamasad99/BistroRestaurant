@@ -23,7 +23,7 @@ import java.util.Map;
  * JavaFX Application for the Server Console.
  * Displays connected clients, logs, and server status.
  * Implements ServerEventListener to receive updates from BistroServer.
- * * @author Group 6
+ * @author Group 6
  * @version 1.0
  */
 public class ServerUI extends Application implements ServerEventListener {

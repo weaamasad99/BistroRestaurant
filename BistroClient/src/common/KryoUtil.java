@@ -12,7 +12,7 @@ import java.sql.Time;
 /**
  * Utility class for handling Kryo serialization.
  * Ensures consistent registration of classes across Client and Server for network communication.
- * * @author Group 6
+ * @author Group 6
  * @version 1.0
  */
 public class KryoUtil {
@@ -50,7 +50,7 @@ public class KryoUtil {
 
     /**
      * Serializes an object into a byte array.
-     * * @param object The object to serialize.
+     * @param object The object to serialize.
      * @return The byte array representing the object.
      */
     public static byte[] serialize(Object object) {
@@ -64,7 +64,7 @@ public class KryoUtil {
 
     /**
      * Deserializes a byte array back into an object.
-     * * @param bytes The byte array to deserialize.
+     * @param bytes The byte array to deserialize.
      * @return The reconstructed object, or null if bytes are null.
      */
     public static Object deserialize(byte[] bytes) {

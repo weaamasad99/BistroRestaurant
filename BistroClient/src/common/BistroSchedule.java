@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * Represents a schedule entry for the restaurant (e.g., opening hours, holidays).
  * Implements Serializable for network transmission and object persistence.
- * * @author Group 6
+ * @author Group 6
  * @version 1.0
  */
 public class BistroSchedule implements Serializable {
@@ -39,7 +39,7 @@ public class BistroSchedule implements Serializable {
 
     /**
      * Constructs a new BistroSchedule with the specified details.
-     * * @param identifier Unique ID for the day or date.
+     * @param identifier Unique ID for the day or date.
      * @param openTime Opening time.
      * @param closeTime Closing time.
      * @param isClosed True if closed, false otherwise.

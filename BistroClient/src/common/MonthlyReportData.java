@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * Data Transfer Object (DTO) for generating monthly performance and activity reports.
  * Holds aggregated statistics and detailed lists required for charts and tables.
- * * @author Group 6
+ * @author Group 6
  * @version 1.0
  */
 public class MonthlyReportData implements Serializable {
@@ -61,7 +61,7 @@ public class MonthlyReportData implements Serializable {
     
     /**
      * Constructor specifying the month and year.
-     * * @param month The month integer (1-12).
+     * @param month The month integer (1-12).
      * @param year The year integer.
      */
     public MonthlyReportData(int month, int year) {
@@ -132,7 +132,7 @@ public class MonthlyReportData implements Serializable {
 
     /**
      * Checks if the report contains any data.
-     * * @return true if there are no stats or orders recorded.
+     * @return true if there are no stats or orders recorded.
      */
     public boolean isEmpty() {
         return totalOnTime == 0 && totalLate == 0 && totalNoShow == 0 &&
