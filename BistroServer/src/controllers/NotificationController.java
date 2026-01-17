@@ -49,20 +49,37 @@ public class NotificationController {
         }
     }
 
-    // --- 2. WAITING LIST ALERT ---
-    public void sendWaitingListAlert(int userId) {
-    	log("Sending Table Availability Alert to User " + userId);
-        System.out.println(">>> [SMS MOCK] To User " + userId + ": A table is available! Confirm within 1 hour.");
+ // --- 2. WAITING LIST ALERT ---
+    // Update: Now accepts 'confirmationCode' to include in the message
+    public void sendWaitingListAlert(int userId, String confirmationCode) {
+        
+        // Console/SMS Mock Message
+        String msg = "Good news! A table is available and reserved for you for 15 minutes. " +
+                     "Please check in using code: " + confirmationCode;
+                     
+        System.out.println(">>> [SMS MOCK] To User " + userId + ": " + msg);
 
         User user = userController.getUserById(userId);
         if (shouldSendEmail(user)) {
             String subject = "Table Available!";
-            String body = "<p>Good news! A table matching your request is available.</p>" +
-                          "<p>Please confirm within <b>1 hour</b>.</p>";
+            
+            // Updated Email Body:
+            // 1. Shows the specific Code
+            // 2. Corrects '1 hour' to '15 minutes'
+            String body = "<div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd;'>" +
+                          "<h2 style='color: #2E8B57;'>Good News!</h2>" +
+                          "<p>A table matching your request is now available.</p>" +
+                          "<p>We have reserved this table for you for <b>15 minutes</b>.</p>" +
+                          "<div style='background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-left: 5px solid #2E8B57;'>" +
+                          "<h3>Your Check-In Code: <span style='color: #d9534f;'>" + confirmationCode + "</span></h3>" +
+                          "</div>" +
+                          "<p>Please proceed to the terminal and enter this code to claim your table immediately.</p>" +
+                          "</div>";
             
             new Thread(() -> EmailService.sendEmail(user.getEmail(), subject, body)).start();
         }
     }
+    
 
     // --- 3. REGISTRATION WELCOME ---
     public void sendRegistrationWelcome(User user) {
@@ -154,6 +171,7 @@ public class NotificationController {
             new Thread(() -> EmailService.sendEmail(user.getEmail(), subject, body)).start();
         }
     }
+    
     
     
     // Helper: Check if we should send email

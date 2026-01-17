@@ -223,10 +223,37 @@ public class ClientController {
                         Platform.runLater(() -> ui.checkoutUI.showBillDetails(bCode, bPrice, isSub));
                     }
                     break;
+                    
 
-                // --- WAITING LIST UPDATES ---
+                    
+                 // --- WAITING LIST UPDATES ---
                 case WAITING_LIST_ADDED:
-                    ui.showAlert("Success", "You have been added to the Waiting List.");
+                    String responseStr = (String) msg.getObject();
+
+                    if (responseStr.startsWith("IMMEDIATE:")) {
+                        // Format: IMMEDIATE:TableID:Code
+                        String[] parts = responseStr.split(":");
+                        String tableId = parts[1];
+                        String code = parts[2]; // Now extracting the code
+
+                        // Display the code clearly to the user
+                        ui.showAlert("Good News!", 
+                                     "A table is available right now!\n" +
+                                     "Please proceed to Table #" + tableId + ".\n\n" +
+                                     "Your Confirmation Code: " + code); // Added code here
+                                     
+                        // Optional: Refresh table view if necessary
+                        // accept(new Message(TaskType.GET_TABLES, null));
+
+                    } else if ("WAITING".equals(responseStr)) {
+                        ui.showAlert("Success", "No tables available right now.\nYou have been added to the Waiting List.");
+                        
+                    } else if ("DUPLICATE".equals(responseStr)) {
+                        ui.showAlert("Info", "You are already on the waiting list.");
+                        
+                    } else {
+                        ui.showAlert("Error", "Could not complete request.");
+                    }
                     break;
 
                 case GET_WAITING_LIST:
