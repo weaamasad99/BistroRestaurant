@@ -38,7 +38,7 @@ public class RepresentativeUI {
     
     protected Button accessSubscriberDashButton;
     protected Button accessCasualDashButton;
-    protected Button checkInClientButton;
+
     protected Button viewCurrentDinersButton;
     protected Button viewWaitingListButton;
 
@@ -140,14 +140,11 @@ public class RepresentativeUI {
         // --- 2. General Operations Section ---
         Label lblOps = sectionTitle("General Operations", "#2196F3");
         registerNewSubscriberButton = createWideButton("Register New Customer", "👤");
-        checkInClientButton = createWideButton("Check-In / Identify Client", "📋");
+        
 
         // NAVIGATION LOGIC
         registerNewSubscriberButton.setOnAction(e -> registerNewSubscriber(username));
-        checkInClientButton.setOnAction(e -> {
-            IdentificationUI idUI = new IdentificationUI(mainLayout, mainUI, () -> showDashboardScreen(username), "Client-Via-Rep");
-            idUI.start();
-        });
+
 
         // --- 3. Management Section ---
         Label lblMgmt = sectionTitle("Management", "#4CAF50");
@@ -171,7 +168,7 @@ public class RepresentativeUI {
 
         // Layout Assembly
         VBox groupAccess = new VBox(8, lblAccess, accessSubscriberDashButton, accessCasualDashButton); groupAccess.setAlignment(Pos.CENTER);
-        VBox groupOps = new VBox(8, lblOps, registerNewSubscriberButton, checkInClientButton); groupOps.setAlignment(Pos.CENTER);
+        VBox groupOps = new VBox(8, lblOps, registerNewSubscriberButton); groupOps.setAlignment(Pos.CENTER);
         VBox groupMgmt = new VBox(8, lblMgmt, manageTablesButton, editOpeningHoursButton); groupMgmt.setAlignment(Pos.CENTER);
         VBox groupView = new VBox(8, lblView, viewCurrentDinersButton, viewOrdersButton, viewWaitingListButton, viewSubscriberButton); groupView.setAlignment(Pos.CENTER);
 
