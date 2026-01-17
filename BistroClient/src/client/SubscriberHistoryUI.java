@@ -18,14 +18,24 @@ import javafx.scene.text.Font;
  * <p>
  * It renders a table view containing details of past orders such as date, time, 
  * number of guests, and the current status of the order.
+ * * @author Group 6
+ * @version 1.0
  */
 public class SubscriberHistoryUI {
 
+    /** The main layout container where the UI will be rendered. */
     private VBox mainLayout;
-    private ClientUI mainUI;
-    private Runnable onBack;      // Action to go back
-    private String subscriberID;  // The ID of the subscriber
     
+    /** The main application instance used for navigation and shared data. */
+    private ClientUI mainUI;
+    
+    /** A Runnable callback to execute when the user navigates back to the previous screen. */
+    private Runnable onBack;      
+    
+    /** The ID of the subscriber whose history is currently being viewed. */
+    private String subscriberID;  
+    
+    /** The data list used to populate the JavaFX TableView. */
     private ObservableList<Order> historyList;
 
     /**
@@ -140,12 +150,29 @@ public class SubscriberHistoryUI {
      * Currently unused in favor of the common.Order entity.
      */
     public static class HistoryItem {
+        /** The unique order ID. */
         private String orderId;
+        
+        /** The date of the order. */
         private String date;
+        
+        /** The time of the order. */
         private String time;
+        
+        /** The number of guests. */
         private String guests;
+        
+        /** The status of the order. */
         private String status;
 
+        /**
+         * Constructs a HistoryItem.
+         * @param orderId Order ID.
+         * @param date Date string.
+         * @param time Time string.
+         * @param guests Guest count string.
+         * @param status Status string.
+         */
         public HistoryItem(String orderId, String date, String time, String guests, String status) {
             this.orderId = orderId;
             this.date = date;
@@ -154,10 +181,15 @@ public class SubscriberHistoryUI {
             this.status = status;
         }
 
+        /** @return The order ID. */
         public String getOrderId() { return orderId; }
+        /** @return The date. */
         public String getDate() { return date; }
+        /** @return The time. */
         public String getTime() { return time; }
+        /** @return The number of guests. */
         public String getGuests() { return guests; }
+        /** @return The status. */
         public String getStatus() { return status; }
     }
 }
