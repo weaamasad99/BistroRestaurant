@@ -12,7 +12,7 @@ import java.util.ArrayList;
 /**
  * Manages operations specific to Subscribers.
  * Handles fetching subscriber lists and updating details.
- * * @author Group 6
+ * @author Group 6
  * @version 1.0
  */
 public class SubscriberController {
@@ -66,7 +66,7 @@ public class SubscriberController {
     
     /**
      * Updates phone and email for a specific subscriber.
-     * * @param user The user object containing new details.
+     * @param user The user object containing new details.
      * @return true if updated successfully.
      */
     public boolean updateSubscriberDetails(User user) {

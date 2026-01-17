@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * Manages the generation of statistical reports for the Bistro.
  * Aggregates data from orders and waiting lists for performance analysis.
- * * @author Group 6
+ * @author Group 6
  * @version 1.0
  */
 public class ReportController {
@@ -27,7 +27,7 @@ public class ReportController {
 
     /**
      * Generates a comprehensive monthly report containing performance stats and activity logs.
-     * * @param month The month to generate for.
+     * @param month The month to generate for.
      * @param year The year to generate for.
      * @return MonthlyReportData object with full stats.
      */

@@ -18,7 +18,7 @@ import java.util.ArrayList;
 /**
  * Manages Orders (Reservations) and Physical Table configurations.
  * Handles the core logic for booking, check-in, and capacity checks.
- * * @author Group 6
+ * @author Group 6
  * @version 1.0
  */
 
@@ -41,7 +41,7 @@ public class ReservationController {
 
     /**
      * Retrieves all orders from the database.
-     * * @return List of all Order objects.
+     * @return List of all Order objects.
      */
     public ArrayList<Order> getAllOrders() {
         ArrayList<Order> orders = new ArrayList<>();
@@ -74,7 +74,7 @@ public class ReservationController {
     /**
      * Finds a confirmation code associated with a phone or email.
      * Returns the most recent relevant code.
-     * * @param contactInfo Phone number or email string.
+     * @param contactInfo Phone number or email string.
      * @return Confirmation code string or null.
      */
     public String findCodeByContact(String contactInfo) {
@@ -113,7 +113,7 @@ public class ReservationController {
     
     /**
      * Retrieves all currently active orders (diners in the restaurant).
-     * * @return List of active Order objects.
+     * @return List of active Order objects.
      */
     public ArrayList<Order> getActiveOrders() {
         ArrayList<Order> orders = new ArrayList<>();
@@ -146,7 +146,7 @@ public class ReservationController {
     /**
      * Finds ALL relevant orders (Active, Approved, Pending) for a user.
      * Supports input as either Subscriber ID or Phone Number.
-     * * @param identifier Phone number or Subscriber ID.
+     * @param identifier Phone number or Subscriber ID.
      * @return List of Order objects.
      */
     public ArrayList<Order> getActiveOrdersForContact(String identifier) {
@@ -194,7 +194,7 @@ public class ReservationController {
     
     /**
      * Fetches all orders belonging to a specific user history.
-     * * @param userId The User ID.
+     * @param userId The User ID.
      * @return List of past orders.
      */
     public ArrayList<Order> getOrdersByUserId(int userId) {
@@ -231,7 +231,7 @@ public class ReservationController {
 
     /**
      * Updates details of an existing order.
-     * * @param order The updated Order object.
+     * @param order The updated Order object.
      * @return true if successful.
      */
     public boolean updateOrder(Order order) {
@@ -256,7 +256,7 @@ public class ReservationController {
      * Checks if there is a specific physical table available for the requested party size
      * during the entire meal duration.
      * LOGIC: "Best Fit" Bin Packing on a Timeline.
-     * * @param date Reservation date.
+     * @param date Reservation date.
      * @param reqTime Reservation time.
      * @param requestedDiners Number of guests.
      * @return true if capacity exists.
@@ -388,7 +388,7 @@ public class ReservationController {
     
     /**
      * Creates a new reservation after validating capacity and duplicates.
-     * * @param order The reservation request.
+     * @param order The reservation request.
      * @return Status string (e.g., "OK:<code>", "Full", "Duplicate").
      */
     public String createReservation(Order order) {
@@ -440,7 +440,7 @@ public class ReservationController {
     
     /**
      * Cancels an existing reservation.
-     * * @param code Confirmation code.
+     * @param code Confirmation code.
      * @param userId User ID for validation.
      * @return true if cancelled successfully.
      */
@@ -480,7 +480,7 @@ public class ReservationController {
     /**
      * Handles the customer check-in process.
      * Validates reservation, assigns table (reserved or new), and updates status.
-     * * @param code The confirmation code.
+     * @param code The confirmation code.
      * @return Table ID if successful, negative error code otherwise.
      */
     public int checkIn(String code) {
@@ -647,7 +647,7 @@ public class ReservationController {
     /**
      * Calculates alternative time slots if a requested slot is full.
      * Looks at times +/- 30 and 60 minutes from target.
-     * * @return Comma-separated string of available times.
+     * @return Comma-separated string of available times.
      */
     private String getAlternativeTimes(Date date, Time targetTime, int diners) {
         StringBuilder suggestions = new StringBuilder();
@@ -720,7 +720,7 @@ public class ReservationController {
 
     /**
      * Fetches all restaurant tables.
-     * * @return List of Table objects.
+     * @return List of Table objects.
      */
     public ArrayList<Table> getAllTables() {
         ArrayList<Table> tables = new ArrayList<>();
@@ -745,7 +745,7 @@ public class ReservationController {
 
     /**
      * Updates seat count or status of a table.
-     * * @param table The table with new values.
+     * @param table The table with new values.
      * @return true if update successful.
      */
     public boolean updateTable(Table table) {
@@ -767,7 +767,7 @@ public class ReservationController {
  
     /**
      * Adds a new table to the layout.
-     * * @param table The new table object.
+     * @param table The new table object.
      * @return true if added successfully.
      */
     public boolean addTable(Table table) {
@@ -787,7 +787,7 @@ public class ReservationController {
 
     /**
      * Removes a table from the layout.
-     * * @param tableId The ID of the table to remove.
+     * @param tableId The ID of the table to remove.
      * @return true if removed successfully.
      */
     public boolean removeTable(int tableId) {
@@ -809,7 +809,7 @@ public class ReservationController {
     // 1. Get All Schedule Items
     /**
      * Retrieves the master schedule (hours and holidays).
-     * * @return List of BistroSchedule items.
+     * @return List of BistroSchedule items.
      */
     public ArrayList<BistroSchedule> getSchedule() {
         ArrayList<BistroSchedule> list = new ArrayList<>();
@@ -840,7 +840,7 @@ public class ReservationController {
     /**
      * Saves a schedule item (Insert or Update).
      * Triggers notifications if hours change affects existing orders.
-     * * @param item The schedule item.
+     * @param item The schedule item.
      * @return true if successful.
      */
     public boolean saveScheduleItem(BistroSchedule item) {
@@ -968,7 +968,7 @@ public class ReservationController {
     // 3. Delete Item (For removing special dates)
     /**
      * Deletes a schedule entry (e.g., removing a holiday).
-     * * @param identifier The ID of the item to delete.
+     * @param identifier The ID of the item to delete.
      * @return true if successful.
      */
     public boolean deleteScheduleItem(String identifier) {

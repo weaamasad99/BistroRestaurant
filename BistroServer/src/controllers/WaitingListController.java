@@ -12,7 +12,7 @@ import java.util.ArrayList;
 /**
  * Manages the Waiting List database operations.
  * Handles adding users to the queue and promoting them when tables free up.
- * * @author Group 6
+ * @author Group 6
  * @version 1.0
  */
 public class WaitingListController {
@@ -64,7 +64,7 @@ public class WaitingListController {
      * - "WAITING" (Added to waiting list)
      * - "DUPLICATE" (Already in list)
      * - "ERROR" (Database error)
-     * * @param wlData The waiting list entry object.
+     * @param wlData The waiting list entry object.
      * @return Status string indicating outcome.
      */
     public String addToWaitingList(WaitingList wlData) {
@@ -149,7 +149,7 @@ public class WaitingListController {
     
     /**
      * Removes a user from the waiting list (sets status to CANCELLED).
-     * * @param userId The ID of the user to remove.
+     * @param userId The ID of the user to remove.
      * @return true if successful.
      */
     public boolean exitWaitingList(int userId) {
@@ -174,7 +174,7 @@ public class WaitingListController {
     /**
      * Logic to promote a waiting customer when a table becomes available.
      * Finds the best fit candidate, reserves the table, and sends a notification.
-     * * @param vacatedTableSeats The size of the table that just became free.
+     * @param vacatedTableSeats The size of the table that just became free.
      */
     public void notifyNextInLine(int vacatedTableSeats) {
         // 1. Find the best candidate from the waiting list

@@ -10,7 +10,7 @@ import java.time.LocalTime;
 
 /**
  * Manages payment processing, bill calculation, and closing of orders.
- * * @author Group 6
+ * @author Group 6
  * @version 1.0
  */
 public class PaymentController {
@@ -28,7 +28,7 @@ public class PaymentController {
      * Retrieves bill details including price and user type.
      * Simulation: Processes payment by marking an order as 'FINISHED'.
      * In a real system, this would integrate with a Payment Gateway API.
-     * * @param code The confirmation code of the active order.
+     * @param code The confirmation code of the active order.
      * @return Object array [Code, Price, UserType] or null if not found.
      */
     public Object[] getBillData(String code) { // Renamed to getBillData
@@ -58,7 +58,7 @@ public class PaymentController {
     /**
      * Processes the bill payment, frees the table, and closes the order.
      * Also triggers the waiting list mechanism to notify the next customer.
-     * * @param code The confirmation code.
+     * @param code The confirmation code.
      * @return true if payment successful, false otherwise.
      */
     public boolean payBill(String code) {

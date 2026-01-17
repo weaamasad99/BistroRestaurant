@@ -11,7 +11,7 @@ import java.sql.SQLException;
 /**
  * Manages user-related database operations including login (DB & Hardcoded) and registration.
  * Handles authentication for Subscribers, Staff, and Casual users.
- * * @author Group 6
+ * @author Group 6
  * @version 1.0
  */
 public class UserController {
@@ -28,7 +28,7 @@ public class UserController {
     /**
      * Retrieves Email by Phone OR Subscriber ID (Identifier).
      * Used for recovering accounts or notifications.
-     * * @param identifier Phone or Subscriber ID.
+     * @param identifier Phone or Subscriber ID.
      * @return Email address string.
      */
     public String getEmailByIdentifier(String identifier) {
@@ -64,7 +64,7 @@ public class UserController {
     
     /**
      * Fetches a full User object by their internal ID.
-     * * @param userId Unique database ID.
+     * @param userId Unique database ID.
      * @return User object.
      */
     public User getUserById(int userId) {
@@ -98,11 +98,11 @@ public class UserController {
     }
     /**
      * Authenticates a user.
-     * * Logic:
+     * Logic:
      * 1. CHECKS HARDCODED ACCOUNTS (Admin/Rep).
      * 2. IF SUBSCRIBER: Checks if 'username' exists AND 'subscriber_number' matches the 'password' input (parsed as int).
      * 3. IF OTHER DB USERS: Standard password check (future proofing).
-     * * @param username The username input.
+     * @param username The username input.
      * @param credentials The second input field (Password OR Subscriber ID).
      * @return A User object if successful, null otherwise.
      */
@@ -198,7 +198,7 @@ public class UserController {
     /**
      * Helper: Get the email address for a user based on phone OR email input.
      * Used for notifications when the user identifies by phone.
-     * * @param contactInfo The phone number or email to search for.
+     * @param contactInfo The phone number or email to search for.
      * @return The email string if found, otherwise null.
      */
     public String getEmailByContact(String contactInfo) {
@@ -265,7 +265,7 @@ public class UserController {
 
     /**
      * Retrieves a user by phone number.
-     * * @param phone Phone number string.
+     * @param phone Phone number string.
      * @return User object.
      */
     public User getUserByPhone(String phone) {
@@ -350,7 +350,7 @@ public class UserController {
     /**
      * Generates a unique 4-digit confirmation code.
      * Ensures code uniqueness by checking database.
-     * * @return Unique 4-digit code.
+     * @return Unique 4-digit code.
      */
     public String generateConfirmationCode() {
     	String code;
@@ -383,7 +383,7 @@ public class UserController {
     }
     /**
      * Helper method to map a SQL ResultSet row to a User object.
-     * * @param rs The ResultSet from the query.
+     * @param rs The ResultSet from the query.
      * @return A User object populated with data.
      * @throws SQLException If a database access error occurs.
      */
@@ -408,7 +408,7 @@ public class UserController {
     /**
      * Registers a new subscriber in the DB.
      * Generates a unique 6-digit Subscriber Number.
-     * * @param user User object containing registration details.
+     * @param user User object containing registration details.
      * @return The registered User object with generated ID.
      */
     public User registerNewSubscriber(User user) {
