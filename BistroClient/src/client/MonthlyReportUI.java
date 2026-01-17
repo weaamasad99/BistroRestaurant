@@ -25,8 +25,8 @@ import java.util.Map;
  * It provides a visual interface to select a specific month and year, fetches statistical data
  * from the server via the {@link ManagerController}, and renders two primary types of reports:
  * <ul>
- * <li><b>Time & Performance:</b> Visualizes arrival/departure punctuality using Pie Charts and tables.</li>
- * <li><b>Activity & Subscribers:</b> Visualizes order volume and waiting list activity by day of the week using Bar Charts.</li>
+ * <li><b>Time &amp; Performance:</b> Visualizes arrival/departure punctuality using Pie Charts and tables.</li>
+ * <li><b>Activity &amp; Subscribers:</b> Visualizes order volume and waiting list activity by day of the week using Bar Charts.</li>
  * </ul>
  */
 public class MonthlyReportUI {
@@ -101,8 +101,8 @@ public class MonthlyReportUI {
         controlsBox.setAlignment(Pos.CENTER);
 
         // --- Report Buttons ---
-        Button btnTimeReport = createReportButton("1. Time & Performance", "⏱");
-        Button btnActivityReport = createReportButton("2. Activity & Subscribers", "📊");
+        Button btnTimeReport = createReportButton("1. Time & Performance", "");
+        Button btnActivityReport = createReportButton("2. Activity & Subscribers", "");
 
         btnTimeReport.setOnAction(e -> {
             if (validateDataLoaded()) renderTimeReport();

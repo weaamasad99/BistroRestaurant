@@ -135,7 +135,7 @@ public class SubscriberUI {
         
         Runnable stayHere = () -> showDashboardScreen(username, id, onExit);
         
-        Button btnProfile = createOptionButton("My Profile", "👤");
+        Button btnProfile = createOptionButton("My Profile", "");
         btnProfile.setStyle("-fx-background-color: #E0F7FA; -fx-border-color: #006064; -fx-font-size: 14px;");
         
         btnProfile.setOnAction(e -> {
@@ -148,35 +148,35 @@ public class SubscriberUI {
             }
         });
 
-        Button btnReservation = createOptionButton("Make Order", "📅");
+        Button btnReservation = createOptionButton("Make Order", "");
         btnReservation.setOnAction(e -> {
             // Note: ReservationUI might need updating to accept 'int id' if it uses it
             ReservationUI resUI = new ReservationUI(mainLayout, mainUI, stayHere, username);
             resUI.start();
         });
         
-        Button btnCancelReservation = createOptionButton("Cancel Order", "X");
+        Button btnCancelReservation = createOptionButton("Cancel Order", "");
         btnCancelReservation.setOnAction(e -> {
             // Note: ReservationUI might need updating to accept 'int id' if it uses it
             CancelReservationUI cancelResUI = new CancelReservationUI(mainLayout, mainUI, stayHere);
             cancelResUI.start();
         });
 
-        Button btnWaitingList = createOptionButton("Enter Waiting List", "⏳");
+        Button btnWaitingList = createOptionButton("Enter Waiting List", "");
         btnWaitingList.setOnAction(e -> {
             // Passing int ID formatted as String for now, or update WaitingListUI to take int
             WaitingListUI waitScreen = new WaitingListUI(mainLayout, mainUI, stayHere, String.valueOf(id), false);
             waitScreen.start();
         });
 
-        Button btnIdentify = createOptionButton("Check-In", "📋");
+        Button btnIdentify = createOptionButton("Check-In", "");
         btnIdentify.setOnAction(e -> {
             // TRUE = Subscriber (Smart List Mode)
            IdentificationUI identifyScreen = new IdentificationUI(mainLayout, mainUI, stayHere, String.valueOf(id), true);
            identifyScreen.start();
        });
 
-        Button btnHistory = createOptionButton("Order History", "📜");
+        Button btnHistory = createOptionButton("Order History", "");
         btnHistory.setOnAction(e -> {
             // FIX: We send the internal 'user_id' (e.g., 1) because the orders table 
             // is linked by user_id, not by the subscriber_number (e.g., 1001).
@@ -187,7 +187,7 @@ public class SubscriberUI {
             }
         });
 
-        Button btnCheckout = createOptionButton("Check Out", "💳");
+        Button btnCheckout = createOptionButton("Check Out", "");
         btnCheckout.setStyle("-fx-background-color: #FF5722; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px;");
         btnCheckout.setOnAction(e -> {
             CheckoutUI checkoutScreen = new CheckoutUI(mainLayout, mainUI, stayHere);

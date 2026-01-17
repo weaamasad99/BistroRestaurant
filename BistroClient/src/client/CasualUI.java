@@ -140,14 +140,14 @@ public class CasualUI {
         Runnable stayHere = () -> showOptionsScreen(phoneNumber, onExit);
 
         // 1. Make Reservation
-        Button btnReservation = createOptionButton("Make Order", "📅");
+        Button btnReservation = createOptionButton("Make Order", "");
         btnReservation.setOnAction(e -> {
         	
             ReservationUI resUI = new ReservationUI(mainLayout, mainUI, stayHere, phoneNumber);
             resUI.start();
         });
         
-        Button btnCancelReservation = createOptionButton("Cancel Order", "X");
+        Button btnCancelReservation = createOptionButton("Cancel Order", "");
         btnCancelReservation.setOnAction(e -> {
             // Note: ReservationUI might need updating to accept 'int id' if it uses it
             CancelReservationUI cancelResUI = new CancelReservationUI(mainLayout, mainUI, stayHere);
@@ -155,7 +155,7 @@ public class CasualUI {
         });
 
         // 2. Enter Waiting List
-        Button btnWaitingList = createOptionButton("Enter Waiting List", "⏳");
+        Button btnWaitingList = createOptionButton("Enter Waiting List", "");
         btnWaitingList.setOnAction(e -> {
  
         	WaitingListUI resUI = new WaitingListUI(mainLayout, mainUI, stayHere, phoneNumber, true);
@@ -163,7 +163,7 @@ public class CasualUI {
         });
 
         // 3. Identify
-        Button btnIdentify = createOptionButton("Check-In", "📋");
+        Button btnIdentify = createOptionButton("Check-In", "");
         btnIdentify.setOnAction(e -> {
             // FALSE = Casual User (Manual Mode)
             IdentificationUI identifyUI = new IdentificationUI(mainLayout, mainUI, stayHere, phoneNumber, false);
@@ -171,7 +171,7 @@ public class CasualUI {
         });
 
         // 4. Check Out
-        Button btnCheckout = createOptionButton("Check Out", "💳");
+        Button btnCheckout = createOptionButton("Check Out", "");
         btnCheckout.setOnAction(e -> {
        
             CheckoutUI checkoutUI = new CheckoutUI(mainLayout, mainUI, stayHere);

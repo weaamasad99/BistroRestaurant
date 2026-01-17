@@ -92,7 +92,7 @@ public class CheckoutUI {
 
     /**
      * Displays the bill details, including the subtotal, discounts, and final total.
-     * Corresponds to Step 2 of the checkout process (Review & Pay).
+     * Corresponds to Step 2 of the checkout process (Review and Pay).
      *
      * @param code           The order code associated with the bill.
      * @param originalAmount The subtotal amount before any discounts.

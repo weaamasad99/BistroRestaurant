@@ -31,14 +31,24 @@ import java.io.IOException;
 public class ClientUI extends Application {
 
 	private Stage primaryStage;
-    // Reference to the active Representative/Manager screen
-    // This allows us to pass data (tables, orders) from the server to the screen.
+    
+    /** * Reference to the active Representative/Manager screen.
+     * This allows us to pass data (tables, orders) from the server to the screen.
+     */
     public RepresentativeUI repUI;
+    
+    /** The currently logged-in user session object. */
     public User currentUser;
+    
+    /** Reference to the currently active checkout interface. */
     public CheckoutUI checkoutUI;
     
+    /** Reference to the currently active identification or login screen. */
     public IdentificationUI currentIdentificationUI;
+    
+    /** The controller responsible for handling network communication with the server. */
     public ClientController controller;
+    
     private VBox mainLayout; 
 
     // Connection Fields
@@ -48,10 +58,17 @@ public class ClientUI extends Application {
     private Button btnConnect; 
     
     private MonthlyReportUI monthlyReportUI;
+    
+    /** Flag indicating if the client is connecting remotely (true) or from within the restaurant (false). */
     public boolean isRemote;
  
+    /** Local cache of the restaurant's schedule (opening hours) for offline access. */
     public ArrayList<BistroSchedule> masterSchedule = new ArrayList<>();
 
+    /**
+     * The main entry point for the JavaFX application.
+     * @param args Command line arguments.
+     */
     public static void main(String[] args) {
         launch(args);
     }
@@ -474,18 +491,28 @@ public class ClientUI extends Application {
         }
     }
     
-    
+    /**
+     * Sets the current active Checkout UI instance.
+     * @param checkoutUI The CheckoutUI object to set.
+     */
     public void setCheckoutUI(CheckoutUI checkoutUI) {
     	this.checkoutUI = checkoutUI;
     }
     
     
- // Setter
+    /**
+     * Sets the current active Monthly Report UI instance.
+     * @param ui The MonthlyReportUI object to set.
+     */
     public void setMonthlyReportUI(MonthlyReportUI ui) {
         this.monthlyReportUI = ui;
     }
     
-   public  MonthlyReportUI  getMonthlyReportUI() {
+    /**
+     * Retrieves the currently active Monthly Report UI instance.
+     * @return The current MonthlyReportUI object.
+     */
+    public  MonthlyReportUI  getMonthlyReportUI() {
         return this.monthlyReportUI;
     }
     

@@ -387,9 +387,19 @@ public class ReservationController {
     }
     
     /**
-     * Creates a new reservation after validating capacity and duplicates.
-     * @param order The reservation request.
-     * @return Status string (e.g., "OK:<code>", "Full", "Duplicate").
+     * Processes a request to create a new reservation.
+     * <p>
+     * Performs two critical checks:
+     * 1. <b>Capacity Check:</b> Uses {@link #checkRestaurantCapacity} to ensure tables are available.
+     * 2. <b>Duplicate Check:</b> Ensures the user doesn't already have a booking for the same time.
+     * @param order The reservation request details.
+     * @return A status string indicating the result:
+     * <ul>
+     * <li>"OK:[code]" - Success, returns confirmation code.</li>
+     * <li>"Full:..." - No capacity.</li>
+     * <li>"SUGGEST:[times]" - No capacity at requested time, but alternatives found.</li>
+     * <li>"Duplicate:..." - User already booked.</li>
+     * </ul>
      */
     public String createReservation(Order order) {
         UserController userController = new UserController();
@@ -1012,9 +1022,12 @@ public class ReservationController {
         }
         return "";
     }
+    
     /**
      * Finds orders scheduled for TODAY for a specific contact (ID or Phone).
-     * Used for the "Smart Check-In" dropdown.
+     * Used to populate the "Smart Check-In" dropdown for subscribers.
+     * @param identifier The user's Subscriber ID or Phone Number.
+     * @return A list of {@link Order} objects for today.
      */
     public ArrayList<Order> getTodayOrdersForContact(String identifier) {
         ArrayList<Order> orders = new ArrayList<>();
@@ -1075,6 +1088,14 @@ public class ReservationController {
         return new Time(millis + extraMillis);
     }
 
+    
+    /**
+     * Attempts to cancel a reservation using only the confirmation code.
+     * <p>
+     * This method is currently a stub and has not been implemented.
+     * @param code The confirmation code of the order to cancel.
+     * @return A status message (e.g., success or error description), or {@code null} if not implemented.
+     */
 	public String cancelReservation(String code) {
 		// TODO Auto-generated method stub
 		return null;

@@ -176,18 +176,18 @@ public class RepresentativeUI {
 
         // --- 3. Management Section ---
         Label lblMgmt = sectionTitle("Management", "#4CAF50");
-        manageTablesButton = createWideButton("Manage Tables", "▦");
-        editOpeningHoursButton = createWideButton("Manage Opening Hours", "⏰");
+        manageTablesButton = createWideButton("Manage Tables", "");
+        editOpeningHoursButton = createWideButton("Manage Opening Hours", "");
         
         manageTablesButton.setOnAction(e -> updateTableDetails());
         editOpeningHoursButton.setOnAction(e -> setOpeningHours());
 
         // --- 4. View Section ---
         Label lblView = sectionTitle("View", "#4CAF50");
-        viewCurrentDinersButton = createWideButton("View Current Diners (Active)", "🍽");
-        viewOrdersButton = createWideButton("View All Orders", "🍜"); 
-        viewWaitingListButton = createWideButton("View Full Waiting List", "⏳");
-        viewSubscriberButton = createWideButton("View All Subscribers", "👥");
+        viewCurrentDinersButton = createWideButton("View Current Diners (Active)", "");
+        viewOrdersButton = createWideButton("View All Orders", ""); 
+        viewWaitingListButton = createWideButton("View Full Waiting List", "");
+        viewSubscriberButton = createWideButton("View All Subscribers", "");
 
         viewCurrentDinersButton.setOnAction(e -> displayCurrentDiners());
         viewOrdersButton.setOnAction(e -> displayAllOrders());

@@ -9,7 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * Manages user-related database operations including login (DB & Hardcoded) and registration.
+ * Manages user-related database operations including login (DB Hardcoded) and registration.
  * Handles authentication for Subscribers, Staff, and Casual users.
  * @author Group 6
  * @version 1.0
