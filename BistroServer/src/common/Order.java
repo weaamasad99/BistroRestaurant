@@ -7,7 +7,7 @@ import java.sql.Time;
 /**
  * Represents a Reservation/Order in the system.
  * Matches the 'orders' table in the database.
- * * @author Group 6
+ * @author Group 6
  * @version 1.0
  */
 public class Order implements Serializable {
@@ -49,7 +49,7 @@ public class Order implements Serializable {
     /**
      * Constructor for creating a new Reservation Request (Client -> Server).
      * Used in ReservationUI.
-     * * @param userId The ID of the user making the booking.
+     * @param userId The ID of the user making the booking.
      * @param orderDate The requested date.
      * @param orderTime The requested time.
      * @param numberOfDiners Number of guests.
@@ -65,7 +65,7 @@ public class Order implements Serializable {
     /**
      * Full Constructor (Server -> Client).
      * Used when loading history or details from DB.
-     * * @param orderNumber Unique Order ID.
+     * @param orderNumber Unique Order ID.
      * @param userId User ID.
      * @param orderDate Reservation Date.
      * @param orderTime Reservation Time.

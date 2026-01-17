@@ -7,7 +7,7 @@ import java.sql.Time;
 /**
  * Represents an entry in the restaurant's waiting list.
  * Stores details about customers waiting for a table.
- * * @author Group 6
+ * @author Group 6
  * @version 1.0
  */
 public class WaitingList implements Serializable {
@@ -39,7 +39,7 @@ public class WaitingList implements Serializable {
 
     /**
      * Constructs a WaitingList entry.
-     * * @param waitingId Unique entry ID.
+     * @param waitingId Unique entry ID.
      * @param userId User ID.
      * @param dateRequested Request date.
      * @param timeRequested Request time.

@@ -5,7 +5,7 @@ import ocsf.server.ConnectionToClient;
 /**
  * Interface for communication between the BistroServer and the ServerUI.
  * Allows the server logic to push updates (logs, client connections) to the GUI.
- * * @author Group 6
+ * @author Group 6
  * @version 1.0
  */
 public interface ServerEventListener {
@@ -30,7 +30,7 @@ public interface ServerEventListener {
     /**
      * Triggered when a client successfully logs in or identifies.
      * Updates the connected clients table with user details.
-     * * @param client The client connection.
+     * @param client The client connection.
      * @param username The name/ID of the user.
      * @param role The role of the user.
      */

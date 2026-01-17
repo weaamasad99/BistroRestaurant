@@ -8,7 +8,7 @@ import java.sql.SQLException;
  * Singleton class responsible strictly for establishing and providing 
  * the JDBC connection to the MySQL database.
  * Ensures only one connection instance exists throughout the application lifecycle.
- * * @author Group 6
+ * @author Group 6
  * @version 1.0
  */
 public class DatabaseConnection {
@@ -47,7 +47,7 @@ public class DatabaseConnection {
     /**
      * Retrieves the singleton instance of the DatabaseConnection.
      * Creates the instance if it does not already exist.
-     * * @return The singleton DatabaseConnection instance.
+     * @return The singleton DatabaseConnection instance.
      */
     public static synchronized DatabaseConnection getInstance() {
         if (instance == null) {
@@ -58,7 +58,7 @@ public class DatabaseConnection {
 
     /**
      * Provides the active connection to other controllers.
-     * * @return The SQL Connection object.
+     * @return The SQL Connection object.
      */
     public Connection getConnection() {
         return conn;

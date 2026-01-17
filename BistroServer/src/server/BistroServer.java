@@ -36,7 +36,7 @@ import java.sql.SQLException;
 /**
  * The main Server class extending OCSF's AbstractServer.
  * Handles all client connections, message routing, and background scheduled tasks.
- * * @author Group 6
+ * @author Group 6
  * @version 1.0
  */
 public class BistroServer extends AbstractServer {
@@ -57,7 +57,7 @@ public class BistroServer extends AbstractServer {
 
     /**
      * Constructor. Initializes the server on the specified port and sets up controllers.
-     * * @param port The port to listen on.
+     * @param port The port to listen on.
      * @param uiListener The listener to update the ServerUI logs and tables.
      */
     public BistroServer(int port, ServerEventListener uiListener) {
@@ -76,7 +76,7 @@ public class BistroServer extends AbstractServer {
     /**
      * Handles incoming messages from clients.
      * Expects serialized Kryo byte arrays.
-     * * @param msg The message object (byte array).
+     * @param msg The message object (byte array).
      * @param client The connection to the client sending the message.
      */
     @Override
@@ -102,7 +102,7 @@ public class BistroServer extends AbstractServer {
     /**
      * Main Business Logic Switch.
      * Routes the decoded Message to the appropriate controller based on TaskType.
-     * * @param message The decoded Message object.
+     * @param message The decoded Message object.
      * @param client The client connection.
      */
     private void processMessage(Message message, ConnectionToClient client) {

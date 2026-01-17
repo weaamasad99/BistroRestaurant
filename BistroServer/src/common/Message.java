@@ -3,7 +3,7 @@ package common;
 /**
  * Wrapper class for network transmission using Kryo.
  * Encapsulates a task type and an optional data object (payload).
- * * @author Group 6
+ * @author Group 6
  * @version 1.0
  */
 public class Message {
@@ -20,7 +20,7 @@ public class Message {
 
     /**
      * Constructs a message with a specific task and payload.
-     * * @param task The TaskType enum value.
+     * @param task The TaskType enum value.
      * @param object The data object (can be null).
      */
     public Message(TaskType task, Object object) {

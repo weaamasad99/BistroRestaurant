@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * Represents a user in the system (Subscriber, Casual, Manager, or Representative).
  * Matches the 'users' table in the database.
- * * @author Group 6
+ * @author Group 6
  * @version 1.0
  */
 public class User implements Serializable {
@@ -43,7 +43,7 @@ public class User implements Serializable {
 
     /**
      * Constructor for basic login requests.
-     * * @param username The username.
+     * @param username The username.
      * @param userId The ID (if known).
      */
     public User(String username, int userId) {
@@ -53,7 +53,7 @@ public class User implements Serializable {
 
     /**
      * Constructor for login verification (Manager/Rep).
-     * * @param username The username input.
+     * @param username The username input.
      * @param password The password input.
      */
     public User(String username, String password) {
@@ -63,7 +63,7 @@ public class User implements Serializable {
 
     /**
      * Full Constructor for User object creation.
-     * * @param userId Unique ID.
+     * @param userId Unique ID.
      * @param phoneNumber Phone number.
      * @param email Email address.
      * @param firstName First name.
