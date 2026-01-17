@@ -15,9 +15,15 @@ import client.BistroClient;
 import client.ClientUI;
 
 /**
- * The ClientController acts as the central "Network Manager".
- * It handles the physical connection to the server and routes incoming 
- * responses to the main ClientUI.
+ * The ClientController serves as the central "Network Manager" for the client-side application.
+ * <p>
+ * It acts as the bridge between the User Interface (JavaFX controllers) and the Network Layer (OCSF).
+ * Its primary responsibilities include:
+ * <ul>
+ * <li>Establishing and maintaining the connection to the server.</li>
+ * <li>Routing outgoing requests from specific UI controllers (e.g., CasualController, SubscriberController) to the server.</li>
+ * <li>Receiving incoming responses from the server and updating the appropriate UI screens on the JavaFX Application Thread.</li>
+ * </ul>
  */
 public class ClientController {
 
@@ -27,7 +33,11 @@ public class ClientController {
     // Reference to the UI layer
     private ClientUI ui;
 
-    // Constructor receives UI so controller can update it
+    /**
+     * Constructs the ClientController.
+     *
+     * @param ui The main UI instance, allowing this controller to trigger screen updates.
+     */
     public ClientController(ClientUI ui) {
         this.ui = ui;
     }
@@ -37,10 +47,11 @@ public class ClientController {
     // =======================================================
 
     /**
-     * Attempts to connect to the server.
-     * @param ip The IP address of the server.
-     * @param port The port number.
-     * @return true if connection successful, false otherwise.
+     * Attempts to establish a connection to the server.
+     *
+     * @param ip   The IP address of the server.
+     * @param port The port number to connect to.
+     * @return {@code true} if the connection was successfully established; {@code false} otherwise.
      */
     public boolean connect(String ip, int port) {
         try {
@@ -56,7 +67,8 @@ public class ClientController {
     }
 
     /**
-     * Disconnects gracefully when exiting.
+     * Disconnects the client from the server gracefully.
+     * This is typically called when the application is closing.
      */
     public void disconnect() {
         if (client != null) {
@@ -69,7 +81,8 @@ public class ClientController {
     }
 
     /**
-     * Called when the server disconnects unexpectedly.
+     * Handles the event where the server connection is lost unexpectedly (crash).
+     * Triggers a UI alert to notify the user.
      */
     public void serverWentDown() {
         Platform.runLater(() -> {
@@ -82,9 +95,12 @@ public class ClientController {
     // =======================================================
 
     /**
-     * The main method used by all specific controllers (Casual, Subscriber, Rep)
-     * to send messages to the server.
-     * @param msg The Message object containing TaskType and data.
+     * Sends a message to the server.
+     * <p>
+     * This method is the single entry point for all specific controllers (Casual, Subscriber, Rep)
+     * to transmit data. It uses Kryo serialization via the {@link BistroClient}.
+     *
+     * @param msg The {@link Message} object containing the TaskType and associated data.
      */
     public void accept(Object msg) {
         if (client != null) {
@@ -95,13 +111,17 @@ public class ClientController {
     // =======================================================
     // HANDLING RESPONSES (Server -> Client)
     // =======================================================
-
-    
     
     /**
-     * Called when the client receives a message from the server.
-     * Routes the data to the correct UI method.
+     * Processes incoming messages received from the server.
+     * <p>
+     * This method acts as a router, inspecting the {@link TaskType} of the message
+     * and delegating the data to the appropriate method in the {@link ClientUI}.
+     * All UI updates are wrapped in {@code Platform.runLater} to ensure thread safety.
+     *
+     * @param msg The message received from the server.
      */
+    @SuppressWarnings("unchecked")
     public void handleMessageFromClient(Message msg) {
 
         // Ensure UI updates run on the JavaFX Application Thread
@@ -111,7 +131,7 @@ public class ClientController {
         	
             switch (msg.getTask()) {
 		
-		        // --- NEW CASES FOR GENERIC SUCCESS/FAIL ---
+		        // --- GENERIC STATUS NOTIFICATIONS ---
 		        case SUCCESS:
 		            String successText = (String) msg.getObject();
 		            ui.showAlert("Success", successText);
@@ -121,13 +141,15 @@ public class ClientController {
 		            String failText = (String) msg.getObject();
 		            ui.showAlert("Operation Failed", failText);
 		            break;
+                    
+                // --- AUTHENTICATION & SESSION ---
 		        case SET_USER:
 		        	user = (User) msg.getObject();
-		        	this.ui.currentUser = user;    
+		        	this.ui.currentUser = user; 
+                    // Fallthrough intentional if SET_USER implies login logic in some flows, 
+                    // usually SET_USER is just state update.
+                    break;
             
-                // --- LOGIN PROCESS ---
-		        	// Inside ClientController.java -> handleMessageFromClient
-
 		        case LOGIN_RESPONSE:
 		            user = (User) msg.getObject();
 		            
@@ -144,13 +166,11 @@ public class ClientController {
 		                if ("SUBSCRIBER".equalsIgnoreCase(type)) {
 		                    ui.openSubscriberDashboard();
 		                } 
-		                // --- ADD THIS BLOCK ---
 		                else if ("REPRESENTATIVE".equalsIgnoreCase(type) || "MANAGER".equalsIgnoreCase(type)) {
 		                    ui.openRepresentativeDashboard(user);
 		                } 
-		                // ----------------------
 		                else {
-		                    // Only defaults to casual if it's not the others
+		                    // Default to casual dashboard
 		                    ui.openCasualDashboard();
 		                }
 
@@ -159,38 +179,36 @@ public class ClientController {
 		            }
 		            break;
 
+                // --- IDENTIFICATION UI ---
 		        case DAILY_ORDERS_RESULT:
                     ArrayList<Order> todayOrders = (ArrayList<Order>) msg.getObject();
-                    // Pass data to the active Identification UI
                     if (ui.currentIdentificationUI != null) {
                         ui.currentIdentificationUI.updateOrderList(todayOrders);
                     }
                     break;
-                // --- RESERVATION PROCESS ---
+
+                // --- RESERVATION FLOW ---
 		        case REQUEST_RESERVATION:
 	                String resResult = (String) msg.getObject();
 	                
 	                Platform.runLater(() -> {
 	                    if (resResult.startsWith("OK:")) {
-	                        // Success
+	                        // Success format: "OK:Code"
 	                        String code = resResult.split(":", 2)[1];
 	                        ui.showAlert("Success", "Reservation Confirmed!\nYour Code: " + code);
 	                    } 
 	                    else if (resResult.startsWith("SUGGEST:")) {
-	                        // FIX IS HERE: split(":", 2) ensures we don't break the time string (15:00)
+	                        // Suggestion format: "SUGGEST:Time1,Time2,Time3"
 	                        String timesStr = resResult.split(":", 2)[1]; 
 	                        String[] options = timesStr.split(",");
-	                        
 	                        ui.showAlternativeTimesDialog(options);
 	                    } 
 	                    else {
-	                        // Regular Error
+	                        // Regular Error Message
 	                        ui.showAlert("Reservation Failed", resResult);
 	                    }
 	                });
 	                break;
-		            
-		            
 		            
                 case RESERVATION_CONFIRMED:
                     Order confirmedOrder = (Order) msg.getObject();
@@ -201,22 +219,18 @@ public class ClientController {
                     ui.showAlert("Fully Booked", "No tables available. Please join the waiting list.");
                     break;
 
-                // --- CHECK-IN / IDENTIFICATION ---
+                // --- CHECK-IN & BILLING ---
                 case CHECK_IN_APPROVED:
                     ui.showAlert("Welcome", "Check-in Approved! Your table is ready.");
-                    break;
-                case REPORT_GENERATED:
-                    common.MonthlyReportData reportData = (common.MonthlyReportData) msg.getObject();
-                    // Assuming you added the method to ClientUI:
-                    ui.getMonthlyReportUI().updateReportData(reportData); 
                     break;
 
                 case CHECK_IN_DENIED:
                     String reason = (String) msg.getObject();
                     ui.showAlert("Check-in Error", reason);
                     break;
+
                 case GET_BILL:
-                    // Server now sends: Object[] { code, price, userType }
+                    // Server sends: Object[] { code, price, userType }
                     Object[] billData = (Object[]) msg.getObject();
                     String bCode = (String) billData[0];
                     Double bPrice = (Double) billData[1];
@@ -224,14 +238,10 @@ public class ClientController {
                     
                     boolean isSub = "SUBSCRIBER".equalsIgnoreCase(bType);
                     
-                    // We need to pass these real values to the UI
-                    // Assuming ClientUI has a method to access checkoutUI or we call it directly if available
                     if (ui.checkoutUI != null) {
                         Platform.runLater(() -> ui.checkoutUI.showBillDetails(bCode, bPrice, isSub));
                     }
                     break;
-                    
-
                     
                  // --- WAITING LIST UPDATES ---
                 case WAITING_LIST_ADDED:
@@ -241,17 +251,12 @@ public class ClientController {
                         // Format: IMMEDIATE:TableID:Code
                         String[] parts = responseStr.split(":");
                         String tableId = parts[1];
-                        String code = parts[2]; // Now extracting the code
+                        String code = parts[2]; 
 
-                        // Display the code clearly to the user
                         ui.showAlert("Good News!", 
                                      "A table is available right now!\n" +
                                      "Please proceed to Table #" + tableId + ".\n\n" +
-                                     "Your Confirmation Code: " + code); // Added code here
-                                     
-                        // Optional: Refresh table view if necessary
-                        // accept(new Message(TaskType.GET_TABLES, null));
-
+                                     "Your Confirmation Code: " + code);
                     } else if ("WAITING".equals(responseStr)) {
                         ui.showAlert("Success", "No tables available right now.\nYou have been added to the Waiting List.");
                         
@@ -268,10 +273,9 @@ public class ClientController {
                     ui.refreshWaitingListData(waitList);
                     break;
 
-                // --- ORDER MANAGEMENT ---
+                // --- DATA REFRESH (STAFF VIEWS) ---
                 case UPDATE_SUCCESS:
                     ui.showAlert("Success", "Operation successful!");
-                    // If we just updated an order or table, we often want to refresh the view
                     break;
 
                 case UPDATE_FAILED:
@@ -280,22 +284,15 @@ public class ClientController {
 
                 case GET_ORDERS:
                 case ORDERS_IMPORTED:
-                    // System.out.println("Log: Received orders from server.");
                     ArrayList<Order> orders = (ArrayList<Order>) msg.getObject();
                     ui.refreshOrderData(orders); 
                     break;
                 
                 case HISTORY_IMPORTED:
                     ArrayList<Order> history = (ArrayList<Order>) msg.getObject();
-                    // Display history in a popup or alert for now
-                    StringBuilder sb = new StringBuilder("Your History:\n");
-                    for(Order o : history) {
-                        sb.append(o.getOrderDate()).append(" - ").append(o.getOrderTime()).append("\n");
-                    }
                     ui.openOrderHistory(history);
                     break;
 
-                // --- STAFF / DATA MANAGEMENT ---
                 case GET_TABLES:
                     ArrayList<Table> tables = (ArrayList<Table>) msg.getObject();
                     ui.refreshTableData(tables); 
@@ -305,51 +302,49 @@ public class ClientController {
                     ArrayList<User> subs = (ArrayList<User>) msg.getObject();
                     ui.refreshSubscriberData(subs);
                     break;
-                
-                case REGISTER_USER:
-                    // Usually returns a boolean or the new User
-                    ui.showAlert("Registration", "User registered successfully.");
-                    break;
 
-                // --- ERROR HANDLING ---
-                case ERROR:
-                    String errorMsg = (String) msg.getObject();
-                    ui.showAlert("Server Error", errorMsg);
-                    break;
                 case GET_SCHEDULE:
                     ArrayList<BistroSchedule> schedule = (ArrayList<BistroSchedule>) msg.getObject();
-                    // Pass data to the UI manager
                     ui.refreshScheduleData(schedule);
                     break;
                     
+                case REPORT_GENERATED:
+                    common.MonthlyReportData reportData = (common.MonthlyReportData) msg.getObject();
+                    if (ui.getMonthlyReportUI() != null) {
+                         ui.getMonthlyReportUI().updateReportData(reportData); 
+                    }
+                    break;
+
+                // --- USER REGISTRATION & SEARCH ---
+                case REGISTER_USER:
+                    ui.showAlert("Registration", "User registered successfully.");
+                    break;
 
                 case REGISTRATION_SUCCESS:
                     User newSub = (User) msg.getObject();
-                    // 1. Show simple success alert
                     ui.showAlert("Success", "Subscriber Registered Successfully!");
-                    
-                    // 2. Launch the Digital Card Popup
                     Platform.runLater(() -> ui.showDigitalCard(newSub));
                     break;
-                    
 
                 case USER_FOUND:
                     User validUser = (User) msg.getObject();
                     this.ui.currentUser = validUser; 
                     
-                    // ui.showAlert("Success", "User found! Redirecting..."); // Optional
-                    
-                    // Check type to know which Java Class to load
                     if ("SUBSCRIBER".equalsIgnoreCase(validUser.getUserType())) {
-                        ui.openSubscriberDashboard(); // Call the new method
+                        ui.openSubscriberDashboard(); 
                     } else {
-                        ui.openCasualDashboard();     // Call the new method
+                        ui.openCasualDashboard();     
                     }
                     break;
 
                 case USER_NOT_FOUND:
                     ui.showAlert("Login Error", "No user found with that ID or Phone Number.");
                     break;    
+                    
+                case ERROR:
+                    String errorMsg = (String) msg.getObject();
+                    ui.showAlert("Server Error", errorMsg);
+                    break;
 
                 default:
                     System.out.println("Log: Unknown TaskType received: " + msg.getTask());

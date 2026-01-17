@@ -21,6 +21,13 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import java.io.IOException;
 
+/**
+ * The ClientUI class is the main entry point for the Bistro Management System client application.
+ * <p>
+ * It extends {@link Application} and manages the primary stage, scene transitions between 
+ * different user roles (Casual, Subscriber, Representative, Manager), and holds global state 
+ * such as the network controller and current user session.
+ */
 public class ClientUI extends Application {
 
 	private Stage primaryStage;
@@ -49,6 +56,12 @@ public class ClientUI extends Application {
         launch(args);
     }
 
+    /**
+     * Initializes the JavaFX application, sets up the main layout, 
+     * and displays the initial connection screen.
+     *
+     * @param primaryStage The primary stage for this application.
+     */
     @Override
     public void start(Stage primaryStage) {
     	this.primaryStage = primaryStage;
@@ -72,9 +85,12 @@ public class ClientUI extends Application {
         primaryStage.show();
     }
 
-    // =========================================================
-    // SCREEN 1: Connection UI
-    // =========================================================
+    /**
+     * SCREEN 1: Connection UI
+     * <p>
+     * Displays the form to input the server IP and Port.
+     * Initiates the connection via the ClientController.
+     */
     private void showConnectionScreen() {
         mainLayout.getChildren().clear();
 
@@ -150,10 +166,12 @@ public class ClientUI extends Application {
         mainLayout.getChildren().add(content);
     }
     
-    // =========================================================
-    // SCREEN 2: Location Selection
-    // =========================================================
-
+    /**
+     * SCREEN 2: Location Selection
+     * <p>
+     * Prompts the user to select their physical location (In Restaurant vs Remote).
+     * This setting affects the available permissions and UI options.
+     */
     private void showLocationModeScreen() {
         mainLayout.getChildren().clear();
 
@@ -197,9 +215,13 @@ public class ClientUI extends Application {
         mainLayout.getChildren().add(content);
     }
     
-    // =========================================================
-    // SCREEN 3: Role Selection
-    // =========================================================
+    /**
+     * SCREEN 3: Role Selection
+     * <p>
+     * Displays the main menu where the user selects their user type:
+     * Casual Diner, Subscriber, Representative, or Manager.
+     * Resets any previous user session data.
+     */
     public void showRoleSelectionScreen(){
     	
         this.repUI = null;          // Forget the previous Representative/Manager
@@ -279,7 +301,10 @@ public class ClientUI extends Application {
     // DATA REFRESH METHODS (Called by ClientController)
     // =========================================================
     
-    
+    /**
+     * Opens the dashboard for an authenticated Subscriber.
+     * Sets up the navigation callback to return to the appropriate previous screen.
+     */
     public void openSubscriberDashboard() {
         Platform.runLater(() -> {
             SubscriberUI subScreen = new SubscriberUI(mainLayout, this);
@@ -305,7 +330,10 @@ public class ClientUI extends Application {
         });
     }
     
-    
+    /**
+     * Opens the dashboard for a Casual user.
+     * Sets up navigation callbacks.
+     */
     public void openCasualDashboard() {
         Platform.runLater(() -> {
             CasualUI casualScreen = new CasualUI(mainLayout, this);
@@ -330,7 +358,11 @@ public class ClientUI extends Application {
         });
     }
     
-    
+    /**
+     * Displays a dialog offering alternative reservation times when the requested time is full.
+     *
+     * @param options An array of available time strings (e.g., "18:00", "19:00").
+     */
     public void showAlternativeTimesDialog(String[] options) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Restaurant Full");
@@ -368,6 +400,11 @@ public class ClientUI extends Application {
         }
     }
     
+    /**
+     * Opens the dashboard for a Representative or Manager.
+     *
+     * @param user The authenticated user object.
+     */
     public void openRepresentativeDashboard(User user) {
         Platform.runLater(() -> {
             // 1. Initialize RepresentativeUI if null (though it should exist from login)
@@ -380,18 +417,30 @@ public class ClientUI extends Application {
         });
     }
 
+    /**
+     * Updates the Representative UI with fresh table data from the server.
+     * @param tables The list of tables.
+     */
     public void refreshTableData(ArrayList<Table> tables) {
         if (repUI != null) {
             repUI.updateTableData(tables);
         }
     }
 
+    /**
+     * Updates the Representative UI with fresh subscriber data from the server.
+     * @param subscribers The list of subscribers.
+     */
     public void refreshSubscriberData(ArrayList<User> subscribers) {
         if (repUI != null) {
             repUI.updateSubscriberData(subscribers);
         }
     }
 
+    /**
+     * Updates the Representative UI with fresh order data from the server.
+     * @param orders The list of orders.
+     */
     public void refreshOrderData(ArrayList<Order> orders) {
         if (repUI != null) {
             // Ensure RepresentativeUI has this method!
@@ -399,6 +448,10 @@ public class ClientUI extends Application {
         }
     }
 
+    /**
+     * Updates the Representative UI with fresh waiting list data.
+     * @param list The list of waiting entries.
+     */
     public void refreshWaitingListData(ArrayList<WaitingList> list) {
         if (repUI != null) {
             // Ensure RepresentativeUI has this method!
@@ -406,6 +459,10 @@ public class ClientUI extends Application {
         }
     }
     
+    /**
+     * Updates the local master schedule and refreshes the Representative UI if active.
+     * @param schedule The list of schedule objects.
+     */
     public void refreshScheduleData(ArrayList<BistroSchedule> schedule) {
         // 1. ALWAYS save it to the client memory
         this.masterSchedule = schedule;
@@ -417,15 +474,6 @@ public class ClientUI extends Application {
         }
     }
     
-    public void activateBillView(String code) {
-        if (checkoutUI != null) {
-            // Triggers the next screen in CheckoutUI
-            checkoutUI.fetchBillDetails(code);
-        }
-        else {
-        	System.out.print("hhhhh");
-        }
-    }
     
     public void setCheckoutUI(CheckoutUI checkoutUI) {
     	this.checkoutUI = checkoutUI;
@@ -443,6 +491,9 @@ public class ClientUI extends Application {
     
     /**
      * Displays a professional "Digital Card" window with a live QR Code.
+     * The QR code encodes the user's subscriber number.
+     *
+     * @param user The user for whom the card is generated.
      */
     public void showDigitalCard(User user) {
         javafx.stage.Stage cardStage = new javafx.stage.Stage();
@@ -492,7 +543,11 @@ public class ClientUI extends Application {
         cardStage.show();
     }
     
-    
+    /**
+     * Opens the Order History screen for the current user.
+     *
+     * @param history The list of past orders to display.
+     */
     public void openOrderHistory(ArrayList<Order> history) {
         Platform.runLater(() -> {
             
@@ -520,6 +575,12 @@ public class ClientUI extends Application {
     // UTILS
     // =========================================================
 
+    /**
+     * Displays an informational alert dialog to the user.
+     *
+     * @param title   The title of the alert window.
+     * @param content The message body of the alert.
+     */
     public void showAlert(String title, String content) {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -530,11 +591,20 @@ public class ClientUI extends Application {
         });
     }
 
+    /**
+     * Handles the event where the server connection is lost.
+     * Notifies the user and resets the UI to the connection screen.
+     */
     public void handleServerDisconnect() {
         showAlert("Connection Lost", "The server has stopped or crashed.\nRestart client.");
         showConnectionScreen();
     }
 
+    /**
+     * Stops the application and ensures the client disconnects gracefully.
+     *
+     * @throws Exception if an error occurs during shutdown.
+     */
     @Override
     public void stop() throws Exception {
         if (controller != null) {
@@ -548,7 +618,12 @@ public class ClientUI extends Application {
     
     /**
      * OFFLINE CHECK: Finds opening hours for a date from the local list.
-     * Returns string "HH:mm-HH:mm" or "CLOSED".
+     * <p>
+     * Checks if a specific date override exists first. If not, falls back to the
+     * general weekday schedule.
+     *
+     * @param date The date to check.
+     * @return A string representing hours (e.g., "08:00-14:00") or "CLOSED".
      */
     public String getOfflineHours(java.time.LocalDate date) {
         if (masterSchedule == null || masterSchedule.isEmpty()) return "00:00-23:59"; // Default fallback

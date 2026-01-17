@@ -19,6 +19,13 @@ import common.Message;
 import common.Order;
 import controllers.CasualController;
 
+/**
+ * The ReservationUI class manages the user interface for creating new dining reservations.
+ * <p>
+ * It allows users to select a date, dynamically generates available time slots based on 
+ * the restaurant's operating hours (fetched from the client cache), and validates input 
+ * before submitting the booking request to the server.
+ */
 public class ReservationUI {
 
     private CasualController casualController;
@@ -30,6 +37,14 @@ public class ReservationUI {
     private ComboBox<String> timeComboBox;
     private Button btnSubmit;
 
+    /**
+     * Constructs the ReservationUI instance.
+     *
+     * @param mainLayout  The main layout container where the UI will be rendered.
+     * @param mainUI      The main application instance.
+     * @param onBack      A Runnable callback to execute when the user navigates back.
+     * @param phoneNumber The phone number of the user making the reservation (used for identification).
+     */
     public ReservationUI(VBox mainLayout, ClientUI mainUI, Runnable onBack, String phoneNumber) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
@@ -38,6 +53,12 @@ public class ReservationUI {
         this.casualController = new CasualController(mainUI.controller);
     }
 
+    /**
+     * Starts the reservation process.
+     * <p>
+     * It sends a request to the server to refresh the master schedule (to ensure 
+     * opening hours are up to date) and then displays the reservation form.
+     */
     public void start() {
         // This ensures that if a Rep just changed hours, we get the latest version.
         Message refreshMsg = new Message(common.TaskType.GET_SCHEDULE, null);
@@ -46,6 +67,17 @@ public class ReservationUI {
         showReservationForm();
     }
 
+    /**
+     * Constructs and displays the visual elements of the reservation form.
+     * <p>
+     * Includes logic for:
+     * <ul>
+     * <li>Date selection (blocking past dates).</li>
+     * <li>Real-time retrieval of opening hours ("Offline Check") when a date is picked.</li>
+     * <li>Input validation (Guests must be &lt;= 15).</li>
+     * <li>Submission of the order to the controller.</li>
+     * </ul>
+     */
     private void showReservationForm() {
         mainLayout.getChildren().clear();
 
@@ -145,6 +177,15 @@ public class ReservationUI {
         mainLayout.getChildren().add(content);
     }
 
+    /**
+     * Populates the time selection dropdown based on the specific opening hours of the selected date.
+     * <p>
+     * This method parses the "Open-Close" string (e.g., "08:00-22:00"), generates 30-minute intervals,
+     * and filters out times that have already passed (if the selected date is today).
+     *
+     * @param range The string representation of opening hours (e.g. "08:00-22:00") or "CLOSED".
+     * @param date  The date selected by the user.
+     */
     private void populateTimeList(String range, LocalDate date) {
         timeComboBox.getItems().clear();
 

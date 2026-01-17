@@ -12,6 +12,13 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 
+/**
+ * The SubscriberHistoryUI class is responsible for displaying the order history
+ * for a specific subscriber.
+ * <p>
+ * It renders a table view containing details of past orders such as date, time, 
+ * number of guests, and the current status of the order.
+ */
 public class SubscriberHistoryUI {
 
     private VBox mainLayout;
@@ -21,6 +28,15 @@ public class SubscriberHistoryUI {
     
     private ObservableList<Order> historyList;
 
+    /**
+     * Constructs the SubscriberHistoryUI instance.
+     *
+     * @param mainLayout   The main layout container where the UI will be rendered.
+     * @param mainUI       The main application instance.
+     * @param onBack       A Runnable callback to execute when the user navigates back.
+     * @param subscriberID The unique ID of the subscriber whose history is being viewed.
+     * @param historyData  The list of Order objects retrieved from the server.
+     */
     public SubscriberHistoryUI(VBox mainLayout, ClientUI mainUI, Runnable onBack, String subscriberID, ArrayList<Order> historyData) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
@@ -29,10 +45,17 @@ public class SubscriberHistoryUI {
         this.historyList = FXCollections.observableArrayList(historyData);
     }
 
+    /**
+     * Starts the UI by building and displaying the history table.
+     */
     public void start() {
         showHistoryTable();
     }
 
+    /**
+     * Clears the layout and constructs the visual elements for the history view.
+     * Includes the header, the table with specific columns, and the back button.
+     */
     @SuppressWarnings("unchecked")
     private void showHistoryTable() {
         mainLayout.getChildren().clear();
@@ -71,7 +94,7 @@ public class SubscriberHistoryUI {
         TableColumn<Order, String> colStatus = new TableColumn<>("Status");
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
         
-        // Status Styling
+        // Status Styling: Custom CellFactory to color-code the status text
         colStatus.setCellFactory(column -> new TableCell<Order, String>() {
             @Override
             protected void updateItem(String item, boolean empty) {
@@ -111,17 +134,11 @@ public class SubscriberHistoryUI {
         mainLayout.getChildren().add(content);
     }
 
-    // --- Mock Data Generator ---
-//    private ObservableList<HistoryItem> getMockData() {
-//        ObservableList<HistoryItem> list = FXCollections.observableArrayList();
-//        list.add(new HistoryItem("1001", "2024-12-01", "19:00", "4", "Finished"));
-//        list.add(new HistoryItem("1025", "2024-12-15", "20:30", "2", "Finished"));
-//        list.add(new HistoryItem("1042", "2025-01-05", "18:00", "6", "Cancelled"));
-//        list.add(new HistoryItem("1055", "2025-01-20", "21:00", "3", "Approved"));
-//        return list;
-//    }
 
-    // --- Simple Inner Class for Data ---
+    /**
+     * Simple inner class originally used for Mock Data.
+     * Currently unused in favor of the common.Order entity.
+     */
     public static class HistoryItem {
         private String orderId;
         private String date;

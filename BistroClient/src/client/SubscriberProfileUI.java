@@ -9,6 +9,13 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 
+/**
+ * The SubscriberProfileUI class manages the user interface for viewing and editing
+ * a subscriber's personal profile information.
+ * <p>
+ * It displays read-only fields for immutable data (ID, Name) and editable fields
+ * for contact information (Phone, Email), allowing the user to update their records.
+ */
 public class SubscriberProfileUI {
 
     private VBox mainLayout;
@@ -17,6 +24,14 @@ public class SubscriberProfileUI {
     private User currentUser;
     private SubscriberController controller;
 
+    /**
+     * Constructs the SubscriberProfileUI instance.
+     *
+     * @param mainLayout The main layout container where the UI will be rendered.
+     * @param mainUI     The main application instance.
+     * @param onBack     A Runnable callback to execute when the user navigates back.
+     * @param user       The User object containing the current subscriber's details.
+     */
     public SubscriberProfileUI(VBox mainLayout, ClientUI mainUI, Runnable onBack, User user) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
@@ -25,10 +40,23 @@ public class SubscriberProfileUI {
         this.controller = new SubscriberController(mainUI.controller);
     }
 
+    /**
+     * Starts the profile UI by building and displaying the profile form.
+     */
     public void start() {
         showProfileForm();
     }
 
+    /**
+     * Constructs and displays the profile details form.
+     * <p>
+     * Features:
+     * <ul>
+     * <li><b>Read-Only Fields:</b> Subscriber Number and Full Name.</li>
+     * <li><b>Editable Fields:</b> Phone Number and Email Address.</li>
+     * <li><b>Save Logic:</b> Validates input and sends an update request to the server.</li>
+     * </ul>
+     */
     private void showProfileForm() {
         mainLayout.getChildren().clear();
 

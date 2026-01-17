@@ -8,24 +8,45 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
+/**
+ * The SubscriberUI class manages the user interface for registered subscribers.
+ * <p>
+ * It handles the login process (Username and Subscriber ID) and displays a dashboard
+ * tailored to the subscriber's location (Remote vs. In-Restaurant).
+ * The dashboard provides access to features such as profile management, reservations,
+ * waiting lists, order history, and check-out.
+ */
 public class SubscriberUI {
 
     private VBox mainLayout;
     private ClientUI mainUI; 
     private SubscriberController controller; 
 
+    /**
+     * Constructs the SubscriberUI instance.
+     *
+     * @param mainLayout The main layout container where the UI will be rendered.
+     * @param mainUI     The main application instance.
+     */
     public SubscriberUI(VBox mainLayout, ClientUI mainUI) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
         this.controller = new SubscriberController(mainUI.controller);
     }
 
+    /**
+     * Starts the subscriber interface flow by displaying the login screen.
+     */
     public void start() {
         showLoginScreen();
     }
 
     /**
-     * SCREEN 1: Subscriber Login (Username & Int ID)
+     * SCREEN 1: Subscriber Login
+     * <p>
+     * Displays a login form requiring a Username and a numeric Subscriber ID.
+     * Includes validation to ensure the ID contains only numbers.
+     * Submits the login request to the server via the SubscriberController.
      */
     private void showLoginScreen() {
         mainLayout.getChildren().clear();
@@ -94,6 +115,13 @@ public class SubscriberUI {
 
     /**
      * SCREEN 2: Dashboard
+     * <p>
+     * Displays the main menu for an authenticated subscriber.
+     * The available options depend on whether the user is connected remotely or from within the restaurant.
+     *
+     * @param username The username of the logged-in subscriber.
+     * @param id       The unique subscriber ID.
+     * @param onExit   A Runnable callback to execute when the user logs out.
      */
     public void showDashboardScreen(String username, int id, Runnable onExit) { 
         mainLayout.getChildren().clear();
@@ -107,7 +135,7 @@ public class SubscriberUI {
         
         Runnable stayHere = () -> showDashboardScreen(username, id, onExit);
         
-        Button btnProfile = createOptionButton("My Profile", "👤");
+        Button btnProfile = createOptionButton("My Profile", "側");
         btnProfile.setStyle("-fx-background-color: #E0F7FA; -fx-border-color: #006064; -fx-font-size: 14px;");
         
         btnProfile.setOnAction(e -> {
@@ -120,7 +148,7 @@ public class SubscriberUI {
             }
         });
 
-        Button btnReservation = createOptionButton("Make Order", "📅");
+        Button btnReservation = createOptionButton("Make Order", "套");
         btnReservation.setOnAction(e -> {
             // Note: ReservationUI might need updating to accept 'int id' if it uses it
             ReservationUI resUI = new ReservationUI(mainLayout, mainUI, stayHere, username);
@@ -134,21 +162,21 @@ public class SubscriberUI {
             cancelResUI.start();
         });
 
-        Button btnWaitingList = createOptionButton("Enter Waiting List", "⏳");
+        Button btnWaitingList = createOptionButton("Enter Waiting List", "竢ｳ");
         btnWaitingList.setOnAction(e -> {
             // Passing int ID formatted as String for now, or update WaitingListUI to take int
             WaitingListUI waitScreen = new WaitingListUI(mainLayout, mainUI, stayHere, String.valueOf(id), false);
             waitScreen.start();
         });
 
-        Button btnIdentify = createOptionButton("Check-In", "📋");
+        Button btnIdentify = createOptionButton("Check-In", "搭");
         btnIdentify.setOnAction(e -> {
             // TRUE = Subscriber (Smart List Mode)
            IdentificationUI identifyScreen = new IdentificationUI(mainLayout, mainUI, stayHere, String.valueOf(id), true);
            identifyScreen.start();
        });
 
-        Button btnHistory = createOptionButton("Order History", "📜");
+        Button btnHistory = createOptionButton("Order History", "糖");
         btnHistory.setOnAction(e -> {
             // FIX: We send the internal 'user_id' (e.g., 1) because the orders table 
             // is linked by user_id, not by the subscriber_number (e.g., 1001).
@@ -159,7 +187,7 @@ public class SubscriberUI {
             }
         });
 
-        Button btnCheckout = createOptionButton("Check Out", "💳");
+        Button btnCheckout = createOptionButton("Check Out", "諜");
         btnCheckout.setStyle("-fx-background-color: #FF5722; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px;");
         btnCheckout.setOnAction(e -> {
             CheckoutUI checkoutScreen = new CheckoutUI(mainLayout, mainUI, stayHere);
@@ -188,6 +216,13 @@ public class SubscriberUI {
         mainLayout.getChildren().add(content);
     }
 
+    /**
+     * Helper method to create a stylized option button.
+     *
+     * @param text The button label.
+     * @param icon The icon to display on the button.
+     * @return A configured Button instance.
+     */
     private Button createOptionButton(String text, String icon) {
         Button btn = new Button(icon + "  " + text);
         btn.setPrefWidth(250);

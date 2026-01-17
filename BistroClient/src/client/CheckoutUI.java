@@ -8,6 +8,11 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 
+/**
+ * The CheckoutUI class handles the user interface for the billing and checkout process.
+ * It guides the user through entering an order code, reviewing the bill (with applicable discounts),
+ * and processing the final payment.
+ */
 public class CheckoutUI {
 
     private VBox mainLayout;
@@ -15,6 +20,13 @@ public class CheckoutUI {
     private Runnable onBack;
     private CasualController casualController;
 
+    /**
+     * Constructs a new CheckoutUI instance.
+     *
+     * @param mainLayout The main layout container where the UI will be rendered.
+     * @param mainUI     The main application instance.
+     * @param onBack     A Runnable callback to execute when the user navigates back.
+     */
     public CheckoutUI(VBox mainLayout, ClientUI mainUI, Runnable onBack) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
@@ -22,13 +34,18 @@ public class CheckoutUI {
         this.casualController = new CasualController(mainUI.controller);
     }
 
+    /**
+     * Starts the checkout process by registering this UI instance with the main application
+     * and displaying the code input form.
+     */
     public void start() {
     	this.mainUI.checkoutUI = this;
         showCodeInputForm();
     }
 
     /**
-     * STEP 1: Enter Confirmation Code
+     * Displays the initial form where the user enters their Order Confirmation Code.
+     * Corresponds to Step 1 of the checkout process.
      */
     private void showCodeInputForm() {
         mainLayout.getChildren().clear();
@@ -74,7 +91,12 @@ public class CheckoutUI {
     }
 
     /**
-     * STEP 2: Review Bill & Pay
+     * Displays the bill details, including the subtotal, discounts, and final total.
+     * Corresponds to Step 2 of the checkout process (Review & Pay).
+     *
+     * @param code           The order code associated with the bill.
+     * @param originalAmount The subtotal amount before any discounts.
+     * @param isSubscriber   Indicates whether the user is a subscriber (eligible for a discount).
      */
     public void showBillDetails(String code, double originalAmount, boolean isSubscriber) {
         mainLayout.getChildren().clear();
@@ -162,26 +184,4 @@ public class CheckoutUI {
         mainLayout.getChildren().add(content);
     }
 
-    // --- Mock Server Logic ---
-	public void fetchBillDetails(String code) {
-		// In the real system, you will send 'code' to the server.
-        // The server will find the order and return: Amount + isSubscriber status.
-
-        // MOCK: Validating input
-        try {
-            Integer.parseInt(code);
-        } catch (NumberFormatException e) {
-            mainUI.showAlert("Error", "Invalid code format.");
-            return;
-        }
-
-        // MOCK: Generate random bill
-        double randomAmount = 50 + (Math.random() * 150); // Random bill between $50 - $200
-        
-        // MOCK: Determine if subscriber (For now, random 50/50 chance to show the difference)
-        // In reality, the server knows if the order belongs to a subscriber.
-        boolean isSubscriber = Math.random() > 0.5; 
-
-        showBillDetails(code, randomAmount, isSubscriber);		
-	}
 }

@@ -9,24 +9,43 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
+/**
+ * The CasualUI class manages the user interface for casual diners (walk-in or non-registered users).
+ * It handles the identification process via phone number and provides a dashboard of options
+ * such as making reservations, entering the waiting list, identifying via check-in, or checking out.
+ */
 public class CasualUI {
 
     private VBox mainLayout;
     private ClientUI mainUI; // Reference back to main to handle navigation "Back"
     private CasualController casualController;
 
+    /**
+     * Constructs the CasualUI instance.
+     *
+     * @param mainLayout The main layout container where the UI views will be rendered.
+     * @param mainUI     The main application controller, used for navigation and global state.
+     */
     public CasualUI(VBox mainLayout, ClientUI mainUI) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
         this.casualController = new CasualController(mainUI.controller);
     }
 
+    /**
+     * Starts the casual user interface flow by displaying the phone input screen.
+     */
     public void start() {
         showPhoneInputScreen();
     }
 
     /**
      * SCREEN 1: Phone Input
+     * <p>
+     * Displays a form for the user to enter their phone number and email.
+     * Includes validation to ensure the phone number is numeric and 10 digits long,
+     * and that the email follows a standard format.
+     * Upon successful validation, it creates a casual user record and proceeds to the options screen.
      */
     private void showPhoneInputScreen() {
         mainLayout.getChildren().clear();
@@ -101,7 +120,13 @@ public class CasualUI {
     }
 
     /**
-     * SCREEN 2: Dashboard with 4 Options
+     * SCREEN 2: Dashboard with Options
+     * <p>
+     * Displays the main menu for a casual user. The available options depend on
+     * whether the client is running in remote mode (e.g., from home) or local mode (at the restaurant).
+     *
+     * @param phoneNumber The phone number of the identified user.
+     * @param onExit      A Runnable callback to execute when the user logs out.
      */
     public void showOptionsScreen(String phoneNumber, Runnable onExit) {
         mainLayout.getChildren().clear();
@@ -115,7 +140,7 @@ public class CasualUI {
         Runnable stayHere = () -> showOptionsScreen(phoneNumber, onExit);
 
         // 1. Make Reservation
-        Button btnReservation = createOptionButton("Make Order", "📅");
+        Button btnReservation = createOptionButton("Make Order", "套");
         btnReservation.setOnAction(e -> {
         	
             ReservationUI resUI = new ReservationUI(mainLayout, mainUI, stayHere, phoneNumber);
@@ -130,7 +155,7 @@ public class CasualUI {
         });
 
         // 2. Enter Waiting List
-        Button btnWaitingList = createOptionButton("Enter Waiting List", "⏳");
+        Button btnWaitingList = createOptionButton("Enter Waiting List", "竢ｳ");
         btnWaitingList.setOnAction(e -> {
  
         	WaitingListUI resUI = new WaitingListUI(mainLayout, mainUI, stayHere, phoneNumber, true);
@@ -138,7 +163,7 @@ public class CasualUI {
         });
 
         // 3. Identify
-        Button btnIdentify = createOptionButton("Check-In", "📋");
+        Button btnIdentify = createOptionButton("Check-In", "搭");
         btnIdentify.setOnAction(e -> {
             // FALSE = Casual User (Manual Mode)
             IdentificationUI identifyUI = new IdentificationUI(mainLayout, mainUI, stayHere, phoneNumber, false);
@@ -146,7 +171,7 @@ public class CasualUI {
         });
 
         // 4. Check Out
-        Button btnCheckout = createOptionButton("Check Out", "💳");
+        Button btnCheckout = createOptionButton("Check Out", "諜");
         btnCheckout.setOnAction(e -> {
        
             CheckoutUI checkoutUI = new CheckoutUI(mainLayout, mainUI, stayHere);
@@ -179,6 +204,13 @@ public class CasualUI {
         mainLayout.getChildren().add(content);
     }
 
+    /**
+     * Helper method to create a stylized option button with an icon and text.
+     *
+     * @param text The label text for the button.
+     * @param icon The icon character (or string) to display.
+     * @return A styled Button instance.
+     */
     private Button createOptionButton(String text, String icon) {
         Button btn = new Button(icon + "  " + text);
         btn.setPrefWidth(250);

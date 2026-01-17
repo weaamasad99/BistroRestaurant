@@ -10,10 +10,23 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 
+/**
+ * The ManagerUI class represents the user interface specifically for the Restaurant Manager.
+ * <p>
+ * It extends {@link RepresentativeUI} to inherit standard staff functionality (like viewing tables)
+ * while adding exclusive administrative features, such as viewing monthly performance reports.
+ */
 public class ManagerUI extends RepresentativeUI {
 
     private ManagerController managerController;
 
+    /**
+     * Constructs the ManagerUI instance.
+     * Initializes the specific ManagerController and links it to the inherited controller logic.
+     *
+     * @param mainLayout The main layout container.
+     * @param mainUI     The main application instance.
+     */
     public ManagerUI(VBox mainLayout, ClientUI mainUI) {
         super(mainLayout, mainUI);
         // Initialize specific Manager Controller
@@ -23,7 +36,10 @@ public class ManagerUI extends RepresentativeUI {
     }
 
     /**
-     * Override the login screen to enforce Manager-specific credentials (admin/admin).
+     * Overrides the default login screen to enforce Manager-specific credentials.
+     * <p>
+     * Displays a purple-themed login form and strictly validates against "admin" credentials
+     * while still sending a login request to the server for session tracking.
      */
     @Override
     protected void showLoginScreen() {
@@ -75,13 +91,21 @@ public class ManagerUI extends RepresentativeUI {
         mainLayout.getChildren().add(content);
     }
 
+    /**
+     * Injects manager-specific content into the dashboard.
+     * <p>
+     * This method adds the "View Monthly Reports" button to the existing dashboard container,
+     * allowing the manager to access the {@link MonthlyReportUI}.
+     *
+     * @param container The VBox container of the dashboard where controls are added.
+     */
     @Override
     protected void addManagerContent(VBox container) {
         Button viewReports = createWideButton("View Monthly Reports", "📊");
         viewReports.setStyle("-fx-background-color: #f3e5f5; -fx-border-color: #ba68c8; -fx-text-fill: #4a148c;");
         
         viewReports.setOnAction(e -> {
-            //Initialize and start the Report UI
+            // Initialize and start the Report UI
            MonthlyReportUI reportUI = new MonthlyReportUI(mainLayout, mainUI, this.managerController, () -> showDashboardScreen("admin"));
            reportUI.start();
         });

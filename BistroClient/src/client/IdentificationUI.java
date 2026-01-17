@@ -11,6 +11,15 @@ import javafx.scene.text.Font;
 import javafx.util.StringConverter;
 import java.util.ArrayList;
 
+/**
+ * The IdentificationUI class handles the "Check-In" process for customers arriving at the restaurant.
+ * <p>
+ * It supports two modes of operation:
+ * <ul>
+ * <li><b>Subscriber Mode:</b> Fetches and displays a list of today's reservations for the user to select from.</li>
+ * <li><b>Casual/Manual Mode:</b> Provides a text field for the user to manually enter their confirmation code.</li>
+ * </ul>
+ */
 public class IdentificationUI {
 
     private VBox mainLayout;
@@ -27,7 +36,15 @@ public class IdentificationUI {
     private Button btnCheckIn;
     private Label lblInstruction;
 
-    // Constructor accepts isSubscriber flag
+    /**
+     * Constructs the IdentificationUI instance.
+     *
+     * @param mainLayout     The main layout container where the UI will be rendered.
+     * @param mainUI         The main application instance.
+     * @param onBack         A Runnable callback to execute when the user navigates back.
+     * @param userIdentifier The identifier for the user (e.g., Phone Number or ID).
+     * @param isSubscriber   Flag indicating if the user is a registered subscriber.
+     */
     public IdentificationUI(VBox mainLayout, ClientUI mainUI, Runnable onBack, String userIdentifier, boolean isSubscriber) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
@@ -40,12 +57,17 @@ public class IdentificationUI {
         this.mainUI.currentIdentificationUI = this;
     }
     
+    /**
+     * Starts the identification process.
+     * Checks if the user is a subscriber to determine whether to fetch daily orders
+     * or default immediately to manual input mode.
+     */
     public void start() {
         showIdentificationForm();
         
-        // --- LOGIC SPLIT ---
+        // Determine mode based on user type
         if (isSubscriber) {
-            // If Subscriber: Fetch list from server
+            // If Subscriber: Fetch list of today's orders from server
             casualController.getDailyOrders(userIdentifier);
         } else {
             // If Casual: Show manual input immediately
@@ -53,6 +75,11 @@ public class IdentificationUI {
         }
     }
 
+    /**
+     * Initializes and displays the visual form elements.
+     * Sets up the ComboBox for subscribers and the TextField for manual entry,
+     * handling their initial visibility states.
+     */
     private void showIdentificationForm() {
         mainLayout.getChildren().clear();
 
@@ -64,6 +91,7 @@ public class IdentificationUI {
         lblInstruction.setPadding(new Insets(10,0,0,0));
 
         // --- 1. Smart Select (Subscriber) ---
+        // Dropdown for Subscribers to select existing reservations.
         cmbOrders = new ComboBox<>();
         cmbOrders.setPromptText("Select your reservation...");
         cmbOrders.setPrefWidth(300);
@@ -82,6 +110,7 @@ public class IdentificationUI {
         });
 
         // --- 2. Manual Entry (Casual) ---
+        // Text field for manual code entry (used by Casual users or as fallback).
         txtBookingId = new TextField();
         txtBookingId.setPromptText("Enter Confirmation Code");
         txtBookingId.setMaxWidth(300);
@@ -121,7 +150,10 @@ public class IdentificationUI {
         mainLayout.getChildren().add(contentBox);
     }
     
-    // Switch to Manual Text Field
+    /**
+     * Switches the UI to manual mode.
+     * Hides the order selection dropdown and displays the manual text input field.
+     */
     private void enableManualMode() {
         lblInstruction.setText("Please enter your Confirmation Code:");
         cmbOrders.setVisible(false);
@@ -130,7 +162,13 @@ public class IdentificationUI {
         txtBookingId.setManaged(true);
     }
     
-    // Server Callback (Called by ClientController)
+    /**
+     * Callback method used by the Controller to update the list of orders.
+     * If orders are found, it populates the dropdown. If no orders are found,
+     * it automatically reverts to manual mode.
+     *
+     * @param orders The list of orders retrieved from the server.
+     */
     public void updateOrderList(ArrayList<Order> orders) {
         Platform.runLater(() -> {
             if (orders != null && !orders.isEmpty()) {
@@ -148,6 +186,11 @@ public class IdentificationUI {
         });
     }
 
+    /**
+     * Handles the "Get Table" button action.
+     * Retrieves the confirmation code from either the selected dropdown item
+     * or the text field, validates it, and triggers the check-in process.
+     */
     private void handleCheckIn() {
         String codeToCheck = "";
 

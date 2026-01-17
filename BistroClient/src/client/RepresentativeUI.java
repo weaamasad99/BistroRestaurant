@@ -16,11 +16,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Boundary class for Representative Dashboard.
- * Integrated with DB via RepresentativeController.
+ * The RepresentativeUI class serves as the main boundary for restaurant staff (Representatives).
+ * <p>
+ * It provides the dashboard interface for:
+ * <ul>
+ * <li>Managing restaurant resources (Tables, Opening Hours).</li>
+ * <li>Viewing operational data (Orders, Waiting List, Current Diners).</li>
+ * <li>Registering new subscribers.</li>
+ * <li>Accessing client dashboards on behalf of customers.</li>
+ * </ul>
+ * This class interacts with the server via the {@link RepresentativeController}.
  */
-
-
 public class RepresentativeUI {
 
     protected VBox mainLayout;
@@ -51,7 +57,10 @@ public class RepresentativeUI {
     private Map<String, DayRow> regularScheduleRows = new HashMap<>();
     private Map<String, BistroSchedule> cachedScheduleMap = new HashMap<>();
 
-    // Helper class to hold inputs for one day
+    /**
+     * Helper class to hold UI references for a single day in the schedule editor.
+     * Contains the checkbox for closed status and dropdowns for open/close times.
+     */
     private class DayRow {
         CheckBox isClosed;
         ComboBox<String> openTime;
@@ -62,6 +71,12 @@ public class RepresentativeUI {
         }
     }
 
+    /**
+     * Constructs the RepresentativeUI instance.
+     *
+     * @param mainLayout The main layout container for the application.
+     * @param mainUI     The main application instance used for global navigation.
+     */
     public RepresentativeUI(VBox mainLayout, ClientUI mainUI) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
@@ -69,10 +84,17 @@ public class RepresentativeUI {
         this.controller = new RepresentativeController(mainUI.controller);
     }
 
+    /**
+     * Starts the representative interface by displaying the login screen.
+     */
     public void start() {
         showLoginScreen();
     }
 
+    /**
+     * Displays the staff login form.
+     * Authenticates the user via the server and routes them to the dashboard upon success.
+     */
     protected void showLoginScreen() {
         mainLayout.getChildren().clear();
 
@@ -118,6 +140,12 @@ public class RepresentativeUI {
         mainLayout.getChildren().add(content);
     }
 
+    /**
+     * Displays the main dashboard for the logged-in representative.
+     * Sets up navigation buttons for various administrative tasks.
+     *
+     * @param username The username of the currently logged-in staff member.
+     */
     protected void showDashboardScreen(String username) {
         this.currentUsername = username;
         mainLayout.getChildren().clear();
@@ -190,11 +218,20 @@ public class RepresentativeUI {
         mainLayout.getChildren().add(scroll);
     }
     
-    // Method to be overridden by ManagerUI
+    /**
+     * Hook method to allow subclasses (e.g., ManagerUI) to inject additional content
+     * into the dashboard container.
+     *
+     * @param container The VBox container of the dashboard.
+     */
     protected void addManagerContent(VBox container) {}
 
     // --- Actions ---
 
+    /**
+     * Navigates to the Subscriber Registration screen.
+     * @param returnUser The username to return to after registration completes/cancels.
+     */
     public void registerNewSubscriber(String returnUser) {
         // Assuming SubscriberRegistrationUI exists and works
         SubscriberRegistrationUI regUI = new SubscriberRegistrationUI(mainLayout, mainUI, () -> showDashboardScreen(returnUser));
@@ -204,6 +241,12 @@ public class RepresentativeUI {
     // =================================================================================
     // 1. MANAGE TABLES UI (Integrated with DB)
     // =================================================================================
+    
+    /**
+     * Displays the Table Management screen.
+     * Allows the staff to Add, Update (seats), or Remove tables from the system.
+     * Automatically requests the current table list from the server upon loading.
+     */
     public void updateTableDetails() {
         mainLayout.getChildren().clear();
 
@@ -316,7 +359,8 @@ public class RepresentativeUI {
     }
     
     /**
-     * CALLED BY CLIENT CONTROLLER WHEN SERVER SENDS 'GET_TABLES' RESPONSE
+     * Callback method: Updates the table view with data received from the server.
+     * @param tables The list of Table objects.
      */
     public void updateTableData(ArrayList<Table> tables) {
         Platform.runLater(() -> {
@@ -329,7 +373,12 @@ public class RepresentativeUI {
     // =================================================================================
     // 2. OPENING HOURS 
     // =================================================================================
-public void setOpeningHours() {
+    
+    /**
+     * Displays the Opening Hours Management screen.
+     * Contains tabs for editing the "Regular Weekly Schedule" and "Special Dates".
+     */
+    public void setOpeningHours() {
         mainLayout.getChildren().clear();
         Label header = new Label("Manage Opening Hours");
         header.setFont(new Font("Arial", 22));
@@ -389,6 +438,11 @@ public void setOpeningHours() {
     // =================================================================================
     // 3. SUBSCRIBERS (Integrated with DB)
     // =================================================================================
+    
+    /**
+     * Displays the list of all registered subscribers.
+     * Fetches data from the server and populates a table view.
+     */
     public void displaySubscribers() {
         mainLayout.getChildren().clear();
 
@@ -428,6 +482,10 @@ public void setOpeningHours() {
         controller.getAllSubscribers();
     }
 
+    /**
+     * Callback method: Updates the subscribers view with data received from the server.
+     * @param subscribers The list of User objects (subscribers).
+     */
     public void updateSubscriberData(ArrayList<User> subscribers) {
         Platform.runLater(() -> {
             if (subscribersView != null) {
@@ -439,6 +497,10 @@ public void setOpeningHours() {
     // =================================================================================
     // 4. WAITING LIST (Integrated with DB)
     // =================================================================================
+    
+    /**
+     * Displays the current Waiting List.
+     */
     public void displayWaitingList() {
         mainLayout.getChildren().clear();
 
@@ -481,6 +543,10 @@ public void setOpeningHours() {
         controller.getWaitingList();
     }
     
+    /**
+     * Callback method: Updates the waiting list view with data received from the server.
+     * @param list The list of WaitingList entries.
+     */
     public void updateWaitingListData(ArrayList<WaitingList> list) {
         Platform.runLater(() -> {
             if (waitingListView != null) waitingListView.getItems().setAll(list);
@@ -490,6 +556,10 @@ public void setOpeningHours() {
     // =================================================================================
     // 5. CURRENT DINERS (Integrated with DB)
     // =================================================================================
+    
+    /**
+     * Displays the list of currently active diners (orders that are currently seated).
+     */
     public void displayCurrentDiners() {
         mainLayout.getChildren().clear();
 
@@ -536,6 +606,9 @@ public void setOpeningHours() {
     // 6. ALL ORDERS (Integrated with DB)
     // =================================================================================
     
+    /**
+     * Displays the list of all orders (History and Active).
+     */
     public void displayAllOrders() {
         mainLayout.getChildren().clear();
 
@@ -582,6 +655,11 @@ public void setOpeningHours() {
         // Request Data via Controller
         controller.getAllOrders();
       }
+      
+    /**
+     * Callback method: Updates the orders view with data received from the server.
+     * @param orders The list of Order objects.
+     */
     public void updateOrdersData(ArrayList<Order> orders) {
         Platform.runLater(() -> {
             if (activeOrdersView != null) activeOrdersView.getItems().setAll(orders);
@@ -603,6 +681,10 @@ public void setOpeningHours() {
         return lbl;
     }
     
+    /**
+     * Shows a dialog asking for a Subscriber ID.
+     * If entered, sends a verification request to the server to potentially access their dashboard.
+     */
     private void promptForSubscriberAccess(String returnUser) {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Access"); 
@@ -624,6 +706,10 @@ public void setOpeningHours() {
         });
     }
 
+    /**
+     * Shows a dialog asking for a Phone Number (Casual User).
+     * If entered, sends a verification request to the server.
+     */
     private void promptForCasualAccess(String returnUser) {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Access"); 
@@ -687,6 +773,10 @@ public void setOpeningHours() {
         return new VBox(10, lblInfo, scroll);
     }
     
+    /**
+     * Helper to create a single row for the Regular Schedule Grid.
+     * Adds the controls to the UI and registers them in the `regularScheduleRows` map.
+     */
     private void addSmartHoursRow(javafx.scene.layout.GridPane grid, int row, String day, String defaultOpen, String defaultClose, boolean isClosed, javafx.collections.ObservableList<String> times) {
         Label lblDay = new Label(day + ":"); 
         CheckBox chkClosed = new CheckBox("Closed"); chkClosed.setSelected(isClosed);
@@ -697,11 +787,15 @@ public void setOpeningHours() {
         cmbOpen.disableProperty().bind(chkClosed.selectedProperty());
         cmbClose.disableProperty().bind(chkClosed.selectedProperty());
 
-        // ***  Save references to the Map ***
+        // *** Save references to the Map ***
         regularScheduleRows.put(day, new DayRow(chkClosed, cmbOpen, cmbClose));
 
         grid.add(lblDay, 0, row); grid.add(chkClosed, 1, row); grid.add(cmbOpen, 2, row); grid.add(lblDash, 3, row); grid.add(cmbClose, 4, row);
     }
+    
+    /**
+     * Creates the UI content for managing Special Dates (Holidays/Events).
+     */
     private VBox createSpecialDatesContent() {
         Label lblInfo = new Label("Define specific dates with different hours:");
         
@@ -765,6 +859,11 @@ public void setOpeningHours() {
         layout.setAlignment(Pos.CENTER); layout.setPadding(new Insets(15));
         return layout;
     }
+    
+    /**
+     * Callback method: Updates the Schedule UI (Regular and Special) with data from server.
+     * @param scheduleList The list of schedule items.
+     */
     public void updateScheduleData(ArrayList<BistroSchedule> scheduleList) {
         Platform.runLater(() -> {
             

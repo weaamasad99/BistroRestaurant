@@ -19,6 +19,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * The MonthlyReportUI class manages the analytics dashboard for the Restaurant Manager.
+ * <p>
+ * It provides a visual interface to select a specific month and year, fetches statistical data
+ * from the server via the {@link ManagerController}, and renders two primary types of reports:
+ * <ul>
+ * <li><b>Time & Performance:</b> Visualizes arrival/departure punctuality using Pie Charts and tables.</li>
+ * <li><b>Activity & Subscribers:</b> Visualizes order volume and waiting list activity by day of the week using Bar Charts.</li>
+ * </ul>
+ */
 public class MonthlyReportUI {
 
     private VBox mainLayout;
@@ -32,6 +42,14 @@ public class MonthlyReportUI {
     private VBox chartContainer; 
     private MonthlyReportData currentReportData; 
 
+    /**
+     * Constructs the MonthlyReportUI instance.
+     *
+     * @param mainLayout        The main layout container where the dashboard will be rendered.
+     * @param mainUI            The main application instance.
+     * @param managerController The controller responsible for fetching report data.
+     * @param onBack            A callback to execute when the user navigates back to the main menu.
+     */
     public MonthlyReportUI(VBox mainLayout, ClientUI mainUI, ManagerController managerController, Runnable onBack) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
@@ -39,11 +57,21 @@ public class MonthlyReportUI {
         this.onBack = onBack;
     }
 
+    /**
+     * Starts the report UI by registering this instance with the main UI
+     * and displaying the initial report selection screen.
+     */
     public void start() {
         mainUI.setMonthlyReportUI(this); 
         showReportScreen();
     }
 
+    /**
+     * Initializes and displays the main dashboard structure.
+     * <p>
+     * Sets up the date selection controls (Month/Year), action buttons for generating reports,
+     * and the container area where charts will be dynamically rendered.
+     */
     private void showReportScreen() {
         mainLayout.getChildren().clear();
 
@@ -111,12 +139,18 @@ public class MonthlyReportUI {
         mainLayout.getChildren().add(scroll);
     }
 
+    /**
+     * Triggered when the "Load Data" button is clicked.
+     * <p>
+     * Validates that the selected date is in the past (to ensure complete data).
+     * If valid, sends a request to the server to fetch the report for the specified month/year.
+     */
     private void fetchReportData() {
         int selectedMonth = cmbMonth.getSelectionModel().getSelectedIndex() + 1;
         int selectedYear = cmbYear.getValue();
         LocalDate now = LocalDate.now();
         
-        // Strict Validation
+        // Strict Validation: Ensure user selects a past period
         if (selectedYear > now.getYear() || 
            (selectedYear == now.getYear() && selectedMonth >= now.getMonthValue())) {
             mainUI.showAlert("Restricted Access", 
@@ -131,6 +165,12 @@ public class MonthlyReportUI {
         }
     }
 
+    /**
+     * Callback method used by the controller to update the dashboard with fresh data.
+     * Automatically renders the "Time Report" view upon successful data load.
+     *
+     * @param data The MonthlyReportData object containing statistical information.
+     */
     public void updateReportData(MonthlyReportData data) {
         this.currentReportData = data;
         Platform.runLater(() -> {
@@ -142,6 +182,9 @@ public class MonthlyReportUI {
         });
     }
     
+    /**
+     * Displays a message indicating no data was available for the selected period.
+     */
     private void showNoDataMessage() {
         chartContainer.getChildren().clear();
         Label lbl = new Label("No data found for the selected period.");
@@ -150,6 +193,10 @@ public class MonthlyReportUI {
         chartContainer.getChildren().add(lbl);
     }
 
+    /**
+     * Checks if report data has been loaded before attempting to render charts.
+     * @return true if data exists, false otherwise (showing an alert).
+     */
     private boolean validateDataLoaded() {
         if (currentReportData == null || currentReportData.isEmpty()) {
             mainUI.showAlert("No Data", "Please load valid data first.");
@@ -161,6 +208,15 @@ public class MonthlyReportUI {
     // =====================================================================
     // REPORT 1: TIME & PERFORMANCE (Pie + Table of Delays)
     // =====================================================================
+    
+    /**
+     * Renders the Time & Performance Report.
+     * <p>
+     * Displays:
+     * 1. A summary of average dining time.
+     * 2. A Pie Chart showing the distribution of On-Time, Late, and No-Show orders.
+     * 3. A detailed table listing specific orders that were late or no-shows.
+     */
     private void renderTimeReport() {
         chartContainer.getChildren().clear();
         
@@ -219,6 +275,15 @@ public class MonthlyReportUI {
     // =====================================================================
     // REPORT 2: ACTIVITY (Bar Chart + Full Order List)
     // =====================================================================
+    
+    /**
+     * Renders the Activity & Subscribers Report.
+     * <p>
+     * Displays:
+     * 1. A Bar Chart comparing Orders vs. Waiting List entries by day of the week.
+     * 2. A summary of total guests served.
+     * 3. A complete log of all orders for the selected month.
+     */
     private void renderActivityReport() {
         chartContainer.getChildren().clear();
         
@@ -286,6 +351,13 @@ public class MonthlyReportUI {
         chartContainer.getChildren().addAll(lblTitle, lblStats, barChart, new Separator(), lblTable, table);
     }
 
+    /**
+     * Helper method to populate a chart series with data for each day of the week.
+     * Ensures all 7 days are represented, using 0 for days with no data.
+     *
+     * @param series The XYChart Series to populate.
+     * @param map    The map containing counts per day (e.g., "Sunday" -> 5).
+     */
     private void fillDaySeries(XYChart.Series<String, Number> series, Map<String, Integer> map) {
         List<String> days = Arrays.asList("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
         for (String day : days) {
@@ -293,6 +365,13 @@ public class MonthlyReportUI {
         }
     }
 
+    /**
+     * Creates a styled button for switching between report views.
+     *
+     * @param text The text to display on the button.
+     * @param icon The icon (emoji or character) to display.
+     * @return A styled Button instance.
+     */
     private Button createReportButton(String text, String icon) {
         Button btn = new Button(icon + "  " + text);
         btn.setPrefWidth(220);

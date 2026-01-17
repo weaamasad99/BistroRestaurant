@@ -14,6 +14,13 @@ import java.util.Optional;
 import common.WaitingList;
 import controllers.CasualController;
 
+/**
+ * The WaitingListUI class provides the user interface for customers to join or leave the waiting list.
+ * <p>
+ * This screen is used when no tables are immediately available. It allows both casual diners 
+ * and subscribers to enter their details (number of diners) and be added to the queue.
+ * It also provides functionality to leave the waiting list if the customer changes their mind.
+ */
 public class WaitingListUI {
 
     private VBox mainLayout;
@@ -23,6 +30,15 @@ public class WaitingListUI {
     private boolean isCasual;     // Flag to toggle fields
     private CasualController casualController;
 
+    /**
+     * Constructs the WaitingListUI instance.
+     *
+     * @param mainLayout     The main layout container where the UI will be rendered.
+     * @param mainUI         The main application instance.
+     * @param onBack         A Runnable callback to execute when the user navigates back.
+     * @param userIdentifier The unique identifier for the user (Phone Number for casual, Subscriber ID for subscribers).
+     * @param isCasual       Flag indicating if the user is a casual diner (true) or a subscriber (false).
+     */
     public WaitingListUI(VBox mainLayout, ClientUI mainUI, Runnable onBack, String userIdentifier, boolean isCasual) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
@@ -32,10 +48,24 @@ public class WaitingListUI {
         this.casualController = new CasualController(mainUI.controller);
     }
 
+    /**
+     * Starts the waiting list interface by building and displaying the form.
+     */
     public void start() {
         showWaitingListForm();
     }
 
+    /**
+     * Constructs and displays the waiting list form.
+     * <p>
+     * The form includes:
+     * <ul>
+     * <li>Input for the number of diners (1-15).</li>
+     * <li>Optional email field for casual diners.</li>
+     * <li>"Join Waiting List" button to submit the request.</li>
+     * <li>"Leave / Cancel" button to remove the user from the list.</li>
+     * </ul>
+     */
     private void showWaitingListForm() {
         mainLayout.getChildren().clear();
 
@@ -137,7 +167,9 @@ public class WaitingListUI {
 
     /**
      * Requirement: "The customer can exit the waiting list at any time"
-     * We ask for the Confirmation Code to cancel.
+     * <p>
+     * Displays a dialog prompting the user for a Confirmation Code to verify the cancellation.
+     * <br><b>Note:</b> This is an alternative flow to the direct "Leave" button above.
      */
     private void showCancellationDialog() {	
         TextInputDialog dialog = new TextInputDialog();
@@ -157,6 +189,12 @@ public class WaitingListUI {
         });
     }
 
+    /**
+     * Validates the input for the number of guests.
+     *
+     * @param guestsStr The input string from the text field.
+     * @return {@code true} if the input is a number between 1 and 15; {@code false} otherwise.
+     */
     private boolean validateInput(String guestsStr) {
         try {
             int guests = Integer.parseInt(guestsStr);
@@ -171,6 +209,14 @@ public class WaitingListUI {
         return true;
     }
 
+    /**
+     * Simulates the server-side logic for joining the waiting list (Mock/Prototype logic).
+     * <p>
+     * This method is preserved for testing purposes. In the live system, the 
+     * {@link CasualController#enterWaitingList(WaitingList)} method is used instead.
+     *
+     * @param guests The number of guests requested.
+     */
     private void simulateJoinServer(String guests) {
         // Logic described in requirements: 
         // 1. Check if table available immediately -> Go to table

@@ -9,12 +9,25 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 
+/**
+ * The CancelReservationUI class represents the user interface that allows
+ * a casual client to cancel an existing reservation.
+ * It provides a form for entering a confirmation code and handles the UI logic
+ * for submitting the cancellation request.
+ */
 public class CancelReservationUI {
 	private VBox mainLayout;
     private ClientUI mainUI;       
     private Runnable onBack;      // Action to go back
     private CasualController casualController;
 
+    /**
+     * Constructs a new CancelReservationUI instance.
+     *
+     * @param mainLayout The main layout container where the UI will be rendered.
+     * @param mainUI     The main application instance, used for global state and alerts.
+     * @param onBack     A Runnable callback to execute when the user navigates back.
+     */
     public CancelReservationUI(VBox mainLayout, ClientUI mainUI, Runnable onBack) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
@@ -22,10 +35,17 @@ public class CancelReservationUI {
         this.casualController = new CasualController(mainUI.controller);
     }
     
+    /**
+     * Initializes and displays the cancellation form.
+     */
     public void start() {
         showCancelForm();
     }
 
+    /**
+     * Clears the main layout and constructs the visual elements for the cancellation form.
+     * This includes the header, input field for the confirmation code, and action buttons.
+     */
     private void showCancelForm() {
         mainLayout.getChildren().clear();
 
@@ -55,7 +75,7 @@ public class CancelReservationUI {
         // Navigation: Back to Casual Options
         btnBack.setOnAction(e -> onBack.run());
 
-        // --- Check-In Logic ---
+        // --- Cancellation Logic ---
         btnCancel.setOnAction(e -> {
             String bookingId = txtBookingId.getText().trim();
             int userId = mainUI.currentUser.getUserId();
