@@ -19,11 +19,11 @@ import java.util.ArrayList;
  * Manages Orders (Reservations) and Physical Table configurations.
  * Handles the core logic for booking, check-in, and capacity checks.
  * @author Group 6
- * @version 1.0
+ * @version 1.1
  */
 
 public class ReservationController {
-	private NotificationController notificationController;
+    private NotificationController notificationController;
 
     private Connection conn;
 
@@ -251,17 +251,26 @@ public class ReservationController {
         }
     }
     
-    
+    // =========================================================================
+    // CAPACITY CHECKING LOGIC (UPDATED FOR ADMIN CHANGES)
+    // =========================================================================
+
     /**
-     * Checks if there is a specific physical table available for the requested party size
-     * during the entire meal duration.
-     * LOGIC: "Best Fit" Bin Packing on a Timeline.
-     * @param date Reservation date.
-     * @param reqTime Reservation time.
-     * @param requestedDiners Number of guests.
-     * @return true if capacity exists.
+     * Wrapper for checkRestaurantCapacity for new reservations.
+     * referenceOrderId is -1, meaning "check against everyone".
      */
     private boolean checkRestaurantCapacity(Date date, Time reqTime, int requestedDiners) {
+        return checkRestaurantCapacity(date, reqTime, requestedDiners, -1);
+    }
+
+    /**
+     * Checks if there is a specific physical table available.
+     * LOGIC: "Best Fit" Bin Packing on a Timeline.
+     * * @param referenceOrderId If -1, counts ALL active orders. 
+     * If > 0, ONLY counts orders with ID < referenceOrderId.
+     * (This enables First-Come-First-Served validation).
+     */
+    private boolean checkRestaurantCapacity(Date date, Time reqTime, int requestedDiners, int referenceOrderId) {
         if (conn == null) return false;
 
         // --- Helper Class: Physical Table ---
@@ -280,7 +289,8 @@ public class ReservationController {
 
         // 1. Fetch ALL Physical Tables (Sorted by Size ASC for "Best Fit")
         ArrayList<TableInfo> allTables = new ArrayList<>();
-        String tableQuery = "SELECT table_id, seats FROM restaurant_tables ORDER BY seats ASC";
+        // Added check for 'BROKEN' status just in case you use it, otherwise normal check
+        String tableQuery = "SELECT table_id, seats FROM restaurant_tables WHERE status != 'BROKEN' ORDER BY seats ASC";
         try (PreparedStatement ps = conn.prepareStatement(tableQuery);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -293,18 +303,25 @@ public class ReservationController {
 
         if (allTables.isEmpty()) return false;
 
-        // 2. Fetch ALL overlapping reservations
-        ArrayList<BookingInfo> overlaps = new ArrayList<>();
+        // 2. Fetch overlapping reservations
+        // NEW LOGIC: Filter by referenceOrderId to support re-validation priority
         String overlapQuery = "SELECT order_time, num_of_diners FROM orders " +
                               "WHERE order_date = ? " +
                               "AND status IN ('APPROVED', 'ACTIVE', 'PENDING') " + 
                               "AND order_time < ADDTIME(?, '02:00:00') " +
-                              "AND order_time > SUBTIME(?, '02:00:00')";
+                              "AND order_time > SUBTIME(?, '02:00:00') " +
+                              "AND ( (? = -1) OR (order_number < ?) )"; // <--- KEY CHANGE
+
+        ArrayList<BookingInfo> overlaps = new ArrayList<>();
 
         try (PreparedStatement ps = conn.prepareStatement(overlapQuery)) {
             ps.setDate(1, date);
             ps.setTime(2, reqTime); 
             ps.setTime(3, reqTime); 
+            // Set the ID filter parameters
+            ps.setInt(4, referenceOrderId);
+            ps.setInt(5, referenceOrderId);
+
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     overlaps.add(new BookingInfo(rs.getTime("order_time"), rs.getInt("num_of_diners")));
@@ -316,7 +333,6 @@ public class ReservationController {
         }
 
         // 3. Define Critical Time Points to check
-        // We must ensure that at every moment of our meal, a valid table configuration exists.
         long reqStartMin = (reqTime.getTime() / 60000) % (24 * 60); 
         long reqEndMin = reqStartMin + 120; // 2 Hours duration
 
@@ -350,14 +366,12 @@ public class ReservationController {
             // B. Try to fit these groups into the tables
             // Strategy: For each group, consume the *smallest available table* that fits them.
             
-            // Clone the table list so we can simulate removing them
             ArrayList<TableInfo> availableTables = new ArrayList<>(allTables);
-            
             boolean allGroupsSeated = true;
 
-            // Sort groups larger first? 
-            // Actually, simply matching each group to its Best Fit is robust.
-            // Let's iterate through groups and try to find a home for each.
+            // Sort activeGroups? Usually descending sort is better for Bin Packing,
+            // but for exact "Best Fit" with sorted tables, simple iteration often works.
+            // Let's stick to the previous working logic:
             for (int groupSize : activeGroups) {
                 TableInfo bestMatch = null;
                 
@@ -365,7 +379,7 @@ public class ReservationController {
                 for (TableInfo t : availableTables) {
                     if (t.seats >= groupSize) {
                         bestMatch = t;
-                        break; // Since 'allTables' is sorted ASC, the first match is the best match
+                        break; 
                     }
                 }
 
@@ -378,28 +392,59 @@ public class ReservationController {
             }
 
             if (!allGroupsSeated) {
-                System.out.println("Capacity Check Failed at min " + point + ". Not enough tables for sizes: " + activeGroups);
-                return false; // Fail immediately if any time point is invalid
+                // System.out.println("Capacity Check Failed at min " + point);
+                return false; 
             }
         }
 
         return true; // Passed all checks
     }
+
+    /**
+     * Validates all future orders against the current table layout.
+     * Called after a table is removed or modified.
+     * Uses "First-Come-First-Served" logic to cancel newest orders if capacity is reduced.
+     */
+    private void validateCapacityForAllFutureOrders() {
+        System.out.println("System: Validating all future orders against new table capacity...");
+        
+        // Fetch all future active orders, ORDERED BY ID (First Come, First Served)
+        String sql = "SELECT * FROM orders WHERE status IN ('APPROVED', 'ACTIVE') AND order_date >= CURDATE() ORDER BY order_number ASC";
+        
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                int orderId = rs.getInt("order_number");
+                int userId = rs.getInt("user_id");
+                Date date = rs.getDate("order_date");
+                Time time = rs.getTime("order_time");
+                int diners = rs.getInt("num_of_diners");
+                
+                // Check capacity specifically for THIS order
+                // passing 'orderId' to exclude this order (and newer ones) from the 'occupied' calculation
+                // effectively simulating if the restaurant was empty up to this point + older orders.
+                boolean fits = checkRestaurantCapacity(date, time, diners, orderId);
+                
+                if (!fits) {
+                    System.out.println(">>> Capacity Crunch! Cancelling Order #" + orderId);
+                    
+                    // 1. Cancel in DB
+                    cancelOrderInternal(orderId);
+                    
+                    // 2. Notify User (Admin Cancellation)
+                    notificationController.sendSystemCancellation(userId, date.toString(), time.toString());
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
     
     /**
      * Processes a request to create a new reservation.
-     * <p>
-     * Performs two critical checks:
-     * 1. <b>Capacity Check:</b> Uses {@link #checkRestaurantCapacity} to ensure tables are available.
-     * 2. <b>Duplicate Check:</b> Ensures the user doesn't already have a booking for the same time.
      * @param order The reservation request details.
-     * @return A status string indicating the result:
-     * <ul>
-     * <li>"OK:[code]" - Success, returns confirmation code.</li>
-     * <li>"Full:..." - No capacity.</li>
-     * <li>"SUGGEST:[times]" - No capacity at requested time, but alternatives found.</li>
-     * <li>"Duplicate:..." - User already booked.</li>
-     * </ul>
+     * @return A status string indicating the result.
      */
     public String createReservation(Order order) {
         UserController userController = new UserController();
@@ -416,7 +461,6 @@ public class ReservationController {
                 if (alternatives.isEmpty()) {
                     return "Full: No tables available around this time.";
                 } else {
-                    // Return special protocol: "SUGGEST:18:30,19:30"
                     return "SUGGEST:" + alternatives;
                 }
             }
@@ -678,8 +722,8 @@ public class ReservationController {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     isClosed = rs.getBoolean("is_closed");
-                    openTime = parseTimeSafe(rs.getString("open_time"));   // <--- FIXED
-                    closeTime = parseTimeSafe(rs.getString("close_time")); // <--- FIXED
+                    openTime = parseTimeSafe(rs.getString("open_time"));   
+                    closeTime = parseTimeSafe(rs.getString("close_time")); 
                     scheduleFound = true;
                 }
             }
@@ -695,8 +739,8 @@ public class ReservationController {
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         isClosed = rs.getBoolean("is_closed");
-                        openTime = parseTimeSafe(rs.getString("open_time"));   // <--- FIXED
-                        closeTime = parseTimeSafe(rs.getString("close_time")); // <--- FIXED
+                        openTime = parseTimeSafe(rs.getString("open_time"));   
+                        closeTime = parseTimeSafe(rs.getString("close_time")); 
                     }
                 }
             } catch (SQLException e) { e.printStackTrace(); }
@@ -755,6 +799,7 @@ public class ReservationController {
 
     /**
      * Updates seat count or status of a table.
+     * Triggers re-validation of capacity for existing orders.
      * @param table The table with new values.
      * @return true if update successful.
      */
@@ -766,6 +811,10 @@ public class ReservationController {
             ps.setString(2, table.getStatus());
             ps.setInt(3, table.getTableId());
             ps.executeUpdate();
+            
+            // NEW: Check if this change broke any existing bookings
+            validateCapacityForAllFutureOrders();
+            
             return true;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -797,6 +846,7 @@ public class ReservationController {
 
     /**
      * Removes a table from the layout.
+     * Triggers re-validation of capacity for existing orders.
      * @param tableId The ID of the table to remove.
      * @return true if removed successfully.
      */
@@ -806,6 +856,10 @@ public class ReservationController {
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, tableId);
             ps.executeUpdate();
+            
+            // NEW: Check if this removal broke any existing bookings
+            validateCapacityForAllFutureOrders(); 
+            
             return true;
         } catch (SQLException e) {
             e.printStackTrace();

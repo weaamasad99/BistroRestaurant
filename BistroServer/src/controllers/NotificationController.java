@@ -287,5 +287,39 @@ public class NotificationController {
             new Thread(() -> EmailService.sendEmail(user.getEmail(), subject, finalBody)).start();        }
     }
 
+    
+    // --- 7. ADMIN CANCELLATION ALERT ---
+    /**
+     * Sends an urgent cancellation notification to a user when their reservation is forced 
+     * to cancel by the system (e.g., due to table removal or capacity reduction).
+     * <p>
+     * This alert utilizes both a simulated SMS log and a real HTML email to ensure the 
+     * user is informed of the unexpected change.
+     *
+     * @param userId The ID of the user to notify.
+     * @param date   The date of the cancelled reservation.
+     * @param time   The time of the cancelled reservation.
+     */
+    public void sendSystemCancellation(int userId, String date, String time) {
+        log("Sending System Cancellation to User " + userId);
+
+        // 1. Mock SMS
+        System.out.println(">>> [SMS MOCK] To User " + userId + ": Urgent. Your reservation on " + date + " was cancelled due to restaurant changes.");
+
+        // 2. Real Email
+        User user = userController.getUserById(userId);
+        if (shouldSendEmail(user)) {
+            String subject = "Urgent: Reservation Cancellation";
+            String body = "<h3>Reservation Cancelled</h3>" +
+                          "<p>Dear " + user.getFirstName() + ",</p>" +
+                          "<p>We regret to inform you that due to unexpected changes in our seating arrangements, we can no longer accommodate your reservation on:</p>" +
+                          "<p><b>Date:</b> " + date + "<br><b>Time:</b> " + time + "</p>" +
+                          "<p>Your order has been cancelled from our system.</p>" +
+                          "<p>We sincerely apologize for the inconvenience.</p>" +
+                          "<br><p>Bistro Management</p>";
+            
+            new Thread(() -> EmailService.sendEmail(user.getEmail(), subject, body)).start();
+        }
+    }
 
 }
