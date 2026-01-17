@@ -592,6 +592,39 @@ public class BistroServer extends AbstractServer {
             } catch (SQLException e) {
                 log("Reminder Error: " + e.getMessage());
             }
+            
+            
+            // =================================================================================
+            // 5. SEND BILL AFTER 2 HOURS (ACTIVE SITTING)
+            // =================================================================================
+            // Logic: Find ACTIVE orders where arrival was > 2 hours ago AND bill not sent yet
+            String billQuery = "SELECT order_number, user_id, confirmation_code FROM orders " +
+                               "WHERE status = 'ACTIVE' " +
+                               "AND is_bill_sent = FALSE " +
+                               "AND actual_arrival_time IS NOT NULL " +
+                               "AND order_date = CURDATE() " + 
+                               "AND actual_arrival_time <= SUBTIME(CURTIME(), '02:00:00')";
+
+            try (PreparedStatement psBill = conn.prepareStatement(billQuery)) {
+                ResultSet rs = psBill.executeQuery();
+                while (rs.next()) {
+                    int oId = rs.getInt("order_number");
+                    int uId = rs.getInt("user_id");
+                    String code = rs.getString("confirmation_code");
+
+                    // A. Send Notification
+                    nc.sendBillNotification(uId, code);
+
+                    // B. Mark as Sent so we don't send again
+                    String markSent = "UPDATE orders SET is_bill_sent = TRUE WHERE order_number = ?";
+                    try (PreparedStatement psUpdate = conn.prepareStatement(markSent)) {
+                        psUpdate.setInt(1, oId);
+                        psUpdate.executeUpdate();
+                    }
+                }
+            } catch (SQLException e) {
+                log("Auto-Bill Error: " + e.getMessage());
+            }
 
         }, 0, 1, TimeUnit.MINUTES);
     }

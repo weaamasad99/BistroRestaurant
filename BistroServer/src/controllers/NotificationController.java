@@ -173,6 +173,27 @@ public class NotificationController {
     }
     
     
+    // --- 6. BILL / TIME LIMIT ALERT ---
+    public void sendBillNotification(int userId, String code) {
+        log("Sending 2-Hour Bill Notification to User " + userId);
+        
+        // 1. Mock SMS
+        System.out.println(">>> [SMS MOCK] To User " + userId + ": Your 2 hours are up. Please checkout. Code: " + code);
+
+        // 2. Real Email
+        User user = userController.getUserById(userId);
+        if (shouldSendEmail(user)) {
+            String subject = "Your Bill is Ready - Bistro";
+            String body = "<h3>Time to Checkout</h3>" +
+                          "<p>We hope you enjoyed your meal!</p>" +
+                          "<p>It has been 2 hours since you were seated.</p>" +
+                          "<p><b>Please proceed to checkout using your code: <span style='color:blue;'>" + code + "</span></b></p>" +
+                          "<p>You can pay at the terminal or via the app.</p>";
+            
+            new Thread(() -> EmailService.sendEmail(user.getEmail(), subject, body)).start();
+        }
+    }
+    
     
     // Helper: Check if we should send email
     private boolean shouldSendEmail(User user) {
