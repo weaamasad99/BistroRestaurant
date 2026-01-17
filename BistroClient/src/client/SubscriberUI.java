@@ -143,10 +143,10 @@ public class SubscriberUI {
 
         Button btnIdentify = createOptionButton("Check-In", "📋");
         btnIdentify.setOnAction(e -> {
-             // Passing int ID formatted as String for now
-            IdentificationUI identifyScreen = new IdentificationUI(mainLayout, mainUI, stayHere, String.valueOf(id));
-            identifyScreen.start();
-        });
+            // TRUE = Subscriber (Smart List Mode)
+           IdentificationUI identifyScreen = new IdentificationUI(mainLayout, mainUI, stayHere, String.valueOf(id), true);
+           identifyScreen.start();
+       });
 
         Button btnHistory = createOptionButton("Order History", "📜");
         btnHistory.setOnAction(e -> {

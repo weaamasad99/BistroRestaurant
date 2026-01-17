@@ -31,6 +31,10 @@ public class CasualController {
         networkController.accept(new Message(TaskType.SET_USER, phone));
     }
 
+ // Request Today's Orders for Check-In UI
+    public void getDailyOrders(String identifier) {
+        networkController.accept(new Message(TaskType.GET_DAILY_ORDERS, identifier));
+    }
     public void requestReservation(Order order) {
         networkController.accept(new Message(TaskType.REQUEST_RESERVATION, order));
     }

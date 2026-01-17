@@ -30,6 +30,7 @@ public class ClientUI extends Application {
     public User currentUser;
     public CheckoutUI checkoutUI;
     
+    public IdentificationUI currentIdentificationUI;
     public ClientController controller;
     private VBox mainLayout; 
 

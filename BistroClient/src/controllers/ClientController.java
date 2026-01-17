@@ -159,6 +159,13 @@ public class ClientController {
 		            }
 		            break;
 
+		        case DAILY_ORDERS_RESULT:
+                    ArrayList<Order> todayOrders = (ArrayList<Order>) msg.getObject();
+                    // Pass data to the active Identification UI
+                    if (ui.currentIdentificationUI != null) {
+                        ui.currentIdentificationUI.updateOrderList(todayOrders);
+                    }
+                    break;
                 // --- RESERVATION PROCESS ---
 		        case REQUEST_RESERVATION:
 	                String resResult = (String) msg.getObject();

@@ -174,6 +174,20 @@ public class BistroServer extends AbstractServer {
                 sendKryoToClient(response, client);
                 break;
                 
+            case GET_DAILY_ORDERS:
+                try {
+                    String idForCheckIn = (String) message.getObject();
+                    log("Fetching today's orders for identifier: " + idForCheckIn);
+                    
+                    ArrayList<Order> dailyOrders = reservationController.getTodayOrdersForContact(idForCheckIn);
+                    
+                    response = new Message(TaskType.DAILY_ORDERS_RESULT, dailyOrders);
+                } catch (Exception e) {
+                    log("Error getting daily orders: " + e.getMessage());
+                    response = new Message(TaskType.FAIL, "Error fetching orders.");
+                }
+                sendKryoToClient(response, client);
+                break;
             case UPDATE_SUBSCRIBER:
                 log("Updating subscriber details...");
                 User userToUpdate = (User) message.getObject();

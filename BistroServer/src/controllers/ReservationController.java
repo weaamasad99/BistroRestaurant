@@ -921,7 +921,54 @@ public class ReservationController {
         }
         return "";
     }
-    
+    /**
+     * Finds orders scheduled for TODAY for a specific contact (ID or Phone).
+     * Used for the "Smart Check-In" dropdown.
+     */
+    public ArrayList<Order> getTodayOrdersForContact(String identifier) {
+        ArrayList<Order> orders = new ArrayList<>();
+        if (conn == null) return orders;
+
+        int subscriberId = -1;
+        try {
+            subscriberId = Integer.parseInt(identifier);
+        } catch (NumberFormatException e) {
+            subscriberId = -1; 
+        }
+
+        // SQL: Find orders for TODAY that are APPROVED
+        String query = "SELECT o.* FROM orders o " +
+                       "JOIN users u ON o.user_id = u.user_id " +
+                       "WHERE (u.subscriber_number = ? OR u.phone_number = ?) " +
+                       "AND o.order_date = CURDATE() " + 
+                       "AND o.status = 'APPROVED' " +
+                       "ORDER BY o.order_time ASC";
+
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, subscriberId);
+            ps.setString(2, identifier);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Order order = new Order(
+                        rs.getInt("order_number"),
+                        rs.getInt("user_id"),
+                        rs.getDate("order_date"),
+                        rs.getTime("order_time"),
+                        rs.getInt("num_of_diners"),
+                        rs.getString("status"),
+                        rs.getString("confirmation_code"),
+                        rs.getTime("actual_arrival_time"),
+                        rs.getTime("leaving_time")
+                    );
+                    orders.add(order);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return orders;
+    }
     // Helper to get day of week (1=Sunday, ..., 7=Saturday)
     private int getDayOfWeek(Date date) {
         java.util.Calendar c = java.util.Calendar.getInstance();

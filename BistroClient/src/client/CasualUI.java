@@ -140,7 +140,8 @@ public class CasualUI {
         // 3. Identify
         Button btnIdentify = createOptionButton("Check-In", "📋");
         btnIdentify.setOnAction(e -> {
-            IdentificationUI identifyUI = new IdentificationUI(mainLayout, mainUI, stayHere, phoneNumber);
+            // FALSE = Casual User (Manual Mode)
+            IdentificationUI identifyUI = new IdentificationUI(mainLayout, mainUI, stayHere, phoneNumber, false);
             identifyUI.start();
         });
 

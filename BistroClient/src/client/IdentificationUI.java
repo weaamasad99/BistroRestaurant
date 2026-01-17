@@ -1,92 +1,168 @@
 package client;
 
+import common.Order;
 import controllers.CasualController;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.util.StringConverter;
+import java.util.ArrayList;
 
 public class IdentificationUI {
 
     private VBox mainLayout;
     private ClientUI mainUI;       
-    private Runnable onBack;      // Action to go back
+    private Runnable onBack;      
     private String userIdentifier;    
     private CasualController casualController;
+    private boolean isSubscriber; 
 
-    public IdentificationUI(VBox mainLayout, ClientUI mainUI, Runnable onBack, String userIdentifier) {
+    // UI Elements
+    private VBox contentBox;
+    private ComboBox<Order> cmbOrders;
+    private TextField txtBookingId;
+    private Button btnCheckIn;
+    private Label lblInstruction;
+
+    // Constructor accepts isSubscriber flag
+    public IdentificationUI(VBox mainLayout, ClientUI mainUI, Runnable onBack, String userIdentifier, boolean isSubscriber) {
         this.mainLayout = mainLayout;
         this.mainUI = mainUI;
         this.onBack = onBack;
         this.userIdentifier = userIdentifier;
+        this.isSubscriber = isSubscriber; 
         this.casualController = new CasualController(mainUI.controller);
+        
+        // Register this instance so ClientController can update it
+        this.mainUI.currentIdentificationUI = this;
     }
     
     public void start() {
         showIdentificationForm();
+        
+        // --- LOGIC SPLIT ---
+        if (isSubscriber) {
+            // If Subscriber: Fetch list from server
+            casualController.getDailyOrders(userIdentifier);
+        } else {
+            // If Casual: Show manual input immediately
+            enableManualMode();
+        }
     }
 
     private void showIdentificationForm() {
         mainLayout.getChildren().clear();
 
-        // --- Header ---
         Label header = new Label("Check-In");
         header.setFont(new Font("Arial", 24));
         header.setStyle("-fx-font-weight: bold; -fx-text-fill: #333;");
 
-        Label instruction = new Label("Please enter your Confirmation Code:");
-        instruction.setPadding(new Insets(10,0,0,0));
+        lblInstruction = new Label("Please wait...");
+        lblInstruction.setPadding(new Insets(10,0,0,0));
 
-        // --- Form Fields ---
-        TextField txtBookingId = new TextField();
+        // --- 1. Smart Select (Subscriber) ---
+        cmbOrders = new ComboBox<>();
+        cmbOrders.setPromptText("Select your reservation...");
+        cmbOrders.setPrefWidth(300);
+        cmbOrders.setVisible(false);
+        cmbOrders.setManaged(false); 
+        
+        // Format dropdown text: "19:00 - 4 Guests"
+        cmbOrders.setConverter(new StringConverter<Order>() {
+            @Override
+            public String toString(Order o) {
+                if (o == null) return "";
+                return o.getOrderTime().toString().substring(0, 5) + " - " + o.getNumberOfDiners() + " Guests";
+            }
+            @Override
+            public Order fromString(String string) { return null; }
+        });
+
+        // --- 2. Manual Entry (Casual) ---
+        txtBookingId = new TextField();
         txtBookingId.setPromptText("Enter Confirmation Code");
         txtBookingId.setMaxWidth(300);
         txtBookingId.setStyle("-fx-font-size: 16px; -fx-padding: 10;");
+        txtBookingId.setVisible(false); 
+        txtBookingId.setManaged(false);
 
         // --- Buttons ---
-        Button btnCheckIn = new Button("Get Table");
+        btnCheckIn = new Button("Get Table");
         btnCheckIn.setPrefWidth(200);
         btnCheckIn.setPrefHeight(40);
         btnCheckIn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
 
-        // Lost Code Button (NEW)
         Button btnLostCode = new Button("Lost Code?");
         btnLostCode.setPrefWidth(200);
         btnLostCode.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
         btnLostCode.setOnAction(e -> {
-             // Logic: Usually this would trigger an SMS to the phone number
         	 casualController.recoverLostCode(userIdentifier);
              mainUI.showAlert("Retrieving Code", "We are sending the order details to: " + userIdentifier);
         });
         
         Button btnBack = new Button("Back to Menu");
         btnBack.setStyle("-fx-background-color: transparent; -fx-text-fill: #555; -fx-underline: true; -fx-cursor: hand;");
-        
-        // Navigation: Back to Casual Options
-        btnBack.setOnAction(e -> onBack.run());
-
-        // --- Check-In Logic ---
-        btnCheckIn.setOnAction(e -> {
-            String bookingId = txtBookingId.getText().trim();
-
-            if (bookingId.isEmpty()) {
-                mainUI.showAlert("Error", "Please enter a Confirmation Code.");
-            } else {
-                // TODO: Send request to Server (CLIENT_IDENTIFY)
-                // If server approves -> Show "Your Table is #5"
-                // If denied -> Show "Reservation not found or too early."
-            	casualController.checkIn(bookingId);
-            }
+        btnBack.setOnAction(e -> {
+            mainUI.currentIdentificationUI = null;
+            onBack.run();
         });
 
-        VBox content = new VBox(20, header, instruction, txtBookingId, btnCheckIn, btnLostCode, btnBack);
-        content.setAlignment(Pos.CENTER);
-        content.setMaxWidth(450);
-        content.setPadding(new Insets(30));
-        content.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);");
+        btnCheckIn.setOnAction(e -> handleCheckIn());
 
-        mainLayout.getChildren().add(content);
+        contentBox = new VBox(20, header, lblInstruction, cmbOrders, txtBookingId, btnCheckIn, btnLostCode, btnBack);
+        contentBox.setAlignment(Pos.CENTER);
+        contentBox.setMaxWidth(450);
+        contentBox.setPadding(new Insets(30));
+        contentBox.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);");
+
+        mainLayout.getChildren().add(contentBox);
+    }
+    
+    // Switch to Manual Text Field
+    private void enableManualMode() {
+        lblInstruction.setText("Please enter your Confirmation Code:");
+        cmbOrders.setVisible(false);
+        cmbOrders.setManaged(false);
+        txtBookingId.setVisible(true);
+        txtBookingId.setManaged(true);
+    }
+    
+    // Server Callback (Called by ClientController)
+    public void updateOrderList(ArrayList<Order> orders) {
+        Platform.runLater(() -> {
+            if (orders != null && !orders.isEmpty()) {
+                // Show List
+                lblInstruction.setText("Select your reservation for today:");
+                cmbOrders.getItems().setAll(orders);
+                cmbOrders.setVisible(true);
+                cmbOrders.setManaged(true);
+                cmbOrders.getSelectionModel().selectFirst();
+            } else {
+                // No orders found? Fallback to manual
+                enableManualMode();
+                lblInstruction.setText("No active bookings found for today. Enter code manually:");
+            }
+        });
+    }
+
+    private void handleCheckIn() {
+        String codeToCheck = "";
+
+        // Check if we are using the dropdown or text field
+        if (cmbOrders.isVisible() && cmbOrders.getValue() != null) {
+            codeToCheck = cmbOrders.getValue().getConfirmationCode();
+        } else {
+            codeToCheck = txtBookingId.getText().trim();
+        }
+
+        if (codeToCheck.isEmpty()) {
+            mainUI.showAlert("Error", "No reservation selected or code entered.");
+            return;
+        }
+
+        casualController.checkIn(codeToCheck);
     }
 }

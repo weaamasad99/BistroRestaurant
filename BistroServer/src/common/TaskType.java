@@ -1,8 +1,5 @@
 package common;
 
-/**
- * Enum defining the types of tasks/commands sent between Client and Server.
- */
 public enum TaskType {
 	// Success or Fail
 	SUCCESS,
@@ -10,11 +7,7 @@ public enum TaskType {
 	
 	// Set User
 	SET_USER,
-	
-	// Get User
 	GET_CASUAL,
-	
-	// Create User
 	CREATE_CASUAL,
 	
     // --- Orders---
@@ -27,56 +20,59 @@ public enum TaskType {
     CANCEL_ORDER,
     ERROR,
 
-    LOGIN_REQUEST,      // Client sends User object (username/userid)
-    LOGIN_RESPONSE,     // Server sends User object (with ID/Type) or null
+    LOGIN_REQUEST,
+    LOGIN_RESPONSE,
     LOGOUT,
 
-
     // --- Reservation Process ---
-    REQUEST_RESERVATION,    // Client sends Order object (Date, Time, Guests)
-    RESERVATION_CONFIRMED,  // Server returns Order with Confirmation Code
-    RESERVATION_REJECTED,   // Server indicates no availability
+    REQUEST_RESERVATION,
+    RESERVATION_CONFIRMED,
+    RESERVATION_REJECTED,
 
-    // --- Waiting List Process ---
-    ENTER_WAITING_LIST,     // Client sends WaitingListEntry
-    WAITING_LIST_ADDED,     // Server confirms addition to list
-    EXIT_WAITING_LIST,      // Client requests removal
+    // --- Waiting List ---
+    ENTER_WAITING_LIST,
+    WAITING_LIST_ADDED,
+    EXIT_WAITING_LIST,
 
     // --- Identification / Check-In ---
-    CHECK_IN_CUSTOMER,      // Client sends Confirmation Code
-    CHECK_IN_APPROVED,      // Server assigns table
-    CHECK_IN_DENIED,        // Reservation not found or too early
+    CHECK_IN_CUSTOMER,
+    CHECK_IN_APPROVED,
+    CHECK_IN_DENIED,
+    
+    // --- NEW: Smart Check-In (Get list for dropdown) ---
+    GET_DAILY_ORDERS,      // Client -> Server (String ID)
+    DAILY_ORDERS_RESULT,   // Server -> Client (ArrayList<Order>)
+
     GET_BILL,
     PAY_BILL,
 
     // --- History & Data ---
-    GET_USER_HISTORY,       // Client requests history for a User ID
-    HISTORY_IMPORTED,        // Server returns ArrayList<Order>
+    GET_USER_HISTORY,
+    HISTORY_IMPORTED,
     
-    GET_TABLES,         // Request all tables
-    UPDATE_TABLE,       // Update seats/status
-    UPDATE_TABLE_STATUS,// Specific status update
-    ADD_TABLE,          
-    REMOVE_TABLE,  
+    GET_TABLES,
+    UPDATE_TABLE,
+    UPDATE_TABLE_STATUS,
+    ADD_TABLE,
+    REMOVE_TABLE,
     
     GET_WAITING_LIST,
     ADD_TO_WAITING_LIST,
     REMOVE_FROM_WAITING_LIST,
     
-    GET_ALL_SUBSCRIBERS, // Request list of all subscribers
-    REGISTER_USER,       // Register a new Subscriber/Casual
-    CHECK_USER_EXISTS, 
+    GET_ALL_SUBSCRIBERS,
+    REGISTER_USER,
+    CHECK_USER_EXISTS,
     GET_SCHEDULE,
     SAVE_SCHEDULE_ITEM,
     DELETE_SCHEDULE_ITEM,
     
-    GET_MONTHLY_REPORT, // Client -> Server (sends String "MM-YYYY")
-    REPORT_GENERATED,    // Server -> Client (sends MonthlyReportData object)
+    GET_MONTHLY_REPORT,
+    REPORT_GENERATED,
     REGISTRATION_SUCCESS,
     
-    USER_FOUND,        
+    USER_FOUND,
     USER_NOT_FOUND,
     RESEND_CODE,
     UPDATE_SUBSCRIBER
-   
 }
