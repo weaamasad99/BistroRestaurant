@@ -23,7 +23,7 @@ import java.util.Map;
  * JavaFX Application for the Server Console.
  * Displays connected clients, logs, and server status.
  * Implements ServerEventListener to receive updates from BistroServer.
- * @author Group 6
+ * * @author Group 6
  * @version 1.0
  */
 public class ServerUI extends Application implements ServerEventListener {
@@ -41,7 +41,10 @@ public class ServerUI extends Application implements ServerEventListener {
     private TextArea consoleLog;
 
     // Map to assign simple IDs (1, 2, 3...) to clients
+    /** Map linking OCSF thread IDs to simple display IDs. */
     private Map<Long, Integer> clientSimpleIdMap = new HashMap<>();
+    
+    /** Counter for generating simple client IDs. */
     private int idCounter = 1;
 
     /**
@@ -212,6 +215,7 @@ public class ServerUI extends Application implements ServerEventListener {
 
     /**
      * Helper to format and append log messages with timestamps.
+     * @param msg The message string to log.
      */
     private void appendLog(String msg) {
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
@@ -223,12 +227,29 @@ public class ServerUI extends Application implements ServerEventListener {
      * Inner class representing a client row in the TableView.
      */
     public static class ClientConnectionData {
+        /** The original thread ID from OCSF. */
         private final long originalId;
+        
+        /** A simplified ID for display purposes. */
         private final int simpleId;
+        
+        /** The IP address of the client. */
         private final String ip;
+        
+        /** The host name of the client. */
         private final String host;
+        
+        /** The identity string (Username + Role) property for the table. */
         private final SimpleStringProperty identity;
 
+        /**
+         * Constructs a new ClientConnectionData object.
+         * @param originalId The thread ID.
+         * @param simpleId The display ID.
+         * @param ip The IP address.
+         * @param host The hostname.
+         * @param identity The user's identity string.
+         */
         public ClientConnectionData(long originalId, int simpleId, String ip, String host, String identity) {
             this.originalId = originalId;
             this.simpleId = simpleId;
@@ -237,10 +258,19 @@ public class ServerUI extends Application implements ServerEventListener {
             this.identity = new SimpleStringProperty(identity);
         }
 
+        /** @return The original thread ID. */
         public long getOriginalId() { return originalId; }
+        
+        /** @return The IP address. */
         public String getIp() { return ip; }
+        
+        /** @return The hostname. */
         public String getHost() { return host; }
+        
+        /** @return The identity property for JavaFX binding. */
         public SimpleStringProperty identityProperty() { return identity; }
+        
+        /** @param s The new identity string to set. */
         public void setIdentity(String s) { this.identity.set(s); }
     }
 }
