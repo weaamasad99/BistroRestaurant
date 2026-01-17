@@ -10,7 +10,7 @@ import server.ServerEventListener;
 /**
  * Manages outgoing notifications to users via simulated SMS and real Email.
  * Handles templates for confirmations, alerts, reminders, and cancellations.
- * * @author Group 6
+ * @author Group 6
  * @version 1.0
  */
 public class NotificationController {
@@ -20,7 +20,7 @@ public class NotificationController {
 
     /**
      * Constructor with logger.
-     * * @param serverLogger Listener for logging events to the server UI.
+     * @param serverLogger Listener for logging events to the server UI.
      */
     public NotificationController(ServerEventListener serverLogger) {
         this.userController = new UserController();
@@ -47,7 +47,7 @@ public class NotificationController {
     
     /**
      * Sends a reservation confirmation message.
-     * * @param userId User ID.
+     * @param userId User ID.
      * @param date Reservation date.
      * @param time Reservation time.
      * @param code Confirmation code.
@@ -75,7 +75,7 @@ public class NotificationController {
  // --- 2. WAITING LIST ALERT ---
     /**
      * Alerts a user that a table is available.
-     * * @param userId User ID.
+     * @param userId User ID.
      * @param confirmationCode The code required to claim the table.
      */
     public void sendWaitingListAlert(int userId, String confirmationCode) {
@@ -111,7 +111,7 @@ public class NotificationController {
     // --- 3. REGISTRATION WELCOME ---
     /**
      * Sends a welcome email to a new subscriber.
-     * * @param user The new user object.
+     * @param user The new user object.
      */
     public void sendRegistrationWelcome(User user) {
     	
@@ -129,7 +129,7 @@ public class NotificationController {
     // --- 4. LOST CODE ---
     /**
      * Sends recovered reservation codes to a user.
-     * * @param contact The email address.
+     * @param contact The email address.
      * @param orders List of active orders found.
      */
     public void sendLostCodes(String contact, ArrayList<Order> orders) {
@@ -163,7 +163,7 @@ public class NotificationController {
      * Logic:
      * 1. Always prints console log (Simulating SMS).
      * 2. If contactInfo is an email, sends a real email.
-     * * @param contactInfo Phone or Email.
+     * @param contactInfo Phone or Email.
      * @param time Reservation time string.
      */
     public void sendTwoHourReminder(String contactInfo, String time) {
@@ -193,7 +193,7 @@ public class NotificationController {
  // --- 5. CANCELLATION NOTICE ---
     /**
      * Notifies a user that their reservation was cancelled.
-     * * @param userId User ID.
+     * @param userId User ID.
      * @param code The reservation code.
      */
     public void sendCancellationNotification(int userId, String code) {
@@ -219,7 +219,7 @@ public class NotificationController {
     // --- 6. BILL / TIME LIMIT ALERT ---
     /**
      * Notifies a user when their dining time limit is reached.
-     * * @param userId User ID.
+     * @param userId User ID.
      * @param code Order code.
      */
     public void sendBillNotification(int userId, String code) {
@@ -251,7 +251,7 @@ public class NotificationController {
     }
     /**
      * Notifies users of changes to the restaurant schedule that affect their booking.
-     * * @param userId User ID.
+     * @param userId User ID.
      * @param date Date of change.
      * @param openTime New opening time.
      * @param closeTime New closing time.
