@@ -11,11 +11,17 @@ import java.util.ArrayList;
 
 /**
  * Manages the Waiting List database operations.
+ * Handles adding users to the queue and promoting them when tables free up.
+ * * @author Group 6
+ * @version 1.0
  */
 public class WaitingListController {
 
     private Connection conn;
 
+    /**
+     * Initializes the controller with a database connection.
+     */
     public WaitingListController() {
         this.conn = DatabaseConnection.getInstance().getConnection();
     }
@@ -54,10 +60,12 @@ public class WaitingListController {
     /**
      * Tries to add a user to the waiting list, BUT first checks if a table is available immediately.
      * Returns a status string: 
-     * - "IMMEDIATE:<TableID>:<Code>" (Table found, assigned immediately)
+     * - "IMMEDIATE:&lt;TableID&gt;:&lt;Code&gt;" (Table found, assigned immediately)
      * - "WAITING" (Added to waiting list)
      * - "DUPLICATE" (Already in list)
      * - "ERROR" (Database error)
+     * * @param wlData The waiting list entry object.
+     * @return Status string indicating outcome.
      */
     public String addToWaitingList(WaitingList wlData) {
         if (conn == null) return "ERROR";
@@ -139,6 +147,11 @@ public class WaitingListController {
         }
     }
     
+    /**
+     * Removes a user from the waiting list (sets status to CANCELLED).
+     * * @param userId The ID of the user to remove.
+     * @return true if successful.
+     */
     public boolean exitWaitingList(int userId) {
     	String sql = "UPDATE waiting_list SET status = 'CANCELLED' WHERE user_id = ? AND status = 'WAITING'";
         
@@ -158,6 +171,11 @@ public class WaitingListController {
     }
     
     
+    /**
+     * Logic to promote a waiting customer when a table becomes available.
+     * Finds the best fit candidate, reserves the table, and sends a notification.
+     * * @param vacatedTableSeats The size of the table that just became free.
+     */
     public void notifyNextInLine(int vacatedTableSeats) {
         // 1. Find the best candidate from the waiting list
         String findNext = "SELECT * FROM waiting_list " +

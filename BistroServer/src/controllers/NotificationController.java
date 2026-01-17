@@ -7,22 +7,36 @@ import common.User;
 import server.EmailService;
 import server.ServerEventListener;
 
+/**
+ * Manages outgoing notifications to users via simulated SMS and real Email.
+ * Handles templates for confirmations, alerts, reminders, and cancellations.
+ * * @author Group 6
+ * @version 1.0
+ */
 public class NotificationController {
 
     private UserController userController;
     private ServerEventListener serverLogger;
 
- //  Constructor
+    /**
+     * Constructor with logger.
+     * * @param serverLogger Listener for logging events to the server UI.
+     */
     public NotificationController(ServerEventListener serverLogger) {
         this.userController = new UserController();
         this.serverLogger = serverLogger;
     }
     
-    // Default constructor for cases where logging isn't strictly required
+    /**
+     * Default constructor for cases where logging isn't strictly required.
+     */
     public NotificationController() {
         this(null);
     }
 
+    /**
+     * Logs messages to console and server log if available.
+     */
     private void log(String message) {
         System.out.println(message); // Console
         if (serverLogger != null) {
@@ -30,6 +44,15 @@ public class NotificationController {
         }
     }
     // --- 1. RESERVATION CONFIRMATION ---
+    
+    /**
+     * Sends a reservation confirmation message.
+     * * @param userId User ID.
+     * @param date Reservation date.
+     * @param time Reservation time.
+     * @param code Confirmation code.
+     * @param guests Number of guests.
+     */
     public void sendReservationConfirmation(int userId, String date, String time, String code, int guests) {
         // 1. Mock SMS (Everyone gets this)
         System.out.println(">>> [SMS MOCK] To User " + userId + ": Reservation confirmed. Code: " + code);
@@ -50,7 +73,11 @@ public class NotificationController {
     }
 
  // --- 2. WAITING LIST ALERT ---
-    // Update: Now accepts 'confirmationCode' to include in the message
+    /**
+     * Alerts a user that a table is available.
+     * * @param userId User ID.
+     * @param confirmationCode The code required to claim the table.
+     */
     public void sendWaitingListAlert(int userId, String confirmationCode) {
         
         // Console/SMS Mock Message
@@ -82,6 +109,10 @@ public class NotificationController {
     
 
     // --- 3. REGISTRATION WELCOME ---
+    /**
+     * Sends a welcome email to a new subscriber.
+     * * @param user The new user object.
+     */
     public void sendRegistrationWelcome(User user) {
     	
         if (shouldSendEmail(user)) {
@@ -96,6 +127,11 @@ public class NotificationController {
     }
     
     // --- 4. LOST CODE ---
+    /**
+     * Sends recovered reservation codes to a user.
+     * * @param contact The email address.
+     * @param orders List of active orders found.
+     */
     public void sendLostCodes(String contact, ArrayList<Order> orders) {
         log("Sending list of " + orders.size() + " recovered codes to: " + contact);
 
@@ -127,6 +163,8 @@ public class NotificationController {
      * Logic:
      * 1. Always prints console log (Simulating SMS).
      * 2. If contactInfo is an email, sends a real email.
+     * * @param contactInfo Phone or Email.
+     * @param time Reservation time string.
      */
     public void sendTwoHourReminder(String contactInfo, String time) {
     	log("Sending 2-Hour Reminder to: " + contactInfo);
@@ -153,6 +191,11 @@ public class NotificationController {
     
 
  // --- 5. CANCELLATION NOTICE ---
+    /**
+     * Notifies a user that their reservation was cancelled.
+     * * @param userId User ID.
+     * @param code The reservation code.
+     */
     public void sendCancellationNotification(int userId, String code) {
         log("Sending Cancellation Notification to User " + userId);
         
@@ -174,6 +217,11 @@ public class NotificationController {
     
     
     // --- 6. BILL / TIME LIMIT ALERT ---
+    /**
+     * Notifies a user when their dining time limit is reached.
+     * * @param userId User ID.
+     * @param code Order code.
+     */
     public void sendBillNotification(int userId, String code) {
         log("Sending 2-Hour Bill Notification to User " + userId);
         
@@ -201,6 +249,14 @@ public class NotificationController {
         	return false;
         return true;
     }
+    /**
+     * Notifies users of changes to the restaurant schedule that affect their booking.
+     * * @param userId User ID.
+     * @param date Date of change.
+     * @param openTime New opening time.
+     * @param closeTime New closing time.
+     * @param isClosed True if closed completely.
+     */
     public void sendScheduleUpdateNotification(int userId, String date, String openTime, String closeTime, boolean isClosed) {
         log("Sending Schedule Update Notification to User " + userId);
 

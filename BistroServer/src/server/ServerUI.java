@@ -19,21 +19,43 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * JavaFX Application for the Server Console.
+ * Displays connected clients, logs, and server status.
+ * Implements ServerEventListener to receive updates from BistroServer.
+ * * @author Group 6
+ * @version 1.0
+ */
 public class ServerUI extends Application implements ServerEventListener {
 
+    /** Reference to the backend server logic. */
     private BistroServer server;
+    
+    /** Observable list for the TableView. */
     private ObservableList<ClientConnectionData> connectedClients;
+    
+    /** Table to display connected client details. */
     private TableView<ClientConnectionData> table;
+    
+    /** Area to display scrolling server logs. */
     private TextArea consoleLog;
 
     // Map to assign simple IDs (1, 2, 3...) to clients
     private Map<Long, Integer> clientSimpleIdMap = new HashMap<>();
     private int idCounter = 1;
 
+    /**
+     * Main entry point for the server application.
+     * @param args Command line arguments.
+     */
     public static void main(String[] args) {
         launch(args);
     }
 
+    /**
+     * Initializes and displays the Server UI stage.
+     * @param primaryStage The primary window.
+     */
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Bistro System - Server Console");
@@ -95,6 +117,9 @@ public class ServerUI extends Application implements ServerEventListener {
         primaryStage.show();
     }
 
+    /**
+     * Instantiates and starts the OCSF server.
+     */
     private void startServer() {
         server = new BistroServer(5555, this);
         try {
@@ -108,6 +133,9 @@ public class ServerUI extends Application implements ServerEventListener {
     // SERVER EVENT LISTENER IMPLEMENTATION
     // =========================================================
 
+    /**
+     * Logs new TCP connections without adding to the table immediately.
+     */
     @Override
     public void onClientConnected(ConnectionToClient client) {
         // CHANGED: We do NOT add to the table here anymore.
@@ -118,6 +146,10 @@ public class ServerUI extends Application implements ServerEventListener {
         });
     }
 
+    /**
+     * Updates the UI table when a user successfully logs in.
+     * Uses Platform.runLater for thread safety.
+     */
     @Override
     public void onUserLoggedIn(ConnectionToClient client, String username, String role) {
         Platform.runLater(() -> {
@@ -152,6 +184,9 @@ public class ServerUI extends Application implements ServerEventListener {
         });
     }
 
+    /**
+     * Removes a client from the table upon disconnection.
+     */
     @Override
     public void onClientDisconnected(ConnectionToClient client) {
         Platform.runLater(() -> {
@@ -167,17 +202,26 @@ public class ServerUI extends Application implements ServerEventListener {
         });
     }
 
+    /**
+     * Appends a message to the console log.
+     */
     @Override
     public void onLog(String message) {
         Platform.runLater(() -> appendLog(message));
     }
 
+    /**
+     * Helper to format and append log messages with timestamps.
+     */
     private void appendLog(String msg) {
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         consoleLog.appendText("[" + time + "] " + msg + "\n");
     }
 
     // --- Data Model ---
+    /**
+     * Inner class representing a client row in the TableView.
+     */
     public static class ClientConnectionData {
         private final long originalId;
         private final int simpleId;

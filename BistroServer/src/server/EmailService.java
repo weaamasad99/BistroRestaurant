@@ -11,11 +11,18 @@ import javax.mail.internet.*;
 /**
  * Handles outgoing email notifications using Gmail SMTP.
  * Configuration is loaded from a local .env file.
+ * * @author Group 6
+ * @version 1.0
  */
 public class EmailService {
 
+    /** SMTP Username (Email). */
     private static String username;
+    
+    /** SMTP Password (App Password). */
     private static String password;
+    
+    /** Flag to indicate if configuration was successful. */
     private static boolean isConfigured = false;
 
     // Static block to load credentials once when the server starts
@@ -23,6 +30,9 @@ public class EmailService {
         loadEnv();
     }
 
+    /**
+     * Loads credentials from the .env file in the root directory.
+     */
     private static void loadEnv() {
         try {
             Path path = Paths.get(".env");
@@ -57,7 +67,7 @@ public class EmailService {
 
     /**
      * Sends an email in a background thread to avoid blocking the UI/Server.
-     * @param recipient The email address of the receiver.
+     * * @param recipient The email address of the receiver.
      * @param subject The subject line.
      * @param body The email content (HTML allowed).
      */

@@ -8,17 +8,28 @@ import java.sql.SQLException;
 import java.sql.Time;
 import java.time.LocalTime;
 
+/**
+ * Manages payment processing, bill calculation, and closing of orders.
+ * * @author Group 6
+ * @version 1.0
+ */
 public class PaymentController {
 
     private Connection conn;
 
+    /**
+     * Initializes the controller with a database connection.
+     */
     public PaymentController() {
         this.conn = DatabaseConnection.getInstance().getConnection();
     }
 
     /**
+     * Retrieves bill details including price and user type.
      * Simulation: Processes payment by marking an order as 'FINISHED'.
      * In a real system, this would integrate with a Payment Gateway API.
+     * * @param code The confirmation code of the active order.
+     * @return Object array [Code, Price, UserType] or null if not found.
      */
     public Object[] getBillData(String code) { // Renamed to getBillData
         if (conn == null) return null;
@@ -44,6 +55,12 @@ public class PaymentController {
         return null;
     }
     
+    /**
+     * Processes the bill payment, frees the table, and closes the order.
+     * Also triggers the waiting list mechanism to notify the next customer.
+     * * @param code The confirmation code.
+     * @return true if payment successful, false otherwise.
+     */
     public boolean payBill(String code) {
         if (conn == null) return false;
 
@@ -79,7 +96,7 @@ public class PaymentController {
         // ==========================================================
         // STEP 2: Calculate Price & Apply Subscriber Discount
         // ==========================================================
-        double basePrice = 250.0; // Simulated price [cite: 48]
+        double basePrice = 250.0; // Simulated price
         if ("SUBSCRIBER".equalsIgnoreCase(userType)) {
             double finalPrice = basePrice * 0.9; // 10% Discount 
             System.out.println("DEBUG: Subscriber discount applied. Total: " + finalPrice);

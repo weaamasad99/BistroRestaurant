@@ -11,11 +11,17 @@ import java.util.ArrayList;
 
 /**
  * Manages operations specific to Subscribers.
+ * Handles fetching subscriber lists and updating details.
+ * * @author Group 6
+ * @version 1.0
  */
 public class SubscriberController {
 
     private Connection conn;
 
+    /**
+     * Initializes the controller with a database connection.
+     */
     public SubscriberController() {
         this.conn = DatabaseConnection.getInstance().getConnection();
     }
@@ -58,7 +64,11 @@ public class SubscriberController {
         return subscribers;
     }
     
-    
+    /**
+     * Updates phone and email for a specific subscriber.
+     * * @param user The user object containing new details.
+     * @return true if updated successfully.
+     */
     public boolean updateSubscriberDetails(User user) {
         if (conn == null) return false;
 

@@ -8,14 +8,29 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Manages the generation of statistical reports for the Bistro.
+ * Aggregates data from orders and waiting lists for performance analysis.
+ * * @author Group 6
+ * @version 1.0
+ */
 public class ReportController {
 
     private Connection conn;
 
+    /**
+     * Initializes the controller with a database connection.
+     */
     public ReportController() {
         this.conn = DatabaseConnection.getInstance().getConnection();
     }
 
+    /**
+     * Generates a comprehensive monthly report containing performance stats and activity logs.
+     * * @param month The month to generate for.
+     * @param year The year to generate for.
+     * @return MonthlyReportData object with full stats.
+     */
     public MonthlyReportData generateMonthlyReport(int month, int year) {
         MonthlyReportData data = new MonthlyReportData(month, year);
         
@@ -141,6 +156,9 @@ public class ReportController {
         return data;
     }
 
+    /**
+     * Helper to fetch data map for charts.
+     */
     private Map<String, Integer> fetchMap(String query, int month, int year) {
         Map<String, Integer> map = new HashMap<>();
         try (PreparedStatement ps = conn.prepareStatement(query)) {

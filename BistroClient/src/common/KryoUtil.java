@@ -11,14 +11,18 @@ import java.sql.Time;
 
 /**
  * Utility class for handling Kryo serialization.
- * Ensures consistent registration of classes across Client and Server.
+ * Ensures consistent registration of classes across Client and Server for network communication.
+ * * @author Group 6
+ * @version 1.0
  */
 public class KryoUtil {
 
-    // Kryo is not thread-safe, so we use ThreadLocal to ensure each thread has its own instance.
-private static final ThreadLocal<Kryo> kryoThreadLocal = ThreadLocal.withInitial(() -> {
+    /**
+     * Kryo is not thread-safe, so we use ThreadLocal to ensure each thread has its own instance.
+     * Registers all necessary classes for the Bistro application.
+     */
+    private static final ThreadLocal<Kryo> kryoThreadLocal = ThreadLocal.withInitial(() -> {
         Kryo kryo = new Kryo();
-        
         
         kryo.register(java.util.HashMap.class);
         // --- Registration ---
@@ -35,7 +39,7 @@ private static final ThreadLocal<Kryo> kryoThreadLocal = ThreadLocal.withInitial
         // Java Utils
         kryo.register(ArrayList.class);
         kryo.register(Date.class);
-        kryo.register(Time.class);       
+        kryo.register(Time.class);   
         
         kryo.register(BistroSchedule.class);
         kryo.register(MonthlyReportData.class);
@@ -46,7 +50,7 @@ private static final ThreadLocal<Kryo> kryoThreadLocal = ThreadLocal.withInitial
 
     /**
      * Serializes an object into a byte array.
-     * @param object The object to serialize.
+     * * @param object The object to serialize.
      * @return The byte array representing the object.
      */
     public static byte[] serialize(Object object) {
@@ -60,8 +64,8 @@ private static final ThreadLocal<Kryo> kryoThreadLocal = ThreadLocal.withInitial
 
     /**
      * Deserializes a byte array back into an object.
-     * @param bytes The byte array to deserialize.
-     * @return The reconstructed object.
+     * * @param bytes The byte array to deserialize.
+     * @return The reconstructed object, or null if bytes are null.
      */
     public static Object deserialize(byte[] bytes) {
         if (bytes == null) return null;

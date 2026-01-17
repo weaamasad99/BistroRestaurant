@@ -33,11 +33,18 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/**
+ * The main Server class extending OCSF's AbstractServer.
+ * Handles all client connections, message routing, and background scheduled tasks.
+ * * @author Group 6
+ * @version 1.0
+ */
 public class BistroServer extends AbstractServer {
 
-    // Interface to communicate with ServerUI
+    /** Interface to communicate events back to the ServerUI. */
     private ServerEventListener uiListener;
     
+    /** Scheduler for background tasks (e.g., automated cancellations, reminders). */
     private ScheduledExecutorService scheduler;
 
     // Controllers
@@ -49,9 +56,9 @@ public class BistroServer extends AbstractServer {
     private ReportController reportController;
 
     /**
-     * Constructor.
-     * @param port The port to listen on.
-     * @param uiListener The listener to update the ServerUI.
+     * Constructor. Initializes the server on the specified port and sets up controllers.
+     * * @param port The port to listen on.
+     * @param uiListener The listener to update the ServerUI logs and tables.
      */
     public BistroServer(int port, ServerEventListener uiListener) {
         super(port);
@@ -66,6 +73,12 @@ public class BistroServer extends AbstractServer {
         this.reportController = new ReportController();
     }
 
+    /**
+     * Handles incoming messages from clients.
+     * Expects serialized Kryo byte arrays.
+     * * @param msg The message object (byte array).
+     * @param client The connection to the client sending the message.
+     */
     @Override
     protected void handleMessageFromClient(Object msg, ConnectionToClient client) {
         // Step 1: Check if message is Kryo byte array
@@ -87,7 +100,10 @@ public class BistroServer extends AbstractServer {
     }
 
     /**
-     * Main Business Logic Switch
+     * Main Business Logic Switch.
+     * Routes the decoded Message to the appropriate controller based on TaskType.
+     * * @param message The decoded Message object.
+     * @param client The client connection.
      */
     private void processMessage(Message message, ConnectionToClient client) {
         Message response = null;
@@ -491,11 +507,20 @@ public class BistroServer extends AbstractServer {
         }
     }
 
+    /**
+     * Logs a message to the Server UI.
+     * @param msg The message string.
+     */
     private void log(String msg) {
         if (uiListener != null) uiListener.onLog(msg);
         else System.out.println(msg);
     }
 
+    /**
+     * Helper to send serialized messages to the client.
+     * @param msg The message object.
+     * @param client The target client.
+     */
     private void sendKryoToClient(Object msg, ConnectionToClient client) {
         try {
             client.sendToClient(KryoUtil.serialize(msg));
@@ -506,6 +531,10 @@ public class BistroServer extends AbstractServer {
 
     
     
+    /**
+     * Called when the server starts listening.
+     * Initializes DB connection and background scheduler.
+     */
     @Override
     protected void serverStarted() {
         log("Server listening on port " + getPort());
@@ -643,6 +672,9 @@ public class BistroServer extends AbstractServer {
         }, 0, 1, TimeUnit.MINUTES);
     }
 
+    /**
+     * Called when the server stops. Cleanly shuts down the scheduler.
+     */
     @Override
     protected void serverStopped() {
     	log("Server stopped.");
@@ -652,16 +684,29 @@ public class BistroServer extends AbstractServer {
         }
     }
 
+    /**
+     * Callback for new client connections.
+     * @param client The new client.
+     */
     @Override
     protected void clientConnected(ConnectionToClient client) {
         if (uiListener != null) uiListener.onClientConnected(client);
     }
 
+    /**
+     * Callback for client disconnections.
+     * @param client The disconnected client.
+     */
     @Override
     synchronized protected void clientDisconnected(ConnectionToClient client) {
         if (uiListener != null) uiListener.onClientDisconnected(client);
     }
 
+    /**
+     * Callback for client exceptions/errors.
+     * @param client The client involved.
+     * @param exception The error.
+     */
     @Override
     synchronized protected void clientException(ConnectionToClient client, Throwable exception) {
         if (uiListener != null) uiListener.onClientDisconnected(client);

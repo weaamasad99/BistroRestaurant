@@ -10,17 +10,26 @@ import java.sql.SQLException;
 
 /**
  * Manages user-related database operations including login (DB & Hardcoded) and registration.
+ * Handles authentication for Subscribers, Staff, and Casual users.
+ * * @author Group 6
+ * @version 1.0
  */
 public class UserController {
 
     private Connection conn;
 
+    /**
+     * Initializes the controller with a database connection.
+     */
     public UserController() {
         this.conn = DatabaseConnection.getInstance().getConnection();
     }
 
     /**
      * Retrieves Email by Phone OR Subscriber ID (Identifier).
+     * Used for recovering accounts or notifications.
+     * * @param identifier Phone or Subscriber ID.
+     * @return Email address string.
      */
     public String getEmailByIdentifier(String identifier) {
         if (conn == null) return null;
@@ -52,6 +61,12 @@ public class UserController {
         }
         return null;
     }
+    
+    /**
+     * Fetches a full User object by their internal ID.
+     * * @param userId Unique database ID.
+     * @return User object.
+     */
     public User getUserById(int userId) {
         if (conn == null) return null;
         String query = "SELECT * FROM users WHERE user_id = ?";
@@ -183,6 +198,8 @@ public class UserController {
     /**
      * Helper: Get the email address for a user based on phone OR email input.
      * Used for notifications when the user identifies by phone.
+     * * @param contactInfo The phone number or email to search for.
+     * @return The email string if found, otherwise null.
      */
     public String getEmailByContact(String contactInfo) {
         if (conn == null) return null;
@@ -246,6 +263,11 @@ public class UserController {
         return user;
     }
 
+    /**
+     * Retrieves a user by phone number.
+     * * @param phone Phone number string.
+     * @return User object.
+     */
     public User getUserByPhone(String phone) {
         User user = null;
         
@@ -283,6 +305,7 @@ public class UserController {
      * Registers a temporary/casual user. 
      * Handles the case where the user ALREADY exists (treats it as a login).
      * @param phone The phone number of the customer.
+     * @param email The email of the customer.
      * @return true if successful (either registered OR already exists).
      */
     public boolean createCasualRecord(String phone, String email) {
@@ -324,6 +347,11 @@ public class UserController {
         }
     }
     
+    /**
+     * Generates a unique 4-digit confirmation code.
+     * Ensures code uniqueness by checking database.
+     * * @return Unique 4-digit code.
+     */
     public String generateConfirmationCode() {
     	String code;
         boolean isUnique = false;
@@ -355,6 +383,9 @@ public class UserController {
     }
     /**
      * Helper method to map a SQL ResultSet row to a User object.
+     * * @param rs The ResultSet from the query.
+     * @return A User object populated with data.
+     * @throws SQLException If a database access error occurs.
      */
     private User mapResultSetToUser(ResultSet rs) throws SQLException {
         int subNum = rs.getInt("subscriber_number");
@@ -377,6 +408,8 @@ public class UserController {
     /**
      * Registers a new subscriber in the DB.
      * Generates a unique 6-digit Subscriber Number.
+     * * @param user User object containing registration details.
+     * @return The registered User object with generated ID.
      */
     public User registerNewSubscriber(User user) {
         if (conn == null) return null;
