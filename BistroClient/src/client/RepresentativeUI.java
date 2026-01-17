@@ -142,7 +142,7 @@ public class RepresentativeUI {
         registerNewSubscriberButton = createWideButton("Register New Customer", "👤");
         
 
-        // NAVIGATION LOGIC
+        // NAVIGATION 
         registerNewSubscriberButton.setOnAction(e -> registerNewSubscriber(username));
 
 
